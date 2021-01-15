@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateSgpatologiasTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('sgpatologias', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('patologia');
+            $table->string('nomenclatura')->nullable();
+            $table->string('descripcion')->nullable();
+            $table->timestamps();   
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('sgpatologias');
+    }
+}

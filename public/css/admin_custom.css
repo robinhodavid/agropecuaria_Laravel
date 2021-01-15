@@ -1,0 +1,81 @@
+/*Personalizamos estilos que son necesarios en el tema*/
+
+/*Fondo del  navbar */
+
+.navbar-white {
+	background-color: #f8f9fa;
+}
+
+/*Fondo del Body*/
+.content-wrapper {
+    background: #fff;
+}
+
+.text-center
+{
+	text-align: center;
+}
+
+/*-> Damos estilos al paginador*/
+
+.link 
+{
+	padding-bottom: 30px;
+	display: inline-block;
+}
+
+/*-> Estilos para las fichas de Registro*/
+.form-group,
+.form-registro {width: 100%;}
+
+.border-right,
+.border-bottom,
+.border-left,
+.border-top
+{
+	border-top: 1px solid #eaeaea;	
+}
+
+.border-style
+{
+	border: 1px solid #eaeaea;
+	border-radius: 3px;
+	padding: 5px;
+}
+
+.form-control 
+{
+	width: 90%; 
+}
+.bck-ground 
+{
+	background-color: #eaeaea;
+}
+
+.oculto 
+{
+	display: none;
+}
+
+/*Estilos para el campo buscador*/
+.bootstrap-tagsinput 
+{
+	width:60%;
+	display: grid;
+}
+
+/*Clases para los tipos de lotes en la vista asignar series*/
+.form-select,
+.check-tipo 
+{
+	width: 97%;
+	margin-bottom: 15px;
+}
+.text-area
+{
+	width:97%;
+}
+
+.form-check-input-paju {	
+	margin-top: 0.7rem;
+}
