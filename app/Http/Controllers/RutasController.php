@@ -140,7 +140,7 @@ class RutasController extends Controller
         
         $codpajuela = ($request->espajuela=="on")?($codpajuela=$request->pajuela):($codpajuela =  null);
         //_>>
-    //********************************************************************************************
+    //***************************************************************************************
         //Se calcula con la herramienta carbon la edad
         $year = Carbon::parse($request->fnac)->diffInYears(Carbon::now());
         //Se multiplica los años obtendios por 12 para saber los meses de la cantidad de años.
@@ -197,6 +197,40 @@ class RutasController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
+    public function editar_fichaganado($id)
+        {
+           
+            $serie = \App\Models\sganim::findOrFail($id);
+            return view('editarfichaganado', compact('serie'));
+        }
+
+    public function update_fichaganado(Request $request, $id)
+        {
+            //Validando los datos
+            $request->validate([
+                'nombre_lote'=>[
+                    'required',
+                ],
+                'tipo'=>[
+                    'required'
+                ],
+            ]);
+
+            $loteUpdate = \App\Models\sglote::findOrFail($id_lote);
+
+            $loteUpdate->nombre_lote=$request->nombre_lote;
+            $loteUpdate->tipo=$request->tipo;
+            $loteUpdate->funcion=$request->funcion;
+            $loteUpdate->slug = str::slug($request['nombre_lote'], '-');
+            $loteUpdate->save();
+
+            return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+
+
+
+
+
     //Retorna a la vista lote
     public function lote()
     {
@@ -230,7 +264,6 @@ class RutasController extends Controller
             $loteNuevo->tipo = $request->tipo;
             $loteNuevo->funcion = $request->funcion;
     	 	$loteNuevo->slug =  str::slug($request['nombre_lote'], '-');
-           	//$loteNuevo->slug = SlugService::createSlug(sglote::class, 'slug', $request->nombre_lote);
 
             $loteNuevo-> save(); 
        		//return response()->json(['slug' => $loteNuevo->slug]);

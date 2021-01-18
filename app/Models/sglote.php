@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-
-use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class sglote extends Model
 {
-    use HasFactory, Sluggable ;
+    use HasFactory;
  
     protected $primaryKey = "id_lote";
     //protected $primaryKey = "slug";
@@ -20,7 +18,7 @@ class sglote extends Model
         'nombre_lote'
       ];
 
-    public function sluggable()
+    public function sluggable ()
     {
         return [
             'slug' => [
@@ -28,6 +26,7 @@ class sglote extends Model
             ]
         ];
     }
+
     public static function filtrarlote($tipo){
         return \App\Models\sglote::where ('tipo','=', $tipo)
         ->get();

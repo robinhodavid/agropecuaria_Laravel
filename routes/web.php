@@ -153,10 +153,9 @@ Route::get('/home/ganaderia/ficha-de-ganado', [App\Http\Controllers\RutasControl
 	//--> Ruta para filtrar el select Tipologia por sexo en forma dinamica.
 	Route::get('/home/ganaderia/ficha-de-ganado/sexo/{sexo}', [App\Http\Controllers\RutasController::class, 'filterSexo'])->name('filterSexo');
 
-	//--> Ruta para filtrar el select Cod Padre por sea Toros de la finca o Pajuela
-	//Route::get('/home/ganaderia/ficha-de-ganado/codpadre', [App\Http\Controllers\RutasController::class, 'filterCodPadre'])->name('filterCodPadre');
-
 Route::post('/home/ganaderia/ficha-de-ganado', [App\Http\Controllers\RutasController::class, 'crear_fichaganado'])->name('fichaganado.crear');
+
+Route::get('/home/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'editar_fichaganado'])->name('fichaganado.editar'); 
 	
 
 
