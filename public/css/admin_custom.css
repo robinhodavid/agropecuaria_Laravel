@@ -1,5 +1,11 @@
 /*Personalizamos estilos que son necesarios en el tema*/
 
+
+/*
+**************************************************************************
+Estilos Generales
+**************************************************************************
+*/
 /*Fondo del  navbar */
 
 .navbar-white {
@@ -42,10 +48,13 @@
 	border-radius: 3px;
 	padding: 5px;
 }
-
+.text-input 
+{
+	margin-bottom: 15px;
+}
 .form-control 
 {
-	width: 90%; 
+	width: 97%; 
 }
 .bck-ground 
 {
@@ -73,9 +82,80 @@
 }
 .text-area
 {
-	width:97%;
+	width:98%;
+	margin-bottom: 15px;
 }
 
 .form-check-input-paju {	
 	margin-top: 0.7rem;
+}
+/*
+*************************************************************************
+Estilos para el arbo de ascendencia
+*************************************************************************
+*/
+.nodo
+{
+	height: 25px;
+	margin-top: 10px
+	margin-bottom:10px;
+	border: 1px solid #eaeaea;
+	border-radius: 3px;
+	padding: 5px;
+	text-align: center;
+}
+
+.div-vacio
+{
+	height: 15px;
+	margin-top: 10px
+	margin-bottom:10px;
+}
+.enlace 
+{
+	font-weight: 700;
+}
+
+
+/*
+**************************************************************************
+Estilos Para la ficha de Ganado
+**************************************************************************
+*/
+.title-header {
+	font-size: 1rem;
+	padding-left: 25px;
+}
+.card-ficha-ganado {
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 2px 1px 0px rgba(17, 17, 17, 0.75);
+	font-size: 14px;
+}
+.card-parametros-peso {
+	margin-right: 8px;
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 3px 5px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 3px 5px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 3px 3px 0px rgba(17, 17, 17, 0.75);
+	font-size: 14px;
+}
+.card-parametros-tipo {
+	margin-left: 8px;
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 3px 5px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 3px 5px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 3px 3px 0px rgba(17, 17, 17, 0.75);
+	font-size: 15px;
+	font-weight: 500;
+	padding: 0px 0px 10px 10px; 
+}
+.card-ascendencia
+{
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 2px 1px 0px rgba(17, 17, 17, 0.75);
+	font-size: 14px;	
 }

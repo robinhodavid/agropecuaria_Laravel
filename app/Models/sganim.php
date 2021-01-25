@@ -15,19 +15,16 @@ class sganim extends Model
     //  use Taggable;
     protected $table = 'sganims';
  	
- 	protected $fillable = [
+ 	  protected $fillable = [
       	'serie'
       ];
 
-     protected $dates = [
-      	'fnac',
-      	'fecr',
+    protected $dates = [
+
       	'fulpes',
       	'fecdes',
       	'fecua',
       	'fecup'
       ]; 
-    
-   
-
+  
 }

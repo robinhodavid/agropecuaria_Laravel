@@ -40,7 +40,7 @@ Route::delete('/home/sisga-admin/fincas/eliminar/{id}', [App\Http\Controllers\Ho
 
 Route::get('/home/sisga-admin/especie', [App\Http\Controllers\HomeController::class, 'especie'])->name('especie');
 
-//->> EndEspecie
+//->> EndEspecie 
 
 /*Ruta para la vista tipologia*/
 
@@ -155,7 +155,9 @@ Route::get('/home/ganaderia/ficha-de-ganado', [App\Http\Controllers\RutasControl
 
 Route::post('/home/ganaderia/ficha-de-ganado', [App\Http\Controllers\RutasController::class, 'crear_fichaganado'])->name('fichaganado.crear');
 
-Route::get('/home/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'editar_fichaganado'])->name('fichaganado.editar'); 
+Route::get('/home/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'editar_fichaganado'])->name('fichaganado.editar');
+
+Route::put('/home/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'update_fichaganado'])->name('fichaganado.update');  
 	
 
 

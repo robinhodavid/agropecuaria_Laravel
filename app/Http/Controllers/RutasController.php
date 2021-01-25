@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Models;
 use App\Lote;
 use App\Models\sgsublote;
-use Carbon\Carbon;
+use Carbon\Carbon; 
 
 //use Rimorsoft\sglote;
 
@@ -200,34 +200,226 @@ class RutasController extends Controller
     public function editar_fichaganado($id)
         {
            
+            $id_finca=1;
+            //Se buscala finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
             $serie = \App\Models\sganim::findOrFail($id);
-            return view('editarfichaganado', compact('serie'));
+            
+            $tipologia = 
+            
+            //se busca las razas registrada para esa finca
+            $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)
+                ->get();
+            //Modelo donde a través de un id se ubica la información en otra tabla.
+            $serieraza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)
+                ->where('idraza','=',$serie->idraza)
+                ->get();
+
+            $condicion_corporal= \App\Models\sgcondicioncorporal::where('id_finca', '=', $finca->id_finca)
+                ->get();    
+
+            $seriecondicion = \App\Models\sgcondicioncorporal::where('id_finca', '=', $finca->id_finca)
+                ->where('id_condicion','=',$serie->id_condicion)
+                ->get();
+
+            $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->get();
+             //return $serieraza->all();
+             //Se trae el modelo de pajuela por el id de finca
+        
+            $pajuela = \App\Models\sgpaju::where('id_finca', '=', $finca->id_finca)->get();
+
+            $serietoro = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)
+            ->where('codpadre','<>',Null)
+            ->where('id_tipologia','=',18)
+            ->where('status','=',1)->get();
+
+            /*****************************************************************
+            * Colocamos un procedimiento para obtener la descendencia
+            * La variable Codigo padre y codigo madre provienen de la busqueda en $serie.
+            *****************************************************************/            
+            
+            //Con el valor de $serie->codpadre obtenemos los abuelos paternos
+
+           //Obtenemos el código (Abuelo) por parte padre
+            $codabuelopaterno = \App\Models\sganim::where('serie', '=', $serie->codpadre)
+                ->get();  
+               if (  ( $codabuelopaterno->count() > 0) ) {
+                    //$codbisabuelospaternospadre = "Bisabuelos Aqui";
+                   
+                   //Obtenemos los bisabuelos paternos por parte padre
+                   $codpadrepa = $codabuelopaterno->pluck('codpadre');  
+                   $codbisabuelospaternospadre = \App\Models\sganim::where('serie', '=', $codpadrepa)
+                        ->get(); 
+                   
+                    } else {
+                   $codbisabuelospaternospadre = \App\Models\sganim::where('serie', '=', "")
+                        ->get(); 
+                   //$codbisabuelospaternospadre = \App\Models\sganim::where('serie', '=', $codpadrepa)
+                     //   ->get(); 
+               }
+            
+            //Obtenemos el código (Abuela) por parte padre
+            $codabuelapaterna = \App\Models\sganim::where('serie', '=', $serie->codpadre)
+                ->get();
+               //$codmadrepa = $codabuelapaterna;
+            
+            if ( ($codabuelapaterna->count() > 0) ) {
+                    //$codbisabuelospaternomadre = "Bisabuelos Paternos ";
+                    //Obtenemos los bisabuelos paternos por parte madre
+                    $codmadrepa = $codabuelapaterna->pluck('codmadre');
+                    $codbisabuelospaternomadre = \App\Models\sganim::where('serie', '=', $codmadrepa)
+                       ->get(); 
+               } else {
+                    $codbisabuelospaternomadre = \App\Models\sganim::where('serie', '=', "")
+                       ->get(); 
+               }
+                
+          
+            //Obtenemos la serie (abuelo)  maternos
+            $codabuelomaterno = \App\Models\sganim::where('serie', '=', $serie->codmadre)
+                ->get();
+               
+
+            if ( ($codabuelomaterno->count() > 0) ) {
+                //$codbisabuelosmaternomadre = "Bisabuelos maternos por parte madre";
+                
+                //Obtenemos los bisabuelos maternos por parte madre
+                $codmadre = $codabuelomaterno->pluck('codmadre');
+                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=', $codmadre)
+                        ->get(); 
+               } else {
+                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=',"")
+                        ->get(); 
+            } 
+
+            //Obtenemos la serie (abuela)  maternos
+            $codabuelamaterna = \App\Models\sganim::where('serie', '=', $serie->codmadre)
+                ->get();    
+                //$codpadre = $codabuelomaterno;              
+
+             if ( ($codabuelamaterna->count() > 0)) {
+                //$codbisabuelosmaternospadre = "Bisabuelos maternos por parte padre";
+                
+                //Obtenemos los bisabuelos maternos por parte padre
+                $codpadre = $codabuelamaterna->pluck('codpadre');  
+                $codbisabuelosmaternospadre = \App\Models\sganim::where('serie', '=', $codpadre)
+                        ->get();   
+               } else {
+                $codbisabuelosmaternospadre = \App\Models\sganim::where('serie', '=', "")
+                        ->get();   
+            }    
+                       
+                        
+
+            //return $codbisabuelospaternospadre;
+
+            return view('editarfichaganado', 
+                   compact('serie','tipologia','raza','serieraza',
+                    'condicion_corporal','seriecondicion','lote','pajuela','serietoro',
+                    'codabuelopaterno', 'codabuelapaterna','codbisabuelospaternospadre',
+                    'codbisabuelospaternomadre',
+                    'codabuelomaterno','codabuelamaterna','codbisabuelosmaternomadre',
+                    'codbisabuelosmaternospadre'));
         }
 
     public function update_fichaganado(Request $request, $id)
-        {
-            //Validando los datos
-            $request->validate([
-                'nombre_lote'=>[
-                    'required',
-                ],
-                'tipo'=>[
-                    'required'
-                ],
-            ]);
+    {
+              //Validando los datos
+        $request->validate([
+            'serie'=> [
+                'required',
+                Rule::unique('sganims')->ignore($request->id),
+            ],
+            'sexo'=>[
+                'required',
+            ],
+            'fnac'=>[
+                'required',
+            ],
+            'tipologia'=>[
+                'required',
+            ],
+            'raza'=>[
+                'required',
+            ],
+            'condicion_corporal'=>[
+                'required',
+            ],
+            'fecr'=>[
+                'required',
+            ],
+        ]);
+        
+       
+        $id_finca=1;
+        //Se buscala finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-            $loteUpdate = \App\Models\sglote::findOrFail($id_lote);
+        //Valida los Checks
+        $request->espajuela = ($request->espajuela=="on")?($request->espajuela=true):($request->espajuela=false);
 
-            $loteUpdate->nombre_lote=$request->nombre_lote;
-            $loteUpdate->tipo=$request->tipo;
-            $loteUpdate->funcion=$request->funcion;
-            $loteUpdate->slug = str::slug($request['nombre_lote'], '-');
-            $loteUpdate->save();
+        //Valida que el serial provenga de una Serie Toro o Pajuela.
+        $seriepadre = ($request->espajuela=="on")?($seriepadre=null):($seriepadre=$request->seriepadre);
+        
+        $codpajuela = ($request->espajuela=="on")?($codpajuela=$request->pajuela):($codpajuela =  null);
+
+        $request->status = ($request->status=="on")?($rrequest->status=true):($request->status=false);
+        //_>>
+    //***************************************************************************************
+        //Se calcula con la herramienta carbon la edad
+        $year = Carbon::parse($request->fnac)->diffInYears(Carbon::now());
+        //Se multiplica los años obtendios por 12 para saber los meses de la cantidad de años.
+        $dt = $year*12;
+        //se restan los meses para obtener los meses transcurridos. 
+        $months = Carbon::parse($request->fnac)->diffInMonths(Carbon::now()) - $dt;
+        // se pasa a la variable edad, para guardar junto a la información que proviene del form.
+        $edad = $year."-".$months;
+    //*********************************************************************************************    
+        
+        $tipologia = \App\Models\sgtipologia::findOrFail($request->tipologia);        
+    
+        $serieUpdate = \App\Models\sganim::findOrFail($id);
+        
+        $serieUpdate->serie = $request->serie;
+        $serieUpdate->sexo = $request->sexo;
+        $serieUpdate->fnac = $request->fnac;
+        
+        $serieUpdate->idraza = $request->raza;
+        $serieUpdate->id_tipologia = $request->tipologia;
+        $serieUpdate->tipo = $tipologia->nombre_tipologia;
+        $serieUpdate->id_condicion = $request->condicion_corporal;
+
+        $serieUpdate->nombrelote = $request->lote;
+        $serieUpdate->codmadre = $request->codmadre;
+        $serieUpdate->espajuela = $request->espajuela;
+        $serieUpdate->pajuela = $codpajuela;
+        $serieUpdate->codpadre = $seriepadre;
+        $serieUpdate->observa = $request->observa;
+
+        $serieUpdate->fecr = $request->fecr;
+        $serieUpdate->pesoi = $request->pesoi;
+        $serieUpdate->procede = $request->procede;
+        $serieUpdate->edad = $edad;
+        
+        //Argumento por referencia:
+        $serieUpdate->id_finca  = $finca->id_finca;
+        $serieUpdate->status  = $request->status;
+       
+        //Se agregan los parametros para la validación de tipologia
+        $serieUpdate->destatado = $tipologia->destetado;
+        $serieUpdate->nro_monta = $tipologia->nro_monta;
+        $serieUpdate->prenada = $tipologia->prenada;
+        $serieUpdate->parida = $tipologia->parida;
+        $serieUpdate->tienecria = $tipologia->tienecria;
+        $serieUpdate->criaviva = $tipologia->criaviva;
+        $serieUpdate->ordenho = $tipologia->ordenho;
+        $serieUpdate->detectacelo = $tipologia->detectacelo;
+
+        $serieUpdate-> save(); 
 
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
-
-
 
 
 

@@ -352,6 +352,11 @@ return [
                     'icon_color' => 'cyan',
                     'url'  => 'home/ganaderia/pajuela',
                 ],
+                [
+                    'text' => 'Pedigree',
+                    'icon_color' => 'cyan',
+                    'url'  => 'home/ganaderia/pedigree',
+                ],
             ],
         ],
 
