@@ -3,7 +3,7 @@
 @section('title', 'SISGA')
 
 @section('content_header')
-    <div class="title-header">Editando la Ficha de Gando.: {{ $serie->serie }}</div>
+   
 @stop
 
 @section('content')
@@ -19,7 +19,7 @@
 <div class="container">
 	<div class="row my-2">
 		<div class="form-registro">
-			<form action="{{ route('fichaganado.update', $serie->id) }}" method="POST">
+			<form action="{{ route('fichaganado.update', [$serie->id,$finca->id_finca]) }}" method="POST">
 				@method('PUT')
 				@csrf
 				@error('serie')
@@ -95,6 +95,9 @@
 
 <div class="container">
 	<div class="row">
+		<div class="col">
+			<div class="title-header">Editando la Ficha de Gando.: {{ $serie->serie }}</div>
+		</div>
 		<div class="col btn-guardar clearfix"> 
 		
 			<button type="submit" class="btn alert-success mb-2 float-right">
@@ -103,7 +106,7 @@
 	  		<path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"/>
 			</svg> Guardar</button>
 
-			<a href="{{ route('ficha') }}" class="btn btn-warning float-right mr-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+			<a href="{{ route('ficha', $finca->id_finca) }}" class="btn btn-warning float-right mr-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
   			<path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
 			</svg> volver</a>	
 		
@@ -111,7 +114,8 @@
 	</div>
  <div class="row mb-2 border-top border-right border-left border-bottom card-ficha-ganado">
 	    <div class="col col-sm-3">
-	    	<div class="col-mini-siderbar label-serie text-center my-4">
+	    	<div class="col-mini-siderbar label-serie text-center my-2">
+	    		<label>Serie Nro.:</label>
 	         <input 
                 class="form-control text-center" 
                 id="serie" 
@@ -134,14 +138,8 @@
 	        </div>  
 	        <div class="col-mini-siderbar label-tipologia">
 	          <label>Tipología</label>  
-	          	<select class="form-select" name="tipologia" aria-label="select example">
-	            <option value="">Seleccione una opción</option>
-	            <option value="{{ $serie->id_tipologia}}" selected>{{ $serie->tipo }}</option>
-	              @foreach($tipologia as $item)
-	                <option value="{{ $item->id_tipologia }}">{{ $item->nombre_tipologia." (".$item->nomenclatura.")" }}
-	                </option>
-	              @endforeach()
-	          	</select>
+	          <label class="col-form-label">Tipología:</label>
+			 {!! Form::select('tipologia',[$serie->id_tipologia=>$serie->tipo],null,['id'=>'tipologia' ,'class'=>'form-select']) !!}
 	        </div>
 	        <div class="col-mini-siderbar label-lote-estrategic">
 				<label class="col-form-label">Lote Estratégico:</label>
@@ -183,8 +181,8 @@
 			    	<label class="col-form-label">Sexo:</label>
 				        <select class="form-select" name="sexo" id="sexo" aria-label="select example">
 				            <option value="">Seleccione una opción</option>
-				            <option value="{{ $serie->sexo }}" {!! $serie->sexo?"":"selected" !!} >Hembra</option>
-				            <option value="{{ $serie->sexo }}"{!! $serie->sexo?"selected":"" !!} >Macho</option>
+				            <option value="0" {!! $serie->sexo?"":"selected" !!} >Hembra</option>
+				            <option value="1"{!! $serie->sexo?"selected":"" !!} >Macho</option>
 				        </select>
 			        <label class="col-form-label">Raza:</label>
 			            <select class="form-select" name="raza" aria-label="select example">

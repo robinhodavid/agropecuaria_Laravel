@@ -265,44 +265,42 @@ return [
             'text'    => 'Variables de Control',
             'icon'    => 'fas fa-fw fa fa-bullseye',
             'submenu' => [
+             /*
                 [
                     'text' => 'Finca',
                     'icon_color' => 'cyan',
                     'url'  => '/home/sisga-admin/fincas',
                 ],
                 
-             /*   [
+                [
                     'text' => 'Procesos',
                     'icon_color' => 'cyan',
                     'url'  => '#',
                 ], */
+               
+                /*
                 [
                     'text' => 'Especie',
                     'icon_color' => 'cyan',
-                    'url'  => '/home/sisga-admin/especie',
+                    'url'  => 'especie',
                 ],
+              
                 [
                     'text' => 'Tipología',
                     'icon_color' => 'cyan',
                     'url'  => 'home/sisga-admin/tipologias',
                 ],
-                
+                  
                 [
                     'text' => 'Condiciones Corporales',
                     'icon_color' => 'cyan',
                     'url'  => 'home/sisga-admin/condicion-corporal',
                 ],
-
+                      
                 [
                     'text' => 'Diagnósticos de Palpaciones',
                     'icon_color' => 'cyan',
                     'url'  => 'home/sisga-admin/diagnostico-palpaciones',
-                ],
-
-                [
-                    'text' => 'Mótivos Entrada y Salida ',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/motivos-entrada-salida',
                 ],
                 [
                     'text' => 'Razas',
@@ -310,11 +308,17 @@ return [
                     'url'  => 'home/sisga-admin/raza',
                 ],
                 [
+                    'text' => 'Mótivos Entrada y Salida ',
+                    'icon_color' => 'cyan',
+                    'url'  => 'home/sisga-admin/motivos-entrada-salida',
+                ],
+                  [
                     'text' => 'Patologías',
                     'icon_color' => 'cyan',
                     'url'  => '/home/sisga-admin/patologia',
                 ],
-
+                          */
+                
             ],
         ],
 
@@ -322,11 +326,12 @@ return [
             'text'    => 'Ganadería',
             'icon'    => 'fas fa-fw fa fa-id-card',
             'submenu' => [
+                /*
                 [
                     'text' => 'Ficha de Ganado',
                     'icon_color' => 'cyan',
                     'url'  => 'home/ganaderia/ficha-de-ganado',
-                ],
+                ],*/
                 
                 [
                     'text' => 'Lote',
@@ -347,11 +352,13 @@ return [
                     'url'  => 'home/ganaderia/transferencia',
                 ],
 
+/*
                 [
                     'text' => 'Pajuela',
                     'icon_color' => 'cyan',
                     'url'  => 'home/ganaderia/pajuela',
-                ],
+                ], 
+                */
                 [
                     'text' => 'Pedigree',
                     'icon_color' => 'cyan',
@@ -360,6 +367,7 @@ return [
             ],
         ],
 
+/*
         [
             'text'    => 'Reproducción',
             'icon'    => 'fas fa-fw fa-project-diagram',
@@ -424,7 +432,7 @@ return [
             ],
         ],
 
-
+*/
 
         ['header' => 'Recursos/ Utilidades'],
         [

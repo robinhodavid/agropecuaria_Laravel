@@ -26,5 +26,7 @@ class sganim extends Model
       	'fecua',
       	'fecup'
       ]; 
-  
+
+
+
 }

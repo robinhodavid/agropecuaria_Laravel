@@ -34,27 +34,30 @@ Estilos Generales
 .form-group,
 .form-registro {width: 100%;}
 
-.border-right,
-.border-bottom,
-.border-left,
-.border-top
-{
-	border-top: 1px solid #eaeaea;	
-}
+.border-right {border-right:1px solid #eaeaea;}
+.border-bottom { border-bottom: 1px solid #eaeaea;}
+.border-left { border-left: 1px solid #eaeaea;}
+.border-top{ border-top: 1px solid #eaeaea;}
 
 .border-style
 {
 	border: 1px solid #eaeaea;
-	border-radius: 3px;
+	border-radius: 2px;
 	padding: 5px;
 }
 .text-input 
 {
 	margin-bottom: 15px;
 }
+.form-select,
 .form-control 
 {
 	width: 97%; 
+	font-size: 12px;
+}
+.form-group
+{
+	padding-left: 10px;
 }
 .bck-ground 
 {
@@ -89,6 +92,62 @@ Estilos Generales
 .form-check-input-paju {	
 	margin-top: 0.7rem;
 }
+.aling-boton
+{
+	float: right;
+	font-size: 13px;
+	margin: 0px 4px 0px 4px;
+}
+
+.col-descrip
+{
+	width: 74%;
+}
+/*
+**************************************************************************
+Estilos para el paginador
+**************************************************************************
+*/
+.row-list 
+{
+	padding: 12px 0px 12px 0px;
+	margin-left: 0px;
+	margin-right:0px;
+}
+.pagination
+{
+	float:right;
+	margin-bottom: -10px;
+}
+
+/*
+**************************************************************************
+Estilos Para la ficha de Especie 
+**************************************************************************
+*/
+.card-especie 
+{
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 2px 1px 0px rgba(17, 17, 17, 0.75);
+	font-size: 12px; 
+	padding: 0px 8px 0px 8px;
+}
+.card-especie-grid 
+{
+	border-radius: 2px;
+	-webkit-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	-moz-box-shadow: 2px 2px 1px 0px rgba(0,0,0,0.75);
+	box-shadow: 2px 2px 1px 0px rgba(17, 17, 17, 0.75);
+	font-size: 12px; 
+	padding: 0px 8px 0px 8px;
+}
+.table-especie 
+{
+	margin: 5px 0px 0px 0px;
+}
+
 /*
 *************************************************************************
 Estilos para el arbo de ascendencia
@@ -123,8 +182,8 @@ Estilos Para la ficha de Ganado
 **************************************************************************
 */
 .title-header {
-	font-size: 1rem;
-	padding-left: 25px;
+	font-size: 15px;
+	font-weight: 700;
 }
 .card-ficha-ganado {
 	border-radius: 2px;
@@ -159,3 +218,60 @@ Estilos Para la ficha de Ganado
 	box-shadow: 2px 2px 1px 0px rgba(17, 17, 17, 0.75);
 	font-size: 14px;	
 }
+
+.search-table 
+{
+
+	text-align: -moz-right;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+/*
+**************************************************************************
+Estilos Para la tabla de finca. 
+**************************************************************************
+*/
+.column-space
+{
+	padding: 5px;
+}
+.table-fincas 
+{
+	font-size: 12px;
+}
+
+/*
+**************************************************************************
+Estilos Para la ficha de Tipologia 
+**************************************************************************
+*/
+.title-table{
+	font-size: 12px; 
+}
+.table-tipologia 
+{
+	font-size: 12px;
+	margin-top: 10px;	
+} 
+.parameter-input
+{
+	text-align: left; 
+}
+.col-parm
+{
+	width: 18%;
+}
+
+.title-tipo
+{
+	font-size: 12px;
+	font-weight: 700;
+	margin: 5px 0px 5px 0px;
+
+}
+/*
+**************************************************************************
+Estilos Para la tabla Listado de  Lote 
+**************************************************************************
+*/
+.col-funcion{width: 32%;}

@@ -27,10 +27,11 @@ class RutasController extends Controller
      *
      * @return void
      */
+   /*
     public function __construct()
     {
         $this->middleware('auth');
-    }
+    } */
 
     /**
      * Show the application dashboard.
@@ -38,7 +39,7 @@ class RutasController extends Controller
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
-    {
+    { 
         return view('home');
     }
 
@@ -50,9 +51,10 @@ class RutasController extends Controller
         /*Aqui los controladores del modulo de ganaderia*/
 
      //Retorna a la vista ficha de ganado
-    public function ganaderia()
+    public function ganaderia($id_finca)
     {
-        $id_finca=1;
+        
+        $status=1;
         //Se buscala finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -67,18 +69,18 @@ class RutasController extends Controller
 
         $condicion_corporal = \App\Models\sgcondicioncorporal::where('id_finca', '=', $finca->id_finca)->get();
 
-        $serie = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)->where('status','=',1)->paginate(10);
+        $serie = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)->where('status','=',$status)->paginate(10);
 
         $serietoro = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)
             ->where('codpadre','<>',Null)
             ->where('id_tipologia','=',18)
-            ->where('status','=',1)->get();
+            ->where('status','=',$status)->get();
 
         //return $serietoro->all();
         //Modelo donde a través de un id se ubica la información en otra tabla.
         $seriesrecords = DB::table('sganims')
-             ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-             ->paginate(10);
+             ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')->where('sganims.id_finca','=',$finca->id_finca)
+                ->where('sganims.status','=',$status)->paginate(10);
 
         $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->get();
 
@@ -97,7 +99,7 @@ class RutasController extends Controller
 
     //Creamos los registros en la Ficha de Ganado
 
-    public function crear_fichaganado(Request $request)
+    public function crear_fichaganado(Request $request, $id_finca)
     {
         
         //Validando los datos
@@ -178,7 +180,7 @@ class RutasController extends Controller
         $serieNueva->edad = $edad;
         
         //Argumento por referencia:
-        $serieNueva->id_finca  = $finca->id_finca;
+        $serieNueva->id_finca  = $id_finca;
         $serieNueva->status  = $status;
        
         //Se agregan los parametros para la validación de tipologia
@@ -197,16 +199,16 @@ class RutasController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-    public function editar_fichaganado($id)
+    public function editar_fichaganado($id_finca, $id)
         {
            
-            $id_finca=1;
+        
             //Se buscala finca por su id - Segun modelo
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
             $serie = \App\Models\sganim::findOrFail($id);
             
-            $tipologia = 
+            $tipologia = \App\Models\sgtipologia::where('id_finca', '=', $finca->id_finca)->get();
             
             //se busca las razas registrada para esa finca
             $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)
@@ -320,17 +322,13 @@ class RutasController extends Controller
                     'codabuelopaterno', 'codabuelapaterna','codbisabuelospaternospadre',
                     'codbisabuelospaternomadre',
                     'codabuelomaterno','codabuelamaterna','codbisabuelosmaternomadre',
-                    'codbisabuelosmaternospadre'));
+                    'codbisabuelosmaternospadre','finca'));
         }
 
-    public function update_fichaganado(Request $request, $id)
+    public function update_fichaganado(Request $request, $id, $id_finca)
     {
               //Validando los datos
         $request->validate([
-            'serie'=> [
-                'required',
-                Rule::unique('sganims')->ignore($request->id),
-            ],
             'sexo'=>[
                 'required',
             ],
@@ -351,8 +349,9 @@ class RutasController extends Controller
             ],
         ]);
         
+       //return $request->all();
+
        
-        $id_finca=1;
         //Se buscala finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -364,7 +363,7 @@ class RutasController extends Controller
         
         $codpajuela = ($request->espajuela=="on")?($codpajuela=$request->pajuela):($codpajuela =  null);
 
-        $request->status = ($request->status=="on")?($rrequest->status=true):($request->status=false);
+        $request->status = ($request->status=="on")?($request->status=true):($request->status=false);
         //_>>
     //***************************************************************************************
         //Se calcula con la herramienta carbon la edad
@@ -403,7 +402,7 @@ class RutasController extends Controller
         $serieUpdate->edad = $edad;
         
         //Argumento por referencia:
-        $serieUpdate->id_finca  = $finca->id_finca;
+ //       $serieUpdate->id_finca  = $id_finca;
         $serieUpdate->status  = $request->status;
        
         //Se agregan los parametros para la validación de tipologia
@@ -428,7 +427,7 @@ class RutasController extends Controller
     {
 
         //$lote = \App\Models\sglote::all();
-        $lote = \App\Models\sglote::paginate(7);
+        $lote = \App\Models\sglote::paginate(4);
         return view('lote', compact('lote'));
         //return view('lote');
     }
@@ -595,7 +594,7 @@ class RutasController extends Controller
 		    {
 		        //->Se muestran las series 
 		        //$asignarseries = \App\Models\sganim::paginate(7);
-		        $asignarseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")->take(10)->get();
+		        $asignarseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")->take(7)->paginate(7);
 
 		      	$lote = \App\Models\sglote::all()->pluck('nombre_lote');	
 						    
@@ -658,9 +657,9 @@ class RutasController extends Controller
     	    }
 		   
     //Retorna a la vista pajuela
-        public function pajuela()
+        public function pajuela(Request $request, $id_finca)
         {
-            $id_finca=1;
+           //return $request->all();
             //Se buscala finca por su id - Segun modelo
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -668,8 +667,14 @@ class RutasController extends Controller
             $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)->get();
 
             //Se trae el modelo de pajuela por el id de finca
-            $pajuela = \App\Models\sgpaju::where('id_finca', '=', $finca->id_finca)->paginate(7);
-            
+            //$pajuela = \App\Models\sgpaju::where('id_finca', '=', $finca->id_finca)->paginate(7);
+
+            $pajuela= \App\Models\sgpaju::where('serie', 'like', $request->pajuela."%")
+                ->where('id_finca', '=', $finca->id_finca)
+                ->take(7)->paginate(7);
+
+            $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();
+           
             //Modelo donde a través de un id se ubica la información en otra tabla.
             $records = DB::table('sgpajus')
              ->join('sgrazas', 'sgrazas.idraza', '=', 'sgpajus.id')
@@ -677,22 +682,27 @@ class RutasController extends Controller
 
 
             //return $records->all();
-            return view('pajuela', compact('pajuela','finca','raza','records'));
+            return view('pajuela', compact('pajuela','finca','raza','records','especie'));
         }
-    //Con esto Agregamos datos en la tabla pajuela
-        public function crear_pajuela(Request $request)
+    
+        //Con esto Agregamos datos en la tabla pajuela
+        public function crear_pajuela(Request $request, $id_finca)
         {
             
-            //Valida que  las series sean requeridos y que no se repitan.
             $request->validate([
+                'raza'=> [
+                    'required',
+                    //Rule::unique('sgrazas')->ignore($request->idraza),
+                ],
                 'serie'=> [
                     'required',
-                    Rule::unique('sgpajus')->ignore($request->id),
+                    'unique:sgpajus,serie,NULL,NULL,id_finca,'. $id_finca,
                 ],
-                'raza'=>[
+                'especie'=> [
                     'required',
                 ],
             ]);
+            
             
         //return  $request ->all();
         /**/
@@ -711,50 +721,42 @@ class RutasController extends Controller
             $pajuelaNueva->maxi = $request->maxi;
             $pajuelaNueva->unid = $request->unid;
             $pajuelaNueva->obser = $request->obser;
-            $pajuelaNueva->id_finca = $request->id_finca;
+            $pajuelaNueva->id_finca = $id_finca;
 
             $pajuelaNueva-> save(); 
             //return response()->json(['slug' => $loteNuevo->slug]);
             return back()->with('msj', 'Registro agregado satisfactoriamente');
         }
 
-        public function editar_pajuela($id)
+        public function editar_pajuela($id_finca, $id)
         {
-            $id_finca=1;
+           
             //Se buscala finca por su id - Segun modelo
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
             $pajuela = \App\Models\sgpaju::findOrFail($id);
 
             $snom = $pajuela->snom;
-            
-            //$raza = \App\Models\sgraza::findOrFail($snom);
 
+            // La especie solo sirve para filtrar la raza aqui en pajuela
+            $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();
+                  
             //se busca las razas registrada para esa finca
-           $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)->get();
-            //return $raza->all();
+            $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)->get();
+            
 
-          /*  $records = DB::table('sgpajus')
-             ->join('sgrazas', 'sgrazas.idraza', '=', 'sgpajus.id')
-             ->where('snom', '=' ,$pajuela->id)
-             ->get();
-            */ 
-           //return $records->all();
-
-            return view('editarpajuela', compact('pajuela','finca','raza'));
+            return view('editarpajuela', compact('pajuela','finca','raza','especie'));
         }
 
-        public function update_pajuela(Request $request, $id)
+        public function update_pajuela(Request $request, $id, $id_finca)
         {
+            
             //Valida que  las series sean requeridos y que no se repitan.
             $request->validate([
                 'serie'=> [
                     'required',
-                    Rule::unique('sgpajus')->ignore($request->id),
                 ],
-                'raza'=>[
-                    'required',
-                ],
+                
             ]);
 
             $pajuelaUpdate = \App\Models\sgpaju::findOrFail($id);
@@ -772,20 +774,20 @@ class RutasController extends Controller
             $pajuelaUpdate->maxi = $request->maxi;
             $pajuelaUpdate->unid = $request->unid;
             $pajuelaUpdate->obser = $request->obser;
-            $pajuelaUpdate->id_finca = $request->id_finca;
+            $pajuelaUpdate->id_finca = $id_finca;
 
             $pajuelaUpdate-> save(); 
 
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
         }
-         public function eliminar_pajuela($id)
+         public function eliminar_pajuela($id_finca, $id)
          {
             
                 $pajuelaEliminar = \App\Models\sgpaju::findOrFail($id);
                     
                 $pajuelaEliminar->delete();
 
-                return back()->with('msj', 'Nota Eliminada Satisfactoriamente');
+                return back()->with('msj', 'Registro eliminado satisfactoriamente');
         }
 
     //Retorna a la vista transferencia
