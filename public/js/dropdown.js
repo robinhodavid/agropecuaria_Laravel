@@ -25,7 +25,7 @@ $('#tipo_estrategico').change(function(event){
         });
     });
 }); 
-$('#tipo_temporal').change(function(event){
+$('#tipo_temporada').change(function(event){
         $.get(`/home/ganaderia/asignar-series/tipo/${event.target.value}`, function(response,tipo){
         console.log(response);
         $("#nombrelote").empty();
@@ -90,7 +90,55 @@ $('#espajuela').on('change', function() {
     }
 });
 
+/*
+*Función que permie calcular en tiempo real la diferencia de dia 
+*para el calculo de peso.
+*/
+$('#fecha').on('change',function(){
+       calculodia();
+});
+function calculodia(){
+    
+    var fulpes = new Date(document.getElementById('fulpes').value);
+    var fecha = new Date(document.getElementById('fecha').value);
+    
+    if (fulpes > fecha) {
+        alert('Error: Fecha de último Pesaje no puede ser mayor a la Fecha de Pesaje');
+    } else {
+        var difdia =fecha.getTime() - fulpes.getTime();
+        var contdia = Math.round(difdia/(1000*60*60*24));
+        $("#difdia").val(contdia);
+    }
+
+    
+}
+
+/*
+*Función que permie calcular en tiempo real GDP 
+*y peso ganado.
+*/
+$('#peso').on('change',function(){
+       console.log ('hoka');
+       calculogdp();
+});
+
+function calculogdp(){
+    var peso = document.getElementById('peso').value;
+    var pesoactual = document.getElementById('pesoactual').value;
+    var dias = document.getElementById('dias').value;
+    var gdp = (peso - pesoactual)/dias;
+    var pesoganado = gdp * dias;
+    
+    if (pesoactual > peso) {
+        alert('Info: Se sugiere revisar el valor de Peso, la serie presenta perdida de peso');
+        var gdp = (peso - pesoactual)/dias;    
+        $("#gdp").val(gdp);
+        $("#pgan").val(pesoganado);
+    } else {
+        var gdp = (peso - pesoactual)/dias;
+        $("#gdp").val(gdp);
+        $("#pgan").val(pesoganado);    
+    }
 
 
-
-
+}

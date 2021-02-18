@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RutasController;
+use App\Http\Controllers\ReportController;
 
 /*
 Route::get('/', function () {
@@ -38,7 +39,14 @@ Route::delete('/home/fincas/eliminar/{id}', [App\Http\Controllers\HomeController
 
 /*Ruta para la vista administrativa*/
 
-Route::get('/home/sisga-admin/finca/{id}', [App\Http\Controllers\HomeController::class, 'admin'])->name('admin'); 
+Route::get('/home/sisga-admin/finca/{id}', [App\Http\Controllers\HomeController::class, 'admin'])->name('admin');
+
+Route::get('/home/sisga-admin/finca/{id}/series-activas', [App\Http\Controllers\HomeController::class, 'series_activas'])->name('series_activas');  
+
+
+
+
+
 /*--->*/
 
 /***********************************************
@@ -193,54 +201,62 @@ Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado', [App\
 
 Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado', [App\Http\Controllers\RutasController::class, 'crear_fichaganado'])->name('fichaganado.crear');
 
-Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'editar_fichaganado'])->name('fichaganado.editar');
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/{serie}', [App\Http\Controllers\RutasController::class, 'editar_fichaganado'])->name('fichaganado.editar');
 
-Route::put('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/{id}', [App\Http\Controllers\RutasController::class, 'update_fichaganado'])->name('fichaganado.update');  
+Route::put('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/{serie}', [App\Http\Controllers\RutasController::class, 'update_fichaganado'])->name('fichaganado.update'); 
+
+/*
+* Ruta para el reporte de Catalogo de Ganado.
+*/
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reportes/catalogo-de-ganado', [App\Http\Controllers\ReportController::class, 'report_catalogoganado'])->name('catalogodeganado.reporte'); 
+
+/*
+*
+*/
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/peso-especifico/{serie}', [App\Http\Controllers\RutasController::class, 'registar_pesoespecifico'])->name('pesoespecifico.mostrar');
+
+	Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/peso-especifico/{serie}', [App\Http\Controllers\RutasController::class, 'crear_pesoespecifico'])->name('pesoespecifico.crear');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/peso-especifico/reportes/{serie}', [App\Http\Controllers\ReportController::class, 'report_pesoespecifico'])->name('pesoespecifico.reporte');
 	
 
 
-
-
-
-
-
 /*Ruta para la vista Lote*/
-Route::get('/home/ganaderia/lote', [App\Http\Controllers\RutasController::class, 'lote'])->name('lote'); 
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/lote', [App\Http\Controllers\RutasController::class, 'lote'])->name('lote'); 
 
 //Ruta con el Slug de Lote
 //Route::post('/home/ganaderia/lote', [App\Http\Controllers\RutasController::class, 'chechkSlug_lote'])->name('lote.chechkSlug');
 
-Route::post('/home/ganaderia/lote', [App\Http\Controllers\RutasController::class, 'crear_lote'])->name('lote.crear'); 
+Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/lote', [App\Http\Controllers\RutasController::class, 'crear_lote'])->name('lote.crear'); 
 
-Route::get('/home/ganaderia/lote/{id}', [App\Http\Controllers\RutasController::class, 'editar_lote'])->name('lote.editar'); 
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/{id}', [App\Http\Controllers\RutasController::class, 'editar_lote'])->name('lote.editar'); 
 
-Route::put('/home/ganaderia/lote/{id}', [App\Http\Controllers\RutasController::class, 'update_lote'])->name('lote.update');
+Route::put('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/{id}', [App\Http\Controllers\RutasController::class, 'update_lote'])->name('lote.update');
 
-Route::delete('/home/ganaderia/lote/eliminar/{id}', [App\Http\Controllers\RutasController::class, 'eliminar_lote'])->name('lote.eliminar'); 
+Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/{id}', [App\Http\Controllers\RutasController::class, 'eliminar_lote'])->name('lote.eliminar'); 
 
 /*---> END REGISTRO DE LOTES*/
 
 
-	/*Ruta para la vista Crear los SubLotes*/
-	Route::get('/home/ganaderia/lote/crear-sub-lote/{id}', [App\Http\Controllers\RutasController::class, 'sublote'])->name('sublote'); 
+/*Ruta para la vista Crear los SubLotes*/
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/crear-sub-lote/{id}', [App\Http\Controllers\RutasController::class, 'sublote'])->name('sublote'); 
 
-	Route::post('/home/ganaderia/lote/crear-sub-lote/{id}', [App\Http\Controllers\RutasController::class, 'crear_sublote'])->name('sublote.crear'); 
-
-
-	Route::delete('/home/ganaderia/lote/crear-sub-lote/eliminar/{id}', [App\Http\Controllers\RutasController::class, 'eliminar_sublote'])->name('sublote.eliminar');  
-	
-	/*----> End Registro de Sub Lote. 
+	Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/crear-sub-lote/{id}', [App\Http\Controllers\RutasController::class, 'crear_sublote'])->name('sublote.crear'); 
 
 
-	/*Ruta para la vista ver las series asignadas a un lote*/
-	Route::get('/home/ganaderia/lote/series-en-lote/{id}', [App\Http\Controllers\RutasController::class, 'seriesenlote'])->name('seriesenlote'); 
+	Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/crear-sub-lote/eliminar/{id}', [App\Http\Controllers\RutasController::class, 'eliminar_sublote'])->name('sublote.eliminar');  	
+/*----> End Registro de Sub Lote. 
+
+
+/*Ruta para la vista ver las series asignadas a un lote*/
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/series-en-lote/{id}', [App\Http\Controllers\RutasController::class, 'seriesenlote'])->name('seriesenlote'); 
 
 	/*Ruta para la vista ver las series asignadas a un sub lote*/
-	Route::get('/home/ganaderia/lote/series-en-sublote/{id}', [App\Http\Controllers\RutasController::class, 'seriesensublote'])->name('seriesensublote'); 
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/series-en-sublote/{id}', [App\Http\Controllers\RutasController::class, 'seriesensublote'])->name('seriesensublote'); 
 
 	
 	/*Ruta para la vista General para asignar series a un Lote o a un sublote en específico*/
-	Route::get('/home/ganaderia/asignar-series', [App\Http\Controllers\RutasController::class, 'asignarseries'])->name('asignarseries');
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/asignar-series', [App\Http\Controllers\RutasController::class, 'asignarseries'])->name('asignarseries');
 
 	//--> Ruta para filtrar el select sub-lote en forma dinamica.
 	Route::get('/home/ganaderia/asignar-series/{nombre_lote}', [App\Http\Controllers\RutasController::class, 'filterName'])->name('filterName');
@@ -249,9 +265,8 @@ Route::delete('/home/ganaderia/lote/eliminar/{id}', [App\Http\Controllers\RutasC
 	Route::get('/home/ganaderia/asignar-series/tipo/{tipo}', [App\Http\Controllers\RutasController::class, 'filterTipo'])->name('filterTipo');
 
 	//--> Ruta que envia los numeros de id y permite hacer en el controlador el update de los campos
-	Route::post('/home/ganaderia/asignar-series', [App\Http\Controllers\RutasController::class, 'asignar_serielote'])->name('serielote.asignar'); 
-
-/*---> END REGISTRO DE LOTES*/
+	Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/asignar-series', [App\Http\Controllers\RutasController::class, 'asignar_serielote'])->name('serielote.asignar'); 
+/*End Ruta para la vista ver las series asignadas a un lote*/
  
 
  

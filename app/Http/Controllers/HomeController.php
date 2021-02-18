@@ -37,14 +37,85 @@ class HomeController extends Controller
     }
 
     //Retorna a la vista administrativa para cada finca
-        public function admin($id_finca)
+    public function admin($id_finca)
     {
+        /*
+        * Variables y constantes necesarias para el filtrado
+        */
+        
+        //$status = 1 activo; 0 = Inactivo;
+
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
         
-        //return $finca;
+        $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->get();
 
-        return view('sisga-admin', compact('finca'));
+        $seriesinactivas = DB::table('sganims')
+                ->where('status', '=', 0)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->get();        
+        //return $finca;
+        $cantregisactiv = $seriesactivas->count();
+        
+        $cantregisinactiv = $seriesinactivas->count();
+        
+        $seriesnodestetado = DB::table('sganims')
+                ->where('destatado','=', 0) //Que no estan destetado
+                ->where('id_finca', '=', $finca->id_finca)
+                ->get();
+        
+        $serieshembrasrepro = DB::table('sganims')
+                ->where('destatado','=',1)
+                ->where('sexo','=',0) //Sexo = hembra
+                ->where('id_finca', '=', $finca->id_finca)
+                ->distinct()->get();
+  
+
+        $cantnodestetado = $seriesnodestetado->count(); //machos y hembras. 
+        $canthemrepro = $serieshembrasrepro->count(); //machos y hembras.          
+
+        //return $seriestiponame->all();
+                
+        return view('sisga-admin', compact('finca','cantregisactiv','cantregisinactiv'
+            ,'cantnodestetado','canthemrepro'));
     }
+
+/*
+*   Vistas generales de Series.
+*/
+    public function series_activas(request $request, $id_finca)
+    {
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+         
+    /*      $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->paginate(10);
+
+    */    
+        if (! empty($request->serie) ) {
+            $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        } else {
+            $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        }
+
+         return view('info.series_activas', compact('finca','seriesactivas'));        
+    }
+
+/*
+* /.End
+*/
+
 
     //Retorna a la vista administrativa /finca
         public function fincas()
@@ -99,6 +170,7 @@ class HomeController extends Controller
 
         return back()->with('msj', 'Nota Eliminada');
     }
+
 
     //Retorna la vista especie
     public function especie(Request $request, $id_finca)

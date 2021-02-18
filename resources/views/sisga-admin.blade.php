@@ -5,8 +5,8 @@
 @section('content_header')
 <div class="container">
 <div class="row">
-	<nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+   <div class="container-fluid">
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
       	<li class="nav-item">
@@ -30,7 +30,7 @@
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-paw" aria-hidden="true"></i> Ganadería</a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li><a class="dropdown-item" href="{{route('ficha', $finca->id_finca)}}">Ficha de Ganado</a></li>
-            <li><a class="dropdown-item" href="#">Lote</a></li>
+            <li><a class="dropdown-item" href="{{route('lote', $finca->id_finca)}}">Lote</a></li>
             <li><a class="dropdown-item" href="#">Trasferencia</a></li>
             <li><a class="dropdown-item" href="{{ route('pajuela', $finca->id_finca)  }}">Pajuela</a></li>
             <!--<li><a class="dropdown-item" href="#">Pedigree</a></li>-->
@@ -76,40 +76,86 @@
   </div>
 </nav>
 
-<a class="dropdown-item" href=" {{ route('especie', $finca->id_finca) }}">Especie</a>
-<a class="dropdown-item" href="{{ route('raza', $finca->id_finca) }}">Raza</a>
-<a class="dropdown-item" href="{{ route('tipologia', $finca->id_finca) }}">Tipologia</a>
-<a class="dropdown-item" href="{{ route('condicion_corporal', $finca->id_finca) }}">Condiciones Corporales</a>
-<a class="dropdown-item" href="{{ route('diagnostico_palpaciones', $finca->id_finca) }}">Diagnósticos de Palpaciones</a>
-<a class="dropdown-item" href="{{ route('motivo_entrada_salida', $finca->id_finca)  }}">Motivos de Entrada / Salida</a>
-<a class="dropdown-item" href="{{ route('patologia', $finca->id_finca)  }}">Patología</a>
-<hr>
-<label for="menu">ganaderia</label>
-<a class="dropdown-item" href="{{ route('pajuela', $finca->id_finca)  }}">Pajuela</a>
-<a class="dropdown-item" href="{{route('ficha', $finca->id_finca)}}">Ficha de Ganado</a>
-</div>		     			     
-</div>   
+</div>
+
+
+</div>
+
 @stop
 
 @section('content')
-<div class="small-box bg-info">
-              <div class="inner">
-                <h3>150</h3>
+<div class="row">
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
 
-                <p>New Orders</p>
+                <div class="info-box-content">
+                  <span class="info-box-text">Series Activas</span>
+                    <a href="{{ route ('series_activas', $finca->id_finca) }}">
+                      <span class="info-box-number">
+                        {{ $cantregisactiv }}
+                      </span>
+                    </a>
+                </div>
+                <!-- /.info-box-content -->
               </div>
-              <div class="icon">
-                <i class="ion ion-bag"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <!-- /.info-box -->
             </div>
+            <!-- /.col -->
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
 
+                <div class="info-box-content">
+                  <span class="info-box-text">Series Inactivas</span>
+                  <a href="#">
+                    <span class="info-box-number">{{ $cantregisinactiv }}</span>
+                  </a>
+                </div>
+                <!-- /.info-box-content -->
+              </div>
+              <!-- /.info-box -->
+            </div>
+            <!-- /.col -->
+
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
+
+                <div class="info-box-content">
+                  <span class="info-box-text">Series por Destetar</span>
+                  <a href="#">
+                    <span class="info-box-number">{{$cantnodestetado}}</span>
+                  </a>
+                </div>
+                <!-- /.info-box-content -->
+              </div>
+              <!-- /.info-box -->
+            </div>
+            <!-- /.col -->
+            <div class="col-12 col-sm-6 col-md-3">
+              <div class="info-box mb-3">
+                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
+
+                <div class="info-box-content">
+                  <span class="info-box-text">Hembras Reprod.</span>
+                  <a href="">
+                    <span class="info-box-number">{{$canthemrepro}}</span>
+                  </a>
+                </div>
+                <!-- /.info-box-content -->
+              </div>
+              <!-- /.info-box -->
+            </div>
+            <!-- /.col -->
+</div>
+  
 @stop
 
 @section('css')
 <!-- CSS only -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
-  
+    <link rel="stylesheet" href="/css/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/admin_custom.css">
 @stop
 

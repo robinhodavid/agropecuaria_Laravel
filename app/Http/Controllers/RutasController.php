@@ -15,8 +15,8 @@ use App\Models;
 use App\Lote;
 use App\Models\sgsublote;
 use Carbon\Carbon; 
+use Barryvdh\DomPDF\Facade as PDF;
 
-//use Rimorsoft\sglote;
 
 
 class RutasController extends Controller
@@ -130,7 +130,7 @@ class RutasController extends Controller
         
         $status=1; //Se pasa por argumento el valor 1 para indicar que es un registro activo.
 
-        $id_finca=1;
+        //$id_finca=1;
         //Se buscala finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -199,15 +199,30 @@ class RutasController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-    public function editar_fichaganado($id_finca, $id)
+    public function editar_fichaganado($id_finca, $ser)
         {
            
-        
             //Se buscala finca por su id - Segun modelo
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-            $serie = \App\Models\sganim::findOrFail($id);
+            //A través del código serie se obtiene el id y lo pasamos al modelo
+            $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+            foreach ($codserie as $serieid) {
+                $id= (int) $serieid->id;
+            }
+                         
+             // $idraza = $codserie->pluck('idraza');
+           // $id_condicion = $codserie->pluck('id_condicion');
+            // $codpadre = $codserie->pluck('codpadre');
+           //$codmadre = $codserie->pluck('codmadre');
             
+            
+            
+            $serie = \App\Models\sganim::findOrFail($id);//findOrFail(2);
+            //$serie = \App\Models\sganim::where('serie', '=', $ser)->get();
+            //return $serie->all();
+
             $tipologia = \App\Models\sgtipologia::where('id_finca', '=', $finca->id_finca)->get();
             
             //se busca las razas registrada para esa finca
@@ -288,7 +303,7 @@ class RutasController extends Controller
                 
                 //Obtenemos los bisabuelos maternos por parte madre
                 $codmadre = $codabuelomaterno->pluck('codmadre');
-                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=', $codmadre)
+                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=', $serie->codmadre)
                         ->get(); 
                } else {
                 $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=',"")
@@ -312,7 +327,8 @@ class RutasController extends Controller
                         ->get();   
             }    
                        
-                        
+                  
+                
 
             //return $codbisabuelospaternospadre;
 
@@ -325,8 +341,9 @@ class RutasController extends Controller
                     'codbisabuelosmaternospadre','finca'));
         }
 
-    public function update_fichaganado(Request $request, $id, $id_finca)
+    public function update_fichaganado(Request $request, $ser, $id_finca)
     {
+        
               //Validando los datos
         $request->validate([
             'sexo'=>[
@@ -349,9 +366,14 @@ class RutasController extends Controller
             ],
         ]);
         
-       //return $request->all();
-
-       
+        //con el numero de serie obtenemos su id
+        //A través del código serie se obtiene el id y lo pasamos al modelo
+        $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+            foreach ($codserie as $serieid) {
+                $id= (int) $serieid->id;
+            }
+   
         //Se buscala finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -420,41 +442,162 @@ class RutasController extends Controller
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
 
+    
+    
+    // Se obtiene el request para guardar los valores en las tablas sganims y sgpesos.
+    public function registar_pesoespecifico ($id_finca, $ser)
+        {
+            
+            //Se buscala finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+            //A través del código serie se obtiene el id y lo pasamos al modelo
+            $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+            foreach ($codserie as $serieid) {
+                $id= (int) $serieid->id;
+            }
+
+            $serie = \App\Models\sganim::findOrFail($id);
+            
+            //Calculamos los días para el campo días.
+            $dias = Carbon::parse($serie->fnac)->diffIndays(Carbon::now());
+            
+
+            //colocamos un filtro para mostrar la tabla de registro de peso
+            $registropeso = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->paginate(4);
+
+            //generamos el mismo modelo para generar la grafica
+            //colocamos un filtro para mostrar la tabla de registro de peso
+            $graficapeso = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->pluck('peso');    
+
+            $graficafecha = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->pluck('fecha');    
+    
+
+            //return $graficapeso->all();
+
+            return view('pesoespecifico', compact('serie', 'finca', 'registropeso','dias','graficapeso','graficafecha'));
+        } 
 
 
+    public function crear_pesoespecifico (Request $request,  $id_finca, $ser)
+        {
+           //dd($id_finca, $ser); 
+            //return $request->all();
+            //Se buscala finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+              //A través del código serie se obtiene el id y lo pasamos al modelo
+            $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+            foreach ($codserie as $serieid) {
+                $id= (int) $serieid->id;
+            }
+
+            $serie = \App\Models\sganim::findOrFail($id);
+            
+            //validamos la condicion destetado
+            $request->destete = ($request->destete=="on")?($request->destete=true):($request->destete=false);
+
+            $pesoNuevo = new \App\Models\sgpeso;
+
+            $pesoNuevo->id_finca = $finca->id_finca;
+            $pesoNuevo->id_serie = $serie->id;
+            $pesoNuevo->serie = $serie->serie;
+            $pesoNuevo->peso = $request->peso;
+            $pesoNuevo->gdp = $request->gdp;
+            $pesoNuevo->dias = $request->dias;
+            $pesoNuevo->pgan = $request->pgan;
+            $pesoNuevo->fecha = $request->fecha;
+            $pesoNuevo->difdia = $request->difdia;
+            $pesoNuevo->destetado = $request->destete;
+
+
+            $pesoNuevo-> save();
+
+            /*
+            * Falta ell proceso en este controlador para actualizar la Tipología 
+            * de forma automática
+            */
+
+
+            /*
+            * Aquí colocamos la actualización de los valores en la tabla sganims. 
+            */
+            // Validamos 
+            if ($request->destete == true) {
+                $fuedestetado = $request->destete;
+                $pesodedestete = $request->peso;
+                $fecdes = $request->fecha;
+
+                $updatepesoserie = DB::table('sganims')
+                                    ->where('id',$serie->id)
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pesoactual'=>$request->peso,
+                                        'fulpes'=>$request->fecha,
+                                        'destatado'=> $fuedestetado,
+                                        'pesodestete'=>$pesodedestete, 
+                                        'fecdes'=>$pesodedestete, 
+                                        'ultgdp'=>$request->gdp]);
+            } else {
+                
+                
+                $updatepesoserie = DB::table('sganims')
+                                    ->where('id',$serie->id)
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pesoactual'=>$request->peso,
+                                        'fulpes'=>$request->fecha,
+                                    //    'destatado'=> $fuedestetado,
+                                    //    'pesodestete'=>$pesodedestete, 
+                                    //    'fecdes'=>$pesodedestete, 
+                                        'ultgdp'=>$request->gdp]);
+            }
+            
+            return back()->with('msj', 'Registro creado satisfactoriamente');
+            //return view('editarfichaganado')->with('msj', 'Registro creado satisfactoriamente');
+        }       
+    
     //Retorna a la vista lote
-    public function lote()
+    public function lote($id_finca)
     {
-
+           //Se buscala finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
         //$lote = \App\Models\sglote::all();
-        $lote = \App\Models\sglote::paginate(4);
-        return view('lote', compact('lote'));
+        //$lote = \App\Models\sglote::paginate(4);
+        $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->paginate(4);
+
+        return view('lote', compact('lote', 'finca'));
         //return view('lote');
     }
 
         //Con esto Agregamos datos en la tabla lote
-            public function crear_lote(Request $request)
+            public function crear_lote(Request $request, $id_finca)
         {
             
             //Validando los datos
             $request->validate([
                 'nombre_lote'=> [
                 	'required',
-                	Rule::unique('sglotes')->ignore($request->id_lote),
+                	'unique:sglotes,nombre_lote,NULL,NULL,id_finca,'.$id_finca,
                 ],
                 'tipo'=>[
                 	'required',
                 ],
             ]);
             
-            //return  $request ->all();
-    	/**/
             $loteNuevo = new \App\Models\sglote;
 
             $loteNuevo->nombre_lote = $request->nombre_lote;
             $loteNuevo->tipo = $request->tipo;
             $loteNuevo->funcion = $request->funcion;
     	 	$loteNuevo->slug =  str::slug($request['nombre_lote'], '-');
+            $loteNuevo->id_finca = $id_finca;
 
             $loteNuevo-> save(); 
        		//return response()->json(['slug' => $loteNuevo->slug]);
@@ -462,14 +605,14 @@ class RutasController extends Controller
         }
 
 
-        public function editar_lote($id_lote)
+        public function editar_lote($id_finca, $id_lote)
         {
-           
+            $finca =  \App\Models\sgfinca::findOrFail($id_finca);   
             $lote = \App\Models\sglote::findOrFail($id_lote);
-            return view('editarlote', compact('lote'));
+            return view('editarlote', compact('lote', 'finca'));
         }
 
-        public function update_lote(Request $request, $id_lote)
+        public function update_lote(Request $request, $id_lote, $id_finca)
         {
             //Validando los datos
             $request->validate([
@@ -487,12 +630,13 @@ class RutasController extends Controller
             $loteUpdate->tipo=$request->tipo;
             $loteUpdate->funcion=$request->funcion;
             $loteUpdate->slug = str::slug($request['nombre_lote'], '-');
+
             $loteUpdate->save();
 
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
         }
 
-        public function eliminar_lote($id_lote)
+        public function eliminar_lote($id_finca, $id_lote)
         {
                 
             $loteEliminar = \App\Models\sglote::findOrFail($id_lote);
@@ -501,54 +645,62 @@ class RutasController extends Controller
 
             $loteEliminar->delete();
 
-                return back()->with('msj', 'Lote Eliminado Satisfactoriamente');
+                return back()->with('msj', 'Registro eliminado Satisfactoriamente');
         }
         // END LOTE--->
 
     		//---> Se crea las rutas para asociar los sub lotes a cada Lotes Principal.
-    		 public function sublote($id_lote)
+    		 public function sublote($id_finca, $id_lote)
 		    {
-		        //modelo de cada lote
+            
+            
+
+		        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+                //modelo de cada lote
 		        $lote = \App\Models\sglote::findOrFail($id_lote);
 		        
 		        //$sublote = \App\Models\sgsublote::all();
                 //filtra la tabla por el nombre de lote principal
-		      	$sublote = \App\Models\sgsublote::where('nombre_lote', '=', $lote->nombre_lote)->get();
+		      	$sublote = \App\Models\sgsublote::where('nombre_lote', '=', $lote->nombre_lote)
+                    ->where('id_finca', '=', $finca->id_finca)->get();
 		        
-		        return view('sublote', compact('sublote','lote'));
+		        return view('sublote', compact('sublote','lote','finca'));
 		        //return view('lote');
 		    }
 		  
 		    //Con esto Agregamos datos en la tabla sublote.
-        	public function crear_sublote(Request $request)
+        	public function crear_sublote(Request $request, $id_finca)
     		{
    
+           // return $request->all();
 	        //Validando los datos
 		        $request->validate([
 		            'sub_lote'=> [
 		            	'required',
-		            	'unique:sgsublotes,sub_lote,NULL,NULL,nombre_lote,'. $request['nombre_lote'],
+                       // 'unique:sgsublotes,sub_lote,NULL,NULL,nombre_lote,'. $id_finca,
+                  
 		            ],
 		            'nombre_lote'=>[
 		            	'required',
-		            	'unique:sgsublotes,nombre_lote,NULL,NULL,sub_lote,'. $request['sub_lote'],
+                        //'unique:sgsublotes,nombre_lote,NULL,NULL,sub_lote,'. $request['sub_lote'],
 		            ],
 		        ]);
 		        
-		      //  return  $request ->all();
-			/**/
+		
+			
 			
 		        $subloteNuevo = new \App\Models\sgsublote;
 
 		        $subloteNuevo->sub_lote = $request->sub_lote;
 		        $subloteNuevo->nombre_lote = $request->nombre_lote;
+                $subloteNuevo->id_finca = $request->id_finca;
 
 		        $subloteNuevo-> save(); 
 		        
 		        return back()->with('msj', 'Registro agregado satisfactoriamente');
 		    }
 		    
-		   public function eliminar_sublote($id_sublote){
+		   public function eliminar_sublote($id_finca, $id_sublote){
             
 		        $subloteEliminar = \App\Models\sgsublote::findOrFail($id_sublote);
 		            
@@ -562,43 +714,78 @@ class RutasController extends Controller
 		    // Begin Asignacción de series a un Lote Padre->>
 
 		    //---> Se crea las rutas para asociar los lotes a cada serie
-    		public function seriesenlote($id_lote)
+    		public function seriesenlote(Request $request, $id_finca, $id_lote)
 		    {
-		        //Obtenemos el nombre del lote.
+               // dd($request, $id_lote, $id_finca);
+
+		        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+                //Obtenemos el nombre del lote.
 		        $lote = \App\Models\sglote::findOrFail($id_lote);
 		        
+                
+                if (! empty($request->serie) ) {
+                   $seriesenlote = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                    ->where('nombrelote', '=', $lote->nombre_lote)
+                    ->where('sub_lote','=',Null)
+                    ->where('id_finca','=',$id_finca)->take(7)->paginate(7);
+                } else {
+                    $seriesenlote = \App\Models\sganim::where('nombrelote', '=', $lote->nombre_lote)
+                        ->where('id_finca','=',$id_finca)
+                        ->where('sub_lote','=',Null)->take(7)->paginate(7);  
+                }
+                
 		        //filtro
-		      	$seriesenlote = \App\Models\sganim::where('nombrelote', '=', $lote->nombre_lote)->where('sub_lote','=',Null)->get();
+		      	
 		      //$serieasignarlote = \App\Models\sganim::paginate(5);
 		        
-		        return view('detalleserielote', compact('seriesenlote','lote'));
+		        return view('detalleserielote', compact('seriesenlote','lote','finca'));
 		        //return view('lote');
 		        
 		    }
-            public function seriesensublote($id_sublote)
+            public function seriesensublote(Request $request, $id_finca, $id_sublote)
             {
+                
+
+                $finca = \App\Models\sgfinca::findOrFail($id_finca);
                 //Obtenemos el nombre del lote.
                 $sublote = \App\Models\sgsublote::findOrFail($id_sublote);
                 
-                //filtro
-                $seriesensublote = \App\Models\sganim::where('sub_lote', '=', $sublote->sub_lote)
-                    ->where('nombrelote','=',$sublote->nombre_lote)->get();
-              //$serieasignarlote = \App\Models\sganim::paginate(5);
+                if (! empty($request->serie) ) {
+                   $seriesensublote = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                    ->where('sub_lote', '=', $sublote->sub_lote)
+                    ->where('nombrelote','=',$sublote->nombre_lote)
+                    ->where('id_finca','=',$finca->id_finca)->take(7)->paginate(7);
+                } else {
+                    $seriesensublote = \App\Models\sganim::where('sub_lote', '=', $sublote->sub_lote)
+                        ->where('id_finca','=',$finca->id_finca)
+                        ->where('nombrelote','=',$sublote->nombre_lote)->get();
+                }
                 
-                return view('detalleseriesublote', compact('seriesensublote','sublote'));
+                return view('detalleseriesublote', compact('seriesensublote','sublote','finca'));
                 //return view('lote');                
             }
 
-		     //Retorna a la vista para asignar la (s) serie (s) a un lote
-	        public function asignarseries(Request $request)
+		    //Retorna a la vista para asignar la (s) serie (s) a un lote
+	        public function asignarseries(Request $request, $id_finca)
 		    {
-		        //->Se muestran las series 
+		        //return $request;
+
+                $finca = \App\Models\sgfinca::findOrFail($id_finca);
+                //->Se muestran las series 
 		        //$asignarseries = \App\Models\sganim::paginate(7);
-		        $asignarseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")->take(7)->paginate(7);
+                if (! empty($request->serie) ) {
+                   $asignarseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                    ->where('id_finca','=',$id_finca)
+                    ->take(7)->paginate(7);
+                } else {
+                    $asignarseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                    ->where('id_finca','=',$id_finca)
+                    ->take(7)->paginate(7);
+                }
 
 		      	$lote = \App\Models\sglote::all()->pluck('nombre_lote');	
 						    
-		     	return view('asignarseries', compact('asignarseries','lote'));
+		     	return view('asignarseries', compact('asignarseries','lote', 'finca'));
 
 		    }
 
@@ -618,9 +805,11 @@ class RutasController extends Controller
 			  }
 		    }
  		
-     		public function asignar_serielote(Request $request)
+     		public function asignar_serielote(Request $request, $id_finca)
     		{
-    			//Validamos los campos Nombre de lote y las series a través de su id
+    			$finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+                //Validamos los campos Nombre de lote y las series a través de su id
     			$request->validate([
     	            'nombrelote'=>[
     	            	'required',
@@ -645,11 +834,14 @@ class RutasController extends Controller
                     $HistorialLoteNuevo->tipologiaactual = $series->tipo;
                     $HistorialLoteNuevo->sub_lote_ini = $series->sub_lote;
                     $HistorialLoteNuevo->sub_lote_fin = $request->sublote;
+                    $HistorialLoteNuevo->id_finca = $finca->id_finca;
+
 
                     $HistorialLoteNuevo-> save();   
 
                     $asignarserielote = DB::table('sganims')
                                     ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
                                     ->update(['nombrelote'=>$request->nombrelote, 'sub_lote'=>$request->sublote]);    
     			}   
     				

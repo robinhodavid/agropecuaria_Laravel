@@ -1,6 +1,5 @@
 /*Personalizamos estilos que son necesarios en el tema*/
 
-
 /*
 **************************************************************************
 Estilos Generales
@@ -101,7 +100,7 @@ Estilos Generales
 
 .col-descrip
 {
-	width: 74%;
+	width: 65%;
 }
 /*
 **************************************************************************
@@ -116,10 +115,24 @@ Estilos para el paginador
 }
 .pagination
 {
-	float:right;
-	margin-bottom: -10px;
+	margin-bottom: 10px;
 }
 
+.card-body > .table {
+	margin-bottom: 10px;
+	font-size: 12px;
+}
+
+/*
+**************************************************************************
+Estilos Para los cards 
+**************************************************************************
+*/
+
+.card-body
+{
+	font-size: 12px;
+}
 /*
 **************************************************************************
 Estilos Para la ficha de Especie 
@@ -184,6 +197,7 @@ Estilos Para la ficha de Ganado
 .title-header {
 	font-size: 15px;
 	font-weight: 700;
+	padding: 10px 0px 10px 0px;
 }
 .card-ficha-ganado {
 	border-radius: 2px;
@@ -225,6 +239,7 @@ Estilos Para la ficha de Ganado
 	text-align: -moz-right;
 	margin-top: 8px;
 	margin-bottom: 8px;
+	margin-right: 20px;
 }
 /*
 **************************************************************************
@@ -271,7 +286,13 @@ Estilos Para la ficha de Tipologia
 }
 /*
 **************************************************************************
-Estilos Para la tabla Listado de  Lote 
+Estilos Para las tablas
 **************************************************************************
 */
 .col-funcion{width: 32%;}
+
+.card-title
+{
+	padding: 8px 0px 8px 0px;
+	margin-left: 8px; 
+} 

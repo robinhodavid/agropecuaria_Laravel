@@ -333,6 +333,7 @@ return [
                     'url'  => 'home/ganaderia/ficha-de-ganado',
                 ],*/
                 
+               /*
                 [
                     'text' => 'Lote',
                     'icon_color' => 'cyan',
@@ -343,8 +344,8 @@ return [
                                 'icon_color' => 'cyan',
                                 'url'  => '#',
                             ],
-                    ],*/
-                ],
+                    ],
+                ],*/
                 
                 [
                     'text' => 'Transferencia',

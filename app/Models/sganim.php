@@ -21,12 +21,10 @@ class sganim extends Model
 
     protected $dates = [
 
-      	'fulpes',
+  //    	'fulpes',
       	'fecdes',
       	'fecua',
       	'fecup'
       ]; 
-
-
-
+  
 }
