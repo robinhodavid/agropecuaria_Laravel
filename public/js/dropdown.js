@@ -97,22 +97,35 @@ $('#espajuela').on('change', function() {
 $('#fecha').on('change',function(){
        calculodia();
 });
-function calculodia(){
+
+function calculodia()
+{
     
+    var fecr = new Date(document.getElementById('fecr').value);    
     var fulpes = new Date(document.getElementById('fulpes').value);
     var fecha = new Date(document.getElementById('fecha').value);
-    
-    if (fulpes > fecha) {
+
+    if  ( isNaN(fulpes) ) {
+        if (fulpes > fecha) {
         alert('Error: Fecha de último Pesaje no puede ser mayor a la Fecha de Pesaje');
-    } else {
-        var difdia =fecha.getTime() - fulpes.getTime();
-        var contdia = Math.round(difdia/(1000*60*60*24));
-        $("#difdia").val(contdia);
-    }
+        } else {
+            var difdia =fecha.getTime() - fecr.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+            $("#difdia").val(contdia);
+        }
+        
+        } else {
+        if (fulpes > fecha) {
+                alert('Error: Fecha de último Pesaje no puede ser mayor a la Fecha de Pesaje');
+            } else {
+                var difdia =fecha.getTime() - fulpes.getTime();
+                var contdia = Math.round(difdia/(1000*60*60*24));
+                $("#difdia").val(contdia);
+            }      
+        }    
 
     
-}
-
+} 
 /*
 *Función que permie calcular en tiempo real GDP 
 *y peso ganado.
@@ -140,5 +153,34 @@ function calculogdp(){
         $("#pgan").val(pesoganado);    
     }
 
-
 }
+
+/*
+* Con esto se permite que una serie pueda ser activada a través de un
+* motivo de entrada, con su respectiva fecha de entrada. 
+*/
+
+if ($('#status').prop('checked') ) {
+    console.log("Checkbox seleccionado");
+    $("#motivo_e").hide();
+    $("#label_motivo_e").hide();
+    } else {
+    $("#motivo_e").hide();
+    $("#label_motivo_e").hide();
+}
+/*
+* Con este Colocaremos que el campo motivo de entrada  
+* si se hacen cambios en tiempo real
+*/
+$('#status').on('change', function() {
+    if ($(this).is(':checked') ) {
+          $("#motivo_e").show(); 
+          $("#label_motivo_e").show();
+    } else {
+        $("#motivo_e").hide();
+        $("#label_motivo_e").hide();
+    }
+});
+
+
+

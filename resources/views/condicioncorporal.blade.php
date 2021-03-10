@@ -102,7 +102,7 @@
 				               	<path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
 				               	</svg> 
 				               	</a>
-                			   	<form action="{{ route('condicion_corporal.eliminar', [$finca->id_finca, $item->id_condicion]) }}" class="d-inline" method="POST">
+                			   	<form action="{{ route('condicion_corporal.eliminar', [$finca->id_finca, $item->id_condicion]) }}" class="d-inline form-delete" method="POST">
 				                @method('DELETE')
 				                @csrf
 				               	<button type="submit" class="btn btn-danger btn-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -131,17 +131,66 @@
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 	
 	<link rel="stylesheet" href="/css/bootstrap5/css/bootstrap.min.css">  
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.css">
     <link rel="stylesheet" href="/css/admin_custom.css">
+
 
 @stop
 
 @section('js')
     <script> console.log('Hi!'); </script>
+    
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.js"></script> 
+    
     <script type="text/javascript">
     $(".alert-dismissible").fadeTo(3000, 500).slideUp(500, function(){
        $(".alert-dismissible").alert('close');
 });
     </script>
+    {!! Html::script('js/jquery-3.5.1.min.js')!!}
+  	{!! Html::script('js/dropdown.js')!!}
+  	{!! Html::script('js/sweetalert2.js')!!}	
+
+   @if(session('mensaje')=='ok')
+	  	<script>
+	  		Swal.fire({
+				title: '¡Eliminado!',
+				text:  'Registro Eliminado Satisfacoriamente',
+				icon:  'success'
+			})
+	  	</script>
+	@endif
+	@if (session('mensaje')=='error')
+	  	<script>
+	  		Swal.fire({
+				text:'Está siendo usado por otro recurso',
+				icon: 'error',
+				title:'¡No Eliminado!'
+			})
+	  	</script>
+  	@endif
     
+    <script>
+    
+    $('.form-delete').submit(function(e){
+    	e.preventDefault();
+	    Swal.fire({
+			title:'¿Está seguro que desea Eliminar el Registro?',
+			text:"Este cambio es irreverible",
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Eliminar',
+			cancelButtonText: 'Cancelar'
+		}).then((result)=>{
+			if (result.value){
+				this.submit();
+			}
+		})
+    });	
+    </script>  
+
 
 @stop

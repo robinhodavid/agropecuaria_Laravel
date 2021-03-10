@@ -43,9 +43,11 @@ Route::get('/home/sisga-admin/finca/{id}', [App\Http\Controllers\HomeController:
 
 Route::get('/home/sisga-admin/finca/{id}/series-activas', [App\Http\Controllers\HomeController::class, 'series_activas'])->name('series_activas');  
 
+Route::get('/home/sisga-admin/finca/{id}/series-inactivas', [App\Http\Controllers\HomeController::class, 'series_inactivas'])->name('series_inactivas');  
 
+Route::get('/home/sisga-admin/finca/{id}/series-por-destetar', [App\Http\Controllers\HomeController::class, 'series_pordestetar'])->name('series_pordestetar');  
 
-
+Route::get('/home/sisga-admin/finca/{id}/series-productivas', [App\Http\Controllers\HomeController::class, 'series_hembras_productivas'])->name('series_hembras_productivas');  
 
 /*--->*/
 
@@ -118,9 +120,7 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/tipologias/{id}', [App\Http\Co
 
 
 Route::get('/home/sisga-admin/finca/{id_finca}/condicion-corporal', [App\Http\Controllers\HomeController::class, 'condicion_corporal'])->name('condicion_corporal');
-/*
-Route::get('/home/sisga-admin/condicion-corporal', [App\Http\Controllers\HomeController::class, 'condicion_corporal'])->name('condicion_corporal');
-*/
+
 Route::post('/home/sisga-admin/finca/{id_finca}/condicion-corporal', [App\Http\Controllers\HomeController::class, 'crear_condicioncorporal'])->name('condicion_corporal.crear'); 
 
 Route::get('/home/sisga-admin/finca/{id_finca}/condicion-corporal/{id}', [App\Http\Controllers\HomeController::class, 'editar_condicion'])->name('condicion_corporal.editar'); 
@@ -138,8 +138,6 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/condicion-corporal/{id}', [App
 ************************************************/
 
 Route::get('/home/sisga-admin/finca/{id_finca}/diagnostico-palpaciones', [App\Http\Controllers\HomeController::class, 'diagnostico_palpaciones'])->name('diagnostico_palpaciones');
-/*
-Route::get('/home/sisga-admin/diagnostico-palpaciones', [App\Http\Controllers\HomeController::class, 'diagnostico_palpaciones'])->name('diagnostico_palpaciones'); */
 
 Route::post('/home/sisga-admin/finca/{id_finca}/diagnostico-palpaciones', [App\Http\Controllers\HomeController::class, 'crear_diagnosticopalpaciones'])->name('diagnostico_palpaciones.crear'); 
 
@@ -173,9 +171,7 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/motivos-entrada-salida/{id}', 
 
 /*Ruta para el registro de patologías*/
 Route::get('/home/sisga-admin/finca/{id_finca}/patologia', [App\Http\Controllers\HomeController::class, 'patologia'])->name('patologia');
-/*
-Route::get('/home/sisga-admin/patologia', [App\Http\Controllers\HomeController::class, 'patologia'])->name('patologia');
-*/
+
 Route::post('/home/sisga-admin/finca/{id_finca}/patologia', [App\Http\Controllers\HomeController::class, 'crear_patologia'])->name('patologia.crear');
 
 Route::get('/home/sisga-admin/finca/{id_finca}/patologia/{id}', [App\Http\Controllers\HomeController::class, 'editar_patologia'])->name('patologia.editar'); 
@@ -210,6 +206,11 @@ Route::put('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/{serie}
 */
 Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reportes/catalogo-de-ganado', [App\Http\Controllers\ReportController::class, 'report_catalogoganado'])->name('catalogodeganado.reporte'); 
 
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reportes/catalogo-de-ganado-inactivo', [App\Http\Controllers\ReportController::class, 'report_catalogoganadoinactivo'])->name('catalogoganadoinactivo.reporte'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reportes/catalogo-de-ganado-por-destetar', [App\Http\Controllers\ReportController::class, 'report_catalogoganadopordestete'])->name('ganadopordestete.reporte'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reportes/catalogo-de-ganado-hembras-reproductivas', [App\Http\Controllers\ReportController::class, 'report_catalogohemrepro'])->name('catalogohemrepro.reporte'); 
 /*
 *
 */
@@ -272,8 +273,20 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/{id}', [App\Htt
  
 
 /*Ruta para la transferencia*/
-Route::get('/home/ganaderia/transferencia', [App\Http\Controllers\RutasController::class, 'transferencia'])->name('transferencia'); 
+Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/transferencia', [App\Http\Controllers\RutasController::class, 'transferencia'])->name('transferencia'); 
  
+Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/transferencia', [App\Http\Controllers\RutasController::class, 'transferir_series'])->name('serie.transferir'); 
+
+	//lleva a la vista de reporte de Transferencia 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-reportes-transferencia', [App\Http\Controllers\RutasController::class, 'vista_reportestransferencia'])->name('reportes_transferencia'); 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reportes-transferencia', [App\Http\Controllers\ReportController::class, 'report_transferencia'])->name('transferencia.reporte');
+
+/*End Transferencia*/
+
+
+
 
 
 /*Ruta para la vista de pajuela*/
@@ -294,7 +307,39 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/pajuela/eliminar/{id
 //->END PAJUELA
 
 
+/*Ruta para la vista de reportes generales*/
+
+Route::get('/home/sisga-admin/finca/{id_finca}/reportes-generales', [App\Http\Controllers\RutasController::class, 'vista_reportesgenerales'])->name('reportes_generales'); 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-catalogo-de-ganado', [App\Http\Controllers\RutasController::class, 'vista_reportecatalogoganado'])->name('reportes_catalogodeganado');
+	
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reportes-catalogo-de-ganado', [App\Http\Controllers\ReportController::class, 'report_catalogoseries'])->name('catalago.reporte');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-pajuela', [App\Http\Controllers\RutasController::class, 'vista_reportepajuela'])->name('reportes_pajuela');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reporte-pajuela', [App\Http\Controllers\ReportController::class, 'report_pajuela'])->name('pajuela.reporte');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-historial-salida', [App\Http\Controllers\RutasController::class, 'vista_reportehistsalida'])->name('reportes_histsalida');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reporte-historial-salida', [App\Http\Controllers\ReportController::class, 'report_historialsalida'])->name('histsal.reporte');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-movimiento-lote', [App\Http\Controllers\RutasController::class, 'vista_reportemovimientolote'])->name('reportes_movimientolote');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reporte-movimiento-lote', [App\Http\Controllers\ReportController::class, 'report_movimientolote'])->name('movimientolote.reporte');
+
 /* ----> EndRoute Módulo de ganadería <-----*/
+
+/***********************************************
+* Inicio Rutas Módulo de Reproducción Animal
+************************************************/
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-monta', [App\Http\Controllers\ReprodController::class, 'temporada_monta'])->name('temporada_monta');
+
+
+
+/***********************************************
+* Fin Rutas Módulo de  Reproducción Animal
+************************************************/
+
 
 
 Auth::routes();

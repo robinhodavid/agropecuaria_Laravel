@@ -39,7 +39,7 @@
           </div>
           @endif
             <!-- /.card-header -->
-          <div class="card-body">
+      <div class="card-body">
           <div class="form-registro">
           <form action="{{ route ('serielote.asignar', $finca->id_finca) }}" method="POST">
             @csrf

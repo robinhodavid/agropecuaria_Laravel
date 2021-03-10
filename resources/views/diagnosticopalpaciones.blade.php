@@ -102,7 +102,7 @@
 				            </svg> 
 				            </a>
 
-					        <form action="{{route('diagnostico_palpaciones.eliminar',[$finca->id_finca, $item->id_diagnostico])}}#" class="d-inline" method="POST">
+					        <form action="{{route('diagnostico_palpaciones.eliminar',[$finca->id_finca, $item->id_diagnostico])}}#" class="d-inline form-delete" method="POST">
 					            @method('DELETE')
 					            @csrf
 					            <button type="submit" class="btn btn-danger btn-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -140,6 +140,49 @@
        $(".alert-dismissible").alert('close');
 });
     </script>
+     {!! Html::script('js/jquery-3.5.1.min.js')!!}
+  	{!! Html::script('js/dropdown.js')!!}
+  	{!! Html::script('js/sweetalert2.js')!!}	
+
+   @if(session('mensaje')=='ok')
+	  	<script>
+	  		Swal.fire({
+				title: '¡Eliminado!',
+				text:  'Registro Eliminado Satisfacoriamente',
+				icon:  'success'
+			})
+	  	</script>
+	@endif
+	@if (session('mensaje')=='error')
+	  	<script>
+	  		Swal.fire({
+				text:'Está siendo usado por otro recurso',
+				icon: 'error',
+				title:'¡No Eliminado!'
+			})
+	  	</script>
+  	@endif
     
+    <script>
+    
+    $('.form-delete').submit(function(e){
+    	e.preventDefault();
+	    Swal.fire({
+			title:'¿Está seguro que desea Eliminar el Registro?',
+			text:"Este cambio es irreverible",
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#3085d6',
+			cancelButtonColor: '#d33',
+			confirmButtonText: 'Eliminar',
+			cancelButtonText: 'Cancelar'
+		}).then((result)=>{
+			if (result.value){
+				this.submit();
+			}
+		})
+    });	
+    </script>  
+
 
 @stop

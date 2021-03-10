@@ -14,7 +14,7 @@
 			<div class="card">
               	<div class="card-header">
               		<div class="row">
-                	 	<div class=" col title-header">Editando la Ficha de Gando.: {{ $serie->serie }}</div>
+                	 	<div class=" col title-header ml-2">Editando la Ficha de Gando.: {{ $serie->serie }}</div>
                 	 </div>
               	</div>
               	@if(session('msj'))
@@ -101,6 +101,16 @@
           </button>
         </div>
         @enderror
+        @error('motivoentrada')
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+          <span>
+            <strong>Atención! </strong>El motivo de entrada es requerido.
+          </span>         
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        @enderror
 		<div class="row">
 		    <div class="col-5">
 		        <div class="col-mini-siderbar label-serie text-center my-2">
@@ -113,6 +123,7 @@
 		                readonly="true" 
 		                value="{{ $serie->serie }}">
 		        </div>
+		        <div class="row">
           		<div class="col-mini-siderbar label-activo">
             		<div class="form-check form-switch">
 	             	<input 
@@ -120,11 +131,19 @@
 			            name="status" 
 			            type="checkbox" 
 			            id="status" 
-			            {!! $serie->status?"checked":"" !!}
+			            {!! $serie->status?"checked disabled":"" !!}
 			            >
 	              	<label class="form-check-label" for="status">Activo</label>
            			</div>
-          		</div>  
+          		</div>
+          		<label class="col-form-label" id="label_motivo_e">Motivo de Entrada:</label>
+	             	<select class="form-select" name="motivoentrada" aria-label="select example" id="motivo_e">
+	                  <option value="">Seleccione una opción</option>
+	                      @foreach ($motivoentrada as $item)
+	                        <option value="{{ $item->nombremotivo }}" selected> {{ $item->nombremotivo}} </option>
+	                      @endforeach() 
+	            	</select>   
+          		</div>
           		<div class="col-mini-siderbar label-tipologia">
             		<label>Tipología</label>  
             		<label class="col-form-label">Tipología:</label>
@@ -485,7 +504,7 @@
 		<div class="col">
 			<div class="card">
 	              <div class="card-header">
-	                <div class=" col title-header">Árbol de Descendencia </div>
+	                <div class=" col title-header">Árbol de Descendencia</div>
 	              </div>
 	              <!-- /.card-header -->
 	              <div class="card-body">

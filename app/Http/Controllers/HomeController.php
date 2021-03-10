@@ -88,13 +88,7 @@ class HomeController extends Controller
     public function series_activas(request $request, $id_finca)
     {
          $finca = \App\Models\sgfinca::findOrFail($id_finca);
-         
-    /*      $seriesactivas = DB::table('sganims')
-                ->where('status', '=', 1)
-                ->where('id_finca', '=', $finca->id_finca)
-                ->paginate(10);
-
-    */    
+            
         if (! empty($request->serie) ) {
             $seriesactivas = DB::table('sganims')
                 ->where('status', '=', 1)
@@ -112,10 +106,94 @@ class HomeController extends Controller
          return view('info.series_activas', compact('finca','seriesactivas'));        
     }
 
+    public function series_inactivas(request $request, $id_finca)
+    {
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+         
+    /*      $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->paginate(10);
+
+    */    
+        if (! empty($request->serie) ) {
+            $seriesinactivas = DB::table('sganims')
+                ->where('status', '=', 0)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        } else {
+            $seriesinactivas = DB::table('sganims')
+                ->where('status', '=', 0)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        }
+
+
+        return view('info.series_inactivas', compact('finca','seriesinactivas'));        
+    }
+
+    public function series_pordestetar(request $request, $id_finca)
+    {
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+         
+    
+        if (! empty($request->serie) ) {
+
+            $seriesnodestetado = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('destatado','=', 0) //Que no estan destetado
+                ->where('id_finca', '=', $finca->id_finca) 
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        } else {
+
+            $seriesnodestetado = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('destatado','=', 0) //Que no estan destetado
+                ->where('id_finca', '=', $finca->id_finca) 
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        }
+
+         return view('info.series_por_destetar', compact('finca','seriesnodestetado'));        
+    }
+    public function series_hembras_productivas(request $request, $id_finca)
+    {
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+         
+    /*      $seriesactivas = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('id_finca', '=', $finca->id_finca)
+                ->paginate(10);
+    */    
+        if (! empty($request->serie) ) {
+
+            $serieshembrasrepro = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('destatado','=',1)
+                ->where('sexo','=',0) //Sexo = hembra
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        } else {
+
+            $serieshembrasrepro = DB::table('sganims')
+                ->where('status', '=', 1)
+                ->where('destatado','=',1)
+                ->where('sexo','=',0) //Sexo = hembra
+                ->where('id_finca', '=', $finca->id_finca)
+                ->where('serie', 'like', $request->serie."%")
+                ->take(10)->paginate(10);
+        }
+
+         return view('info.hembras_reprod', compact('finca','serieshembrasrepro'));        
+    }
+
 /*
 * /.End
 */
-
 
     //Retorna a la vista administrativa /finca
         public function fincas()
@@ -164,11 +242,18 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
 
-    public function eliminar($id_finca){
+    public function eliminar(Request $request, $id_finca){
+        
         $fincasEliminar = \App\Models\sgfinca::findOrFail($id_finca);
+ 
+        try {
         $fincasEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-        return back()->with('msj', 'Nota Eliminada');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+        
     }
 
 
@@ -246,9 +331,13 @@ class HomeController extends Controller
         //dd($id);
         $especieEliminar = \App\Models\sgespecie::findOrFail($id);
         
+        try {
         $especieEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-        return back()->with('msj', 'Registro Eliminado satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
     }
     //-->End Vista especie
 /*Raza*/
@@ -356,9 +445,14 @@ class HomeController extends Controller
             
         $razaEliminar = \App\Models\sgraza::findOrFail($idraza);
             
+        try {
         $razaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-        return back()->with('msj', 'El registro hasido eliminado satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+
     }
 
 
@@ -503,11 +597,15 @@ class HomeController extends Controller
 
     public function eliminar_tipo($id_finca, $id_tipologia){
             
-            $tipologiaEliminar = \App\Models\sgtipologia::findOrFail($id_tipologia);
-            
-            $tipologiaEliminar->delete();
+        $tipologiaEliminar = \App\Models\sgtipologia::findOrFail($id_tipologia);
+        
+        try {
+           $tipologiaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-            return back()->with('msj', 'Registro Eliminado Satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
     }
 
 /*
@@ -583,11 +681,15 @@ class HomeController extends Controller
     
    public function eliminar_condicion($id_finca, $id_condicion){
             
-            $condicionEliminar = \App\Models\sgcondicioncorporal::findOrFail($id_condicion);
-            
+        $condicionEliminar = \App\Models\sgcondicioncorporal::findOrFail($id_condicion);
+             
+        try {
             $condicionEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-            return back()->with('msj', 'Registro Eliminado Satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }  
     }
 /*
 *******************************************************
@@ -668,11 +770,17 @@ class HomeController extends Controller
 
     public function eliminar_diagnostico_palpaciones($id_finca, $id_diagnostico){
             
-            $diagnostico_palpacionesEliminar = \App\Models\sgdiagnosticpalpaciones::findOrFail($id_diagnostico);
-            
+        $diagnostico_palpacionesEliminar = \App\Models\sgdiagnosticpalpaciones::findOrFail($id_diagnostico);
+             
+        try {
             $diagnostico_palpacionesEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-            return back()->with('msj', 'Registro eliminado satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+
+         
     }
 /*
 *********************************************************
@@ -756,11 +864,14 @@ class HomeController extends Controller
             
         $motivo_entrada_salidaEliminar = \App\Models\sgmotivoentradasalida::findOrFail($id);
             
-        $motivo_entrada_salidaEliminar->delete();
+        try {
+            $motivo_entrada_salidaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-            return back()->with('msj', 'Registro eliminado satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
     }
-
 /*
 ************************************************************
 * Fin de la vista administrativa motivo-entrada-salida
@@ -845,9 +956,13 @@ class HomeController extends Controller
             
         $patologiaEliminar = \App\Models\sgpatologia::findOrFail($id);
             
+        try {
         $patologiaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
 
-        return back()->with('msj', 'Registro Eliminado Satisfactoriamente');
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
     }
 
     

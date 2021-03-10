@@ -113,6 +113,7 @@
     
     <link rel="stylesheet" href="/css/bootstrap5/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/admin_custom.css">
+
 @stop
 
 @section('js')

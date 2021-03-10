@@ -206,7 +206,9 @@ class RutasController extends Controller
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
             //A través del código serie se obtiene el id y lo pasamos al modelo
-            $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            $codserie = DB::table('sganims')->select('id')
+                ->where('serie', '=', $ser)
+                ->where('id_finca', '=', $id_finca)->get();
             //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
             foreach ($codserie as $serieid) {
                 $id= (int) $serieid->id;
@@ -217,11 +219,12 @@ class RutasController extends Controller
             // $codpadre = $codserie->pluck('codpadre');
            //$codmadre = $codserie->pluck('codmadre');
             
-            
-            
+            $motivoentrada = \App\Models\sgmotivoentradasalida::where('tipo','=','Entrada')->get();
+
             $serie = \App\Models\sganim::findOrFail($id);//findOrFail(2);
             //$serie = \App\Models\sganim::where('serie', '=', $ser)->get();
-            //return $serie->all();
+            
+            //return $serie;
 
             $tipologia = \App\Models\sgtipologia::where('id_finca', '=', $finca->id_finca)->get();
             
@@ -338,13 +341,19 @@ class RutasController extends Controller
                     'codabuelopaterno', 'codabuelapaterna','codbisabuelospaternospadre',
                     'codbisabuelospaternomadre',
                     'codabuelomaterno','codabuelamaterna','codbisabuelosmaternomadre',
-                    'codbisabuelosmaternospadre','finca'));
+                    'codbisabuelosmaternospadre','finca','motivoentrada'));
         }
 
     public function update_fichaganado(Request $request, $ser, $id_finca)
     {
-        
-              //Validando los datos
+        if ($request->status=="on") {
+            $request->validate([
+            'motivoentrada'=>[
+                'required',
+            ],
+        ]);
+        }
+        //Validando los datos
         $request->validate([
             'sexo'=>[
                 'required',
@@ -368,7 +377,8 @@ class RutasController extends Controller
         
         //con el numero de serie obtenemos su id
         //A través del código serie se obtiene el id y lo pasamos al modelo
-        $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+        $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)
+        ->where('id_finca', '=', $id_finca)->get();
             //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
             foreach ($codserie as $serieid) {
                 $id= (int) $serieid->id;
@@ -386,8 +396,10 @@ class RutasController extends Controller
         $codpajuela = ($request->espajuela=="on")?($codpajuela=$request->pajuela):($codpajuela =  null);
 
         $request->status = ($request->status=="on")?($request->status=true):($request->status=false);
+
         //_>>
     //***************************************************************************************
+ 
         //Se calcula con la herramienta carbon la edad
         $year = Carbon::parse($request->fnac)->diffInYears(Carbon::now());
         //Se multiplica los años obtendios por 12 para saber los meses de la cantidad de años.
@@ -398,8 +410,8 @@ class RutasController extends Controller
         $edad = $year."-".$months;
     //*********************************************************************************************    
         
+
         $tipologia = \App\Models\sgtipologia::findOrFail($request->tipologia);        
-    
         $serieUpdate = \App\Models\sganim::findOrFail($id);
         
         $serieUpdate->serie = $request->serie;
@@ -424,9 +436,8 @@ class RutasController extends Controller
         $serieUpdate->edad = $edad;
         
         //Argumento por referencia:
- //       $serieUpdate->id_finca  = $id_finca;
         $serieUpdate->status  = $request->status;
-       
+   
         //Se agregan los parametros para la validación de tipologia
         $serieUpdate->destatado = $tipologia->destetado;
         $serieUpdate->nro_monta = $tipologia->nro_monta;
@@ -436,10 +447,16 @@ class RutasController extends Controller
         $serieUpdate->criaviva = $tipologia->criaviva;
         $serieUpdate->ordenho = $tipologia->ordenho;
         $serieUpdate->detectacelo = $tipologia->detectacelo;
-
+        
+        //Se obtiene la fecha entrada con la actual.
+        if ($request->status=="on") {
+         $serieUpdate->fecentrada = Carbon::now();
+         $serieUpdate->motivo= $request->motivoentrada;   
+        }
+       // return $request;
         $serieUpdate-> save(); 
 
-            return back()->with('msj', 'Registro actualizado satisfactoriamente');
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
 
     
@@ -467,7 +484,7 @@ class RutasController extends Controller
             //colocamos un filtro para mostrar la tabla de registro de peso
             $registropeso = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
                 ->where('id_finca', '=', $finca->id_finca)
-                ->paginate(4);
+                ->paginate(5);
 
             //generamos el mismo modelo para generar la grafica
             //colocamos un filtro para mostrar la tabla de registro de peso
@@ -491,6 +508,15 @@ class RutasController extends Controller
            //dd($id_finca, $ser); 
             //return $request->all();
             //Se buscala finca por su id - Segun modelo
+
+            $request->validate([
+                'fecha'=>[
+                    'required',
+                ],
+                'peso'=>[
+                    'required',
+                ],
+            ]);
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
               //A través del código serie se obtiene el id y lo pasamos al modelo
@@ -502,8 +528,8 @@ class RutasController extends Controller
 
             $serie = \App\Models\sganim::findOrFail($id);
             
-            //validamos la condicion destetado
-            $request->destete = ($request->destete=="on")?($request->destete=true):($request->destete=false);
+            //validamos la condicion si se trata de un peso de destete
+            $request->destatado = ($request->destatado=="on")?($request->destatado=true):($request->destatado=false);
 
             $pesoNuevo = new \App\Models\sgpeso;
 
@@ -516,38 +542,67 @@ class RutasController extends Controller
             $pesoNuevo->pgan = $request->pgan;
             $pesoNuevo->fecha = $request->fecha;
             $pesoNuevo->difdia = $request->difdia;
-            $pesoNuevo->destetado = $request->destete;
+            $pesoNuevo->destetado = $request->destatado;
 
 
             $pesoNuevo-> save();
-
+ 
             /*
-            * Falta ell proceso en este controlador para actualizar la Tipología 
+            * Actualizar la Tipología en caso de un destete 
             * de forma automática
             */
+            $edad = Carbon::parse($serie->fnac)->diffInDays(Carbon::now());
+
+            if ($request->destatado =="on") {
+                
+                $buscatipologia = DB::table('sgtipologias')->select('id_tipologia')
+                   ->where('id_finca','=',$id_finca)
+                   ->where('destetado','=',$request->destatado)
+                   ->where('sexo','=',$serie->sexo)
+                   ->where('edad','<',365)
+                   ->whereBetween('peso',[$request->pesoi,$request->peso])
+                   ->where('nro_monta','=',$serie->nro_monta)
+                   ->where('prenada','=',$serie->prenada)
+                   ->where('parida','=',$serie->parida)
+                   ->where('tienecria','=',$serie->tienecria)
+                   ->where('criaviva','=',$serie->criaviva)
+                   ->where('ordenho','=',$serie->ordenho)
+                   ->where('detectacelo','=',$serie->detectacelo)->get();
+              
+
+            foreach ($buscatipologia as $id_tipo) 
+            {
+                $idtipo = (int) $id_tipo->id_tipologia;
+            }     
 
 
-            /*
-            * Aquí colocamos la actualización de los valores en la tabla sganims. 
-            */
-            // Validamos 
-            if ($request->destete == true) {
-                $fuedestetado = $request->destete;
+                $tipologia = \App\Models\sgtipologia::findOrFail($idtipo);
+
+               // $tipologianame = $buscatipologia->pluck('nombre_tipologia');     
+               // $tipologia_id = $buscatipologia->pluck('id_tipologia');     
+                
+                $fuedestetado = $request->destatado;
                 $pesodedestete = $request->peso;
                 $fecdes = $request->fecha;
 
                 $updatepesoserie = DB::table('sganims')
-                                    ->where('id',$serie->id)
-                                    ->where('id_finca', $finca->id_finca)
-                                    ->update(['pesoactual'=>$request->peso,
-                                        'fulpes'=>$request->fecha,
-                                        'destatado'=> $fuedestetado,
-                                        'pesodestete'=>$pesodedestete, 
-                                        'fecdes'=>$pesodedestete, 
-                                        'ultgdp'=>$request->gdp]);
+                                ->where('id',$serie->id)
+                                ->where('id_finca', $finca->id_finca)
+                                ->update([
+                                    'pesoactual'  => $request->peso,
+                                    'fulpes'      => $request->fecha,
+                                    'destatado'   => $fuedestetado,
+                                    'pesodestete' => $pesodedestete, 
+                                    'fecdes'      => $fecdes, 
+                                    'ultgdp'      => $request->gdp,
+                                    'tipo'        => $tipologia->nombre_tipologia,
+                                    'id_tipologia'=> $tipologia->id_tipologia,
+                                    ]);
+
+                return back()->with('mensaje', 'ok');     
+                                        
             } else {
-                
-                
+                //Los cambios se dan por sugerencia
                 $updatepesoserie = DB::table('sganims')
                                     ->where('id',$serie->id)
                                     ->where('id_finca', $finca->id_finca)
@@ -557,11 +612,12 @@ class RutasController extends Controller
                                     //    'pesodestete'=>$pesodedestete, 
                                     //    'fecdes'=>$pesodedestete, 
                                         'ultgdp'=>$request->gdp]);
-            }
             
             return back()->with('msj', 'Registro creado satisfactoriamente');
             //return view('editarfichaganado')->with('msj', 'Registro creado satisfactoriamente');
-        }       
+        }
+
+    }       
     
     //Retorna a la vista lote
     public function lote($id_finca)
@@ -640,12 +696,16 @@ class RutasController extends Controller
         {
                 
             $loteEliminar = \App\Models\sglote::findOrFail($id_lote);
-            
-            $subloteEliminar = \App\Models\sgsublote::where('nombre_lote', '=', $loteEliminar->nombre_lote)->delete();    
-
+            $subloteEliminar = \App\Models\sgsublote::where('nombre_lote', '=', $loteEliminar->nombre_lote);
+             
+            try {
             $loteEliminar->delete();
+            $subloteEliminar->delete();   
+            return back()->with('mensaje', 'ok');     
 
-                return back()->with('msj', 'Registro eliminado Satisfactoriamente');
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }
         }
         // END LOTE--->
 
@@ -685,10 +745,7 @@ class RutasController extends Controller
                         //'unique:sgsublotes,nombre_lote,NULL,NULL,sub_lote,'. $request['sub_lote'],
 		            ],
 		        ]);
-		        
-		
-			
-			
+		    
 		        $subloteNuevo = new \App\Models\sgsublote;
 
 		        $subloteNuevo->sub_lote = $request->sub_lote;
@@ -703,10 +760,14 @@ class RutasController extends Controller
 		   public function eliminar_sublote($id_finca, $id_sublote){
             
 		        $subloteEliminar = \App\Models\sgsublote::findOrFail($id_sublote);
-		            
-		        $subloteEliminar->delete();
+		        
+                try {
+                $subloteEliminar->delete();   
+                return back()->with('mensaje', 'ok');     
 
-		        return back()->with('msj', 'Nota Eliminada Satisfactoriamente');
+                }catch (\Illuminate\Database\QueryException $e){
+                    return back()->with('mensaje', 'error');
+                }
 		    }
 
     		// END SUBLOTE--->
@@ -822,6 +883,7 @@ class RutasController extends Controller
     			for($i=0; $i < $cont; $i++){
     				
                     $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
                     $fecregistro = Carbon::now();
 
                     $HistorialLoteNuevo = new \App\Models\sghistlote;
@@ -972,22 +1034,555 @@ class RutasController extends Controller
 
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
         }
-         public function eliminar_pajuela($id_finca, $id)
-         {
+        public function eliminar_pajuela($id_finca, $id)
+        {
             
-                $pajuelaEliminar = \App\Models\sgpaju::findOrFail($id);
-                    
-                $pajuelaEliminar->delete();
+            $pajuelaEliminar = \App\Models\sgpaju::findOrFail($id);
+                
+            try {
+            $pajuelaEliminar->delete();
+            return back()->with('mensaje', 'ok');     
 
-                return back()->with('msj', 'Registro eliminado satisfactoriamente');
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }
+
         }
 
     //Retorna a la vista transferencia
-        public function transferencia()
+        public function transferencia(Request $request, $id_finca)
     {
-        return view('transferencia');
+
+            //Se buscala finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+            //->Se muestran las series 
+            //$asignarseries = \App\Models\sganim::paginate(7);
+            if (! empty($request->serie) ) {
+               $transferseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                ->where('id_finca','=',$id_finca)
+                ->where('status','=',1)
+                ->take(7)->paginate(7);
+            } else {
+                $transferseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                ->where('id_finca','=',$id_finca)
+                ->where('status','=',1)
+                ->take(7)->paginate(7);
+            }
+            
+            $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=',"Salida") 
+            ->get();
+            /*
+             $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=',"Salida") 
+            ->where('id_finca','=',$id_finca)->get();
+            */
+
+            $destino = \App\Models\sgfinca::all();  
+
+            $fecsalida = Carbon::now()->format('Y-m-d');
+
+            $transfrealizada = \App\Models\sgtransferencia::whereDate('fecs','=',$fecsalida) 
+            ->where('id_finca','=',$id_finca)->get();
+
+           // return $transfrealizada; 
+
+        //return $destino->all();     
+
+        return view('transferencia',compact('finca','transferseries','motivo', 'destino','transfrealizada'));
+    }
+
+    public function transferir_series(Request $request, $id_finca)
+    {
+   
+        //Finca de origen        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $request->validate([
+            'id'=>[
+                'required',
+            ],
+            'fecs'=>[
+                'required',
+            ],
+            'motivo'=>[
+                'required',
+            ],
+            'destino'=>[
+                'required',
+            ],
+            'obser'=>[
+                'required',
+            ],
+        ]);
+        
+        //Aquí ubicamos la finca destino        
+        $fincadestino = \App\Models\sgfinca::findOrFail($request->destino);
+
+        //Corremos el indice para cada serie qe viene en el array[$request]
+        $cont = count($request->id);
+        for($i=0; $i < $cont; $i++){    
+            
+            //Obtenemos las series que se van a transferir con su ID
+            $series = \App\Models\sganim::findOrFail($request->id[$i]);
+            //Obtenemos  el motivo de salida
+            $motivosal = \App\Models\sgmotivoentradasalida::findOrFail($request->motivo);
+           
+            //Buscamos si realmente exite la serie en la finca destino. 
+            $seriesfincadestino = DB::table('sganims')
+                ->where('serie','=', $series->serie)
+                ->where('id_finca','=', $request->destino)->get();    
+           
+            // $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+           
+            if ($seriesfincadestino->count() > 0) {
+             
+             // si existe ubicamos sus ID para luego pasarsela al modelo y ubicar sus 
+             // codigo de series.
+             foreach ($seriesfincadestino as $serieid) {
+                $id[$i]= (int) $serieid->id;
+            }   
+             
+             /*
+             * Se comprueba que la serie existe $seriefincadestino
+             * Luego se ubica (n)  la (s) serie (s)
+             * Se registran en sgtransferencias y sghsal
+             * Luego seactualizan (update) de los datos de la serie transferida 
+             */
+             
+                $seriedesti = \App\Models\sganim::findOrFail($id[$i]);
+
+                //return $seriedesti;
+                
+                $fecsalida = Carbon::now();
+                
+                $transferenciaNuevo = new \App\Models\sgtransferencia;
+                
+                $transferenciaNuevo->id_serie = $request->id[$i];
+                $transferenciaNuevo->serie = $series->serie;
+                $transferenciaNuevo->codm= $series->codmadre;
+                $transferenciaNuevo->codp= $series->codpadre;
+                $transferenciaNuevo->espajuela= $series->espajuela;
+                $transferenciaNuevo->paju= $series->pajuela;
+                $transferenciaNuevo->fnac= $series->fnac;
+                $transferenciaNuevo->fecr= $series->fecr;
+                $transferenciaNuevo->fecs= $fecsalida;
+                $transferenciaNuevo->destino= $fincadestino->nombre;
+                $transferenciaNuevo->id_tipologia= $series->id_tipologia;
+                $transferenciaNuevo->tipo= $series->tipo;
+                $transferenciaNuevo->idraza= $series->idraza;
+                $transferenciaNuevo->sexo= $series->sexo;
+                $transferenciaNuevo->obser= $request->obser;
+                $transferenciaNuevo->procede= $finca->nombre;
+                $transferenciaNuevo->id_condicion= $series->id_condicion;
+                $transferenciaNuevo->pesoi= $series->pesoi;
+                $transferenciaNuevo->pesoactual= $series->pesoactual;
+                $transferenciaNuevo->fulpes= $series->fulpes;
+                $transferenciaNuevo->destatado= $series->destatado;
+                $transferenciaNuevo->pesodestete= $series->pesodestete;
+                $transferenciaNuevo->fecdes= $series->fecdes;
+                $transferenciaNuevo->nparto= $series->nparto;
+                $transferenciaNuevo->dparto= $series->dparto;
+                $transferenciaNuevo->pesodestete= $series->pesodestete;
+                $transferenciaNuevo->nservi= $series->nservi;
+                $transferenciaNuevo->fecua= $series->fecua;
+                $transferenciaNuevo->fecup= $series->fecup;
+                $transferenciaNuevo->abort= $series->abort;
+                $transferenciaNuevo->edad= $series->edad;
+                $transferenciaNuevo->edadpp= $series->edadpp;
+                $transferenciaNuevo->tipoap= $series->tipoap;
+                $transferenciaNuevo->tipops= $series->tipops;
+                $transferenciaNuevo->lote= $series->nombrelote;
+                $transferenciaNuevo->sublote= $series->sub_lote;
+                $transferenciaNuevo->lprod= $series->lprod;
+                $transferenciaNuevo->sublprod= $series->sublprod;
+                $transferenciaNuevo->lpast= $series->lpast;
+                $transferenciaNuevo->sublpast= $series->sublpast;
+                $transferenciaNuevo->ltemp= $series->ltemp;
+                $transferenciaNuevo->subltemp= $series->subltemp;
+                $transferenciaNuevo->ulgdp= $series->ultgdp;
+                $transferenciaNuevo->pa1= $series->pa1;
+                $transferenciaNuevo->pa2= $series->pa2;
+                $transferenciaNuevo->pa3= $series->pa3;
+                $transferenciaNuevo->pa4= $series->pa4;
+                $transferenciaNuevo->ua= $series->ua;
+                $transferenciaNuevo->ncrias= $series->ncrias;
+                $transferenciaNuevo->npartorepor= $series->npartorepor;
+                $transferenciaNuevo->nabortoreport= $series->nabortoreport;
+                $transferenciaNuevo->id_motivo_salida= $request->motivo;
+                $transferenciaNuevo->id_finca= $finca->id_finca;
+
+             $transferenciaNuevo-> save();   
+
+                //Luego creamos la tabla sghsalidas
+                if ($series->fecr == null) {
+                    $series->fecr = $series->fnac;
+                } else {
+                    $series->fecr = $series->fecr; 
+                }
+                
+
+                $serieHistoriaSal = new \App\Models\sghsal;
+
+                $serieHistoriaSal->id_serie = $request->id[$i];
+                $serieHistoriaSal->serie = $series->serie;
+                $serieHistoriaSal->motivo = $motivosal->nombremotivo;
+                $serieHistoriaSal->fechs = $request->fecs;
+                $serieHistoriaSal->procede = $finca->nombre;
+                $serieHistoriaSal->destino = $fincadestino->nombre;
+                $serieHistoriaSal->peso = $series->pesoactual;
+                $serieHistoriaSal->feche = $series->fecr;
+                $serieHistoriaSal->e_s = 0;
+                $serieHistoriaSal->id_motsal = $request->motivo;
+                $serieHistoriaSal->obser = $request->obser;
+                $serieHistoriaSal->id_finca = $finca->id_finca;
+
+                $serieHistoriaSal-> save();
+
+                //actualizamos los datos en la finca destino
+                $serieNuevaFinca = DB::table('sganims')
+                            ->where('id',$seriedesti->id)
+                            ->where('id_finca', $fincadestino->id_finca)
+                            ->update(
+                                ['status'      => 1,
+                                 'nombrelote'  => $series->nombrelote,
+                                 'sub_lote'    => $series->sub_lote,
+                                 'codmadre'    => $series->codmadre,
+                                 'codpadre'    => $series->codpadre,
+                                 'espajuela'   => $series->espajuela,
+                                 'pajuela'     => $series->pajuela,
+                                 'fnac'        => $series->fnac,
+                                 'fecr'        => $series->fecr,
+                                 'fecentrada'  => $fecsalida,
+                                 'tipo'        => $series->tipo,
+                                 'tipoanterior'=> $series->tipoanterior,
+                                 'sexo'        => $series->sexo,
+                                 'observa'     => $request->obser,
+                                 'procede'     => $finca->nombre,
+                                 'pesoi'       => $series->pesoi,
+                                 'pesoactual'  => $series->pesoactual,
+                                 'fulpes'      => $series->fulpes,
+                                 'destatado'   => $series->destatado,
+                                 'pesodestete' => $series->pesodestete,
+                                 'fecdes'      => $series->fecdes,
+                                 'pa1'         => $series->pa1,
+                                 'pa2'         => $series->pa2,
+                                 'pa3'         => $series->pa3,
+                                 'pa4'         => $series->pa4,
+                                 'ua'          => $series->ua,
+                                 'nparto'      => $series->nparto,
+                                 'dparto'      => $series->dparto,
+                                 'nservi'      => $series->nservi,
+                                 'fecua'       => $series->fecua,
+                                 'fecup'       => $series->fecup,
+                                 'abort'       => $series->abort,
+                                 'edad'        => $series->edad,
+                                 'edadpp'      => $series->edadpp,
+                                 'pesopp'      => $series->pesopp,
+                                 'ultgdp'      => $series->ultgdp,
+                                 'ncrias'      => $series->ncrias,
+                                 'npartorepor' => $series->npartorepor,
+                                 'nabortoreport'=> $series->nabortoreport,  
+                                 'nro_monta'   => $series->nro_monta,
+                                 'prenada'     => $series->prenada,
+                                 'parida'      => $series->parida,
+                                 'tienecria'   => $series->tienecria,
+                                 'criaviva'    => $series->criaviva,
+                                 'ordenho'     => $series->ordenho,
+                                 'detectacelo' => $series->detectacelo,
+                                 'id_tipologia'=> $series->id_tipologia,
+                                 'idraza'      => $series->idraza,
+                                 'id_condicion'=> $series->id_condicion,
+                                 'lprod'       => $series->lprod,
+                                 'lpast'       => $series->lpast,
+                                 'ltemp'       => $series->ltemp,
+                                 'lnaci'       => $series->lnaci,
+                                 'id_finca'    => $fincadestino->id_finca
+                                ]);  
+
+                //Luego acualizamos el status a inactivo en serie origen
+                $updateserie = DB::table('sganims')
+                            ->where('id',$request->id[$i])
+                            ->where('id_finca', $finca->id_finca)
+                            ->update(['status'=>0,'motivo'=>$motivosal->nombremotivo,
+                                'fecs'=>$fecsalida]); 
+
+            } else {
+
+                $fecsalida = Carbon::now();
+                
+                $transferenciaNuevo = new \App\Models\sgtransferencia;
+                
+                $transferenciaNuevo->id_serie = $request->id[$i];
+                $transferenciaNuevo->serie = $series->serie;
+                $transferenciaNuevo->codm= $series->codmadre;
+                $transferenciaNuevo->codp= $series->codpadre;
+                $transferenciaNuevo->espajuela= $series->espajuela;
+                $transferenciaNuevo->paju= $series->pajuela;
+                $transferenciaNuevo->fnac= $series->fnac;
+                $transferenciaNuevo->fecr= $series->fecr;
+                $transferenciaNuevo->fecs= $fecsalida;
+                $transferenciaNuevo->destino= $fincadestino->nombre;
+                $transferenciaNuevo->id_tipologia= $series->id_tipologia;
+                $transferenciaNuevo->tipo= $series->tipo;
+                $transferenciaNuevo->idraza= $series->idraza;
+                $transferenciaNuevo->sexo= $series->sexo;
+                $transferenciaNuevo->obser= $request->obser;
+                $transferenciaNuevo->procede= $finca->nombre;
+                $transferenciaNuevo->id_condicion= $series->id_condicion;
+                $transferenciaNuevo->pesoi= $series->pesoi;
+                $transferenciaNuevo->pesoactual= $series->pesoactual;
+                $transferenciaNuevo->fulpes= $series->fulpes;
+                $transferenciaNuevo->destatado= $series->destatado;
+                $transferenciaNuevo->pesodestete= $series->pesodestete;
+                $transferenciaNuevo->fecdes= $series->fecdes;
+                $transferenciaNuevo->nparto= $series->nparto;
+                $transferenciaNuevo->dparto= $series->dparto;
+                $transferenciaNuevo->pesodestete= $series->pesodestete;
+                $transferenciaNuevo->nservi= $series->nservi;
+                $transferenciaNuevo->fecua= $series->fecua;
+                $transferenciaNuevo->fecup= $series->fecup;
+                $transferenciaNuevo->abort= $series->abort;
+                $transferenciaNuevo->edad= $series->edad;
+                $transferenciaNuevo->edadpp= $series->edadpp;
+                $transferenciaNuevo->tipoap= $series->tipoap;
+                $transferenciaNuevo->tipops= $series->tipops;
+                $transferenciaNuevo->lote= $series->nombrelote;
+                $transferenciaNuevo->sublote= $series->sub_lote;
+                $transferenciaNuevo->lprod= $series->lprod;
+                $transferenciaNuevo->sublprod= $series->sublprod;
+                $transferenciaNuevo->lpast= $series->lpast;
+                $transferenciaNuevo->sublpast= $series->sublpast;
+                $transferenciaNuevo->ltemp= $series->ltemp;
+                $transferenciaNuevo->subltemp= $series->subltemp;
+                $transferenciaNuevo->ulgdp= $series->ultgdp;
+                $transferenciaNuevo->pa1= $series->pa1;
+                $transferenciaNuevo->pa2= $series->pa2;
+                $transferenciaNuevo->pa3= $series->pa3;
+                $transferenciaNuevo->pa4= $series->pa4;
+                $transferenciaNuevo->ua= $series->ua;
+                $transferenciaNuevo->ncrias= $series->ncrias;
+                $transferenciaNuevo->npartorepor= $series->npartorepor;
+                $transferenciaNuevo->nabortoreport= $series->nabortoreport;
+                $transferenciaNuevo->id_motivo_salida= $request->motivo;
+                $transferenciaNuevo->id_finca= $finca->id_finca;
+
+                $transferenciaNuevo-> save();   
+
+                //Luego creamos la tabla sghsalidas
+                if ($series->fecr == null) {
+                    $series->fecr = $series->fnac;
+                } else {
+                    $series->fecr = $series->fecr; 
+                }
+                
+
+                $serieHistoriaSal = new \App\Models\sghsal;
+
+                $serieHistoriaSal->id_serie = $request->id[$i];
+                $serieHistoriaSal->serie = $series->serie;
+                $serieHistoriaSal->motivo = $motivosal->nombremotivo;
+                $serieHistoriaSal->fechs = $request->fecs;
+                $serieHistoriaSal->procede = $finca->nombre;
+                $serieHistoriaSal->destino = $fincadestino->nombre;
+                $serieHistoriaSal->peso = $series->pesoactual;
+                $serieHistoriaSal->feche = $series->fecr;
+                $serieHistoriaSal->e_s = 0;
+                $serieHistoriaSal->id_motsal = $request->motivo;
+                $serieHistoriaSal->obser = $request->obser;
+                $serieHistoriaSal->id_finca = $finca->id_finca;
+
+                $serieHistoriaSal-> save();
+
+                //luego creamos la (s) series en la tabla sganims para la nueva finca en estatus activos
+
+                $serieNuevaFinca = new \App\Models\sganim;
+
+
+                $serieNuevaFinca->serie = $series->serie;
+                $serieNuevaFinca->nombrelote= $series->nombrelote;
+                $serieNuevaFinca->sub_lote= $series->sub_lote;
+                $serieNuevaFinca->codmadre= $series->codmadre;
+                $serieNuevaFinca->codpadre= $series->codpadre;
+                $serieNuevaFinca->espajuela= $series->espajuela;
+                $serieNuevaFinca->pajuela= $series->pajuela;
+                $serieNuevaFinca->fnac= $series->fnac;
+                $serieNuevaFinca->fecr= $series->fecr;
+                //$serieNuevaFinca->fecs= null;
+                //$serieNuevaFinca->motivo = null;
+                $serieNuevaFinca->fecentrada= $fecsalida;
+                $serieNuevaFinca->status= 1;
+                $serieNuevaFinca->tipo= $series->tipo;
+                $serieNuevaFinca->tipoanterior= $series->tipoanterior;
+                $serieNuevaFinca->sexo= $series->sexo;
+                $serieNuevaFinca->observa= $series->observa;
+                $serieNuevaFinca->procede= $finca->nombre;
+                $serieNuevaFinca->pesoi= $series->pesoi;
+                $serieNuevaFinca->pesoactual= $series->pesoactual;
+                $serieNuevaFinca->fulpes= $series->fulpes;
+                $serieNuevaFinca->destatado= $series->destatado;
+                $serieNuevaFinca->pesodestete= $series->pesodestete;
+                $serieNuevaFinca->fecdes= $series->fecdes;
+                $serieNuevaFinca->pa1= $series->pa1;
+                $serieNuevaFinca->pa2= $series->pa2;
+                $serieNuevaFinca->pa3= $series->pa3;
+                $serieNuevaFinca->pa4= $series->pa4;
+                $serieNuevaFinca->ua= $series->ua;
+                $serieNuevaFinca->nparto= $series->nparto;
+                $serieNuevaFinca->dparto= $series->dparto;
+                $serieNuevaFinca->nservi= $series->nservi;
+                $serieNuevaFinca->fecua= $series->fecua;
+                $serieNuevaFinca->fecup= $series->fecup;
+                $serieNuevaFinca->abort= $series->abort;
+                $serieNuevaFinca->edad= $series->edad;
+                $serieNuevaFinca->edadpp= $series->edadpp;
+                $serieNuevaFinca->pesopp= $series->pesopp;
+                $serieNuevaFinca->ultgdp= $series->ultgdp;
+                $serieNuevaFinca->ncrias= $series->ncrias;
+                $serieNuevaFinca->npartorepor= $series->npartorepor;
+                $serieNuevaFinca->nabortoreport= $series->nabortoreport;
+                /*
+                * Parametros Tipológicos
+                */
+                $serieNuevaFinca->nro_monta= $series->nro_monta;
+                $serieNuevaFinca->prenada= $series->prenada;
+                $serieNuevaFinca->parida= $series->parida;
+                $serieNuevaFinca->tienecria= $series->tienecria;
+                $serieNuevaFinca->criaviva= $series->criaviva;
+                $serieNuevaFinca->ordenho= $series->ordenho;
+                $serieNuevaFinca->detectacelo= $series->detectacelo;
+                $serieNuevaFinca->id_tipologia= $series->id_tipologia;
+                $serieNuevaFinca->idraza= $series->idraza;
+                $serieNuevaFinca->id_condicion= $series->id_condicion;
+                $serieNuevaFinca->lprod= $series->lprod;
+                $serieNuevaFinca->lpast= $series->lpast;
+                $serieNuevaFinca->ltemp= $series->ltemp;
+                $serieNuevaFinca->lnaci= $series->lnaci;
+                $serieNuevaFinca->id_finca= $fincadestino->id_finca;
+
+                $serieNuevaFinca->save(); 
+
+                //Luego acualizamos el status a inactivo en serie origen
+                $updateserie = DB::table('sganims')
+                            ->where('id',$request->id[$i])
+                            ->where('id_finca', $finca->id_finca)
+                            ->update(['status'=>0,'motivo'=>$motivosal->nombremotivo,
+                                'fecs'=>$fecsalida]);
+            }
+            
+        }   
+                    
+        return back()->with('msj', 'Serie (s) transferida (s) satisfactoriamente');
+    }
+
+
+    //Retorna a la vista de transferencia.
+    public function vista_reportestransferencia(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+    
+        $destino = \App\Models\sgfinca::all();
+        
+        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+            ->get();
+
+        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get();  
+        
+        $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+           ->paginate(10); 
+
+        
+          
+
+        return view('info.transferencias_realizadas',compact('finca','transfrealizada','tipologia','destino','motivo'));
+    }
+
+     //Retorna a la vista general de reportes
+        public function vista_reportesgenerales($id_finca)
+    {
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+    
+        return view('info.vista_reportes_generales',compact('finca'));
+    }
+
+    //Retorna a la vista de transferencia.
+    public function vista_reportecatalogoganado(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        $status = 1; //Status activos
+
+        $lote = \App\Models\sglote::where('id_finca','=',$id_finca)
+            ->get();
+        
+        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+            ->get();
+
+
+    /*
+        $catalogoganado = \App\Models\sganim::where('id_finca','=',$id_finca)
+           ->paginate(10); 
+    */
+           $catalogoganado = DB::table('sganims')
+                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
+                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
+                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
+                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
+                ->where('sganims.id_finca','=',$finca->id_finca)
+                ->where('sganims.status','=',$status)
+                ->paginate(10);
+
+        //return $catalogoganado->all();
+                
+        return view('info.catalogo_de_ganado',compact('finca','catalogoganado','tipologia','lote'));
+    }
+
+    //Retorna a la vista de transferencia.
+    public function vista_reportepajuela(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        $pajuela = \App\Models\sgpaju::where('id_finca','=',$id_finca)
+            ->paginate(10);
+        
+        //return $pajuela->all();
+                
+        return view('info.catalogo_de_paju',compact('finca','pajuela'));
     }
    
+
+    //Retorna a la vista de transferencia.
+    public function vista_reportehistsalida(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        $destino = \App\Models\sgfinca::all();
+    
+        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
+    
+        $historialsalida = \App\Models\sghsal::where('id_finca','=',$id_finca)
+            ->paginate(10);
+        
+        //return $pajuela->all();
+                
+        return view('info.historial_salida',compact('finca','destino','motivo','historialsalida'));
+    }
+
+    public function vista_reportemovimientolote(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
+            ->paginate(10);
+    
+        //return $movimientolote->all();
+                
+        return view('info.movimiento_lote',compact('finca','movimientolote'));
+    }
 
 
 }

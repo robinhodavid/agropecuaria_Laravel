@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Reporte Catálago de Ganado</title>
+        <title>Reporte Catálogo de Ganado</title>
 
         <!-- Fonts -->
         <!-- <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
             *
             {
                font-family: Arial, Helvetica, sans-serif;
-               font-size: 10px;
+               font-size: 15px;
             }
             .title-membrete
             {
@@ -57,7 +57,7 @@
                 padding-left: 26px;
                 padding-right: 26px;
                 margin-top: 160px;
-                font-size: 10px;
+                font-size: 14px;
             } 
            td
             {
@@ -69,26 +69,30 @@
                 background-color: #eaeaea;
                 border:1px solid #aeaeae;
                 border-radius: 3px; 
+                width: 17%;
             }
             .content-resumen-data 
             {
-                font-size: 10px; 
+               font-size: 15px;
+              line-height: 2;
+              margin-left: 10px;   
+              font-weight: 600;   
             }
             
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="row">
+        <div>
+            <div>
                     <label class="title-membrete">{{$finca->nombre}}</label>  
                     <label>SISGA</label>
             </div>
-            <div class="row">
+            <div>
                 <label class="title-report-name">Reporte: Catálogo de Ganado</label>
                 <label>{{ $fechadereporte }}</label>        
             </div>
-            <div class="row">
-                <div class="card-especie">
+            <div>
+                <div>
                 <table class="table table-bordered">
                   <thead>                  
                     <tr>

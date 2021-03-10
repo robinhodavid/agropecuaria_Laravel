@@ -309,7 +309,7 @@
                     <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
                 </svg> </a>
                         
-                    <form action="{{ route ('pajuela.eliminar', [$finca->id_finca, $item->id]) }}" class="d-inline" method="POST">
+                    <form action="{{ route ('pajuela.eliminar', [$finca->id_finca, $item->id]) }}" class="d-inline form-delete" method="POST">
                       @method('DELETE')
                       @csrf
                       <button type="submit" class="btn btn-danger btn-sm">
@@ -345,5 +345,47 @@
 });
     </script>
     
+    {!! Html::script('js/sweetalert2.js')!!}  
+
+   @if(session('mensaje')=='ok')
+      <script>
+        Swal.fire({
+        title: '¡Eliminado!',
+        text:  'Registro Eliminado Satisfacoriamente',
+        icon:  'success'
+      })
+      </script>
+  @endif
+  @if (session('mensaje')=='error')
+      <script>
+        Swal.fire({
+        text:'Está siendo usado por otro recurso',
+        icon: 'error',
+        title:'¡No Eliminado!'
+      })
+      </script>
+    @endif
+    
+    <script>
+    
+    $('.form-delete').submit(function(e){
+      e.preventDefault();
+      Swal.fire({
+      title:'¿Está seguro que desea Eliminar el Registro?',
+      text:"Este cambio es irreverible",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then((result)=>{
+      if (result.value){
+        this.submit();
+      }
+    })
+    }); 
+    </script>  
+
 
 @stop

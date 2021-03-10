@@ -22,7 +22,7 @@
             *
             {
                font-family: Arial, Helvetica, sans-serif;
-               font-size: 10px;
+               font-size: 15px;
             }
             .title-membrete
             {
@@ -66,14 +66,18 @@
             }   
             .resumen-data 
             {
-                margin-top: 40px;
-                background-color: #eaeaea;
-                border:1px solid #aeaeae;
-                border-radius: 3px; 
+              margin-top: 40px;
+              background-color: #eaeaea;
+              border:1px solid #aeaeae;
+              border-radius: 3px;
+              width: 27%; 
             }
             .content-resumen-data 
             {
-                font-size: 10px; 
+              font-size: 15px; 
+              line-height: 2;
+              margin-left: 10px;   
+              font-weight: 600;   
             }
             
         </style>

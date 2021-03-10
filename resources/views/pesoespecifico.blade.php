@@ -20,6 +20,26 @@
 		<div class="form-registro">
 			<form action="{{ route('pesoespecifico.crear', [$finca->id_finca, $serie->serie]) }}" method="POST">
 				@csrf
+				@error('fecha')
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  <span>
+                    <strong>Atención! </strong>El Campo Fecha de Pesaje es requerido.
+                  </span>         
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                @enderror
+                @error('peso')
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  <span>
+                    <strong>Atención! </strong>El Campo peso es requerido.
+                  </span>         
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                @enderror
 				<div class="col-md-12">
 		            <div class="card">
 		              <div class="card-header">
@@ -92,6 +112,7 @@
 							                <input 
 							                type="date" 
 							                name="fecr"
+							                id="fecr"
 							                class="form-control"
 							                value="{{ $serie->fecr }}" 
 							                min="1980-01-01" 
@@ -377,6 +398,17 @@
 
 	{!! Html::script('js/jquery-3.5.1.min.js')!!}
     {!! Html::script('js/dropdown.js')!!} 
-       
+    
+    {!! Html::script('js/sweetalert2.js')!!}	
+    
+  	@if(session('mensaje')=='ok')
+	  	<script>
+	  		Swal.fire({
+				title: '¡Tipología Actualizada!',
+				text:  'El registro de peso Generó un cambio de Tipología',
+				icon:  'info'
+			})
+	  	</script>
+	@endif   
 
 @stop
