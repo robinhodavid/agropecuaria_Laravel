@@ -850,10 +850,11 @@ class RutasController extends Controller
 
 		    }
 
-		    public function filterName(Request $request, $nombre_lote)
+		    public function filterName(Request $request, $id_finca, $nombre_lote)
 	    	{
-			  	if($request->ajax()){
-                    $sublote=\App\Models\sgsublote::filtrarlotesublote($nombre_lote); 
+			  	
+                if($request->ajax()){
+                    $sublote=\App\Models\sgsublote::filtrarlotesublote($id_finca, $nombre_lote); 
 			  	return response()->json($sublote);
 			  }
 		    }
@@ -1142,6 +1143,7 @@ class RutasController extends Controller
                 $id[$i]= (int) $serieid->id;
             }   
              
+
              /*
              * Se comprueba que la serie existe $seriefincadestino
              * Luego se ubica (n)  la (s) serie (s)

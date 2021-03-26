@@ -85,7 +85,7 @@ class HomeController extends Controller
 /*
 *   Vistas generales de Series.
 */
-    public function series_activas(request $request, $id_finca)
+    public function series_activas(Request $request, $id_finca)
     {
          $finca = \App\Models\sgfinca::findOrFail($id_finca);
             
@@ -964,6 +964,94 @@ class HomeController extends Controller
             return back()->with('mensaje', 'error');
         }
     }
+
+    /*
+    * Creamos las Clases para el tipo de monta - Variables de Control
+    */
+
+    public function tipomonta(Request $request, $id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $tipomonta = \App\Models\sgtipomonta::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.tipo_monta', compact('tipomonta','finca'));
+    }
+
+    public function crear_tipomonta(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgpatologias,patologia,NULL,NULL,id_finca,'. $id_finca,
+            ],
+            'nomenclatura'=>[
+                'required',
+            ],
+        ]);
+        
+        //return  $request ->all();
+
+        $tipomontaNueva = new \App\Models\sgtipomonta;
+
+        $tipomontaNueva->nombre = $request->nombre;
+        $tipomontaNueva->nomenclatura = $request->nomenclatura;
+        $tipomontaNueva->descripcion = $request->descripcion;
+        $tipomontaNueva->id_finca = $id_finca;
+
+        $tipomontaNueva-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+    public function editar_tipomonta($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $tipomonta = \App\Models\sgtipomonta::findOrFail($id);
+        
+        return view('varcontrol.editar_tipo_monta', compact('tipomonta', 'finca'));
+    }
+
+    public function update_tipomonta(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+            'nomenclatura'=>[
+                'required',
+            ],
+        ]);
+
+        $tipomontaUpdate = \App\Models\sgtipomonta::findOrFail($id);
+
+        $tipomontaUpdate->nombre=$request->nombre;
+        $tipomontaUpdate->nomenclatura=$request->nomenclatura;
+        $tipomontaUpdate->descripcion=$request->descripcion;
+        
+        $tipomontaUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_tipomonta($id_finca, $id){
+            
+        $tipomontaEliminar = \App\Models\sgtipomonta::findOrFail($id);
+            
+        try {
+        $tipomontaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }
+
 
     
 

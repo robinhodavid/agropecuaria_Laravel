@@ -96,6 +96,7 @@ Estilos Generales
 	float: right;
 	font-size: 13px;
 	margin: 0px 4px 0px 4px;
+	text-align: right;
 }
 
 .col-descrip
@@ -324,4 +325,33 @@ Estilos Para la tabla de reporte transferencia.
 {
 	margin-top: 30px;
 	margin-right: 5px;	
+}
+
+/*
+*************************************************************************
+Estilos para las celdas del Progreso de la Temporada
+*
+*/
+
+.celda
+{
+	font-weight: 900;
+	text-align: center;
+}
+.color-celo{color: #dc3545 !important;}
+.color-palpaciones{color: #fd7e14 !important;}
+.color-servicios{color: #17a2b8 !important;}
+.color-prenhez{color: #007bff !important;}
+.color-parto{color: #28a745 !important;}
+.color-aborto{color: #dc3545 !important;}
+
+
+/*
+***************************************************************************
+Esilos para el btón action de la tabla de lote de monta.
+*
+*/
+.dropdown-menu 
+{
+	left:-100px;
 }

@@ -5,8 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class sgciclo extends Model
+class sgtipomonta extends Model
 {
     use HasFactory;
-    protected $primaryKey = "id_ciclo";
 }

@@ -16,8 +16,9 @@ class sgsublote extends Model
         'nombre_lote',
         'sub_lote',
       ];
-    public static function filtrarlotesublote($nombre_lote){
+    public static function filtrarlotesublote($id_finca, $nombre_lote){
         return \App\Models\sgsublote::where ('nombre_lote','=', $nombre_lote)
+        ->where('id_finca','=',$id_finca)
         ->get();
 
     }

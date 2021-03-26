@@ -1,24 +1,8 @@
-//Permite filtrar y cargar el select Sub-Lote de forma dinamica.
-$('#nombrelote').change(function(event){
-    $.get(`/home/ganaderia/asignar-series/${event.target.value}`, function(response,nombrelote){
-        console.log(response);
-
-         if ($.trim(response) != '') {
-         $("#sublote").empty();
-        	response.forEach(element => {	
-            $("#sublote").append(`<option value='${element.sub_lote}'> ${element.sub_lote} </option>`);
-        });
-        	} else {
-        	$("#sublote").empty();	
-	        $("#sublote").append(`<option value=''> No posee Sub lote </option>`);
-         }
-    }); 
-});
 
 //Permite filtrar y cargar el select Lote de forma dinamica segun el tipo.
 $('#tipo_estrategico').change(function(event){
         $.get(`/home/ganaderia/asignar-series/tipo/${event.target.value}`, function(response,tipo){
-        console.log(response);
+        console.log(event.target.value);
         $("#nombrelote").empty();
             response.forEach(element => {   
             $("#nombrelote").append(`<option value='${element.nombre_lote}'> ${element.nombre_lote} </option>`);
@@ -43,6 +27,26 @@ $('#tipo_pastoreo').change(function(event){
         });
     });
 }); 
+
+//Permite filtrar y cargar el select Sub-Lote de forma dinamica.
+$('#nombrelote').change(function(event){
+    $.get(`/home/sisga-admin/finca/${event.target.value}/ganaderia/asignar-series/${event.target.value}`, function(response,nombrelote){
+        
+        ///home/ganaderia/asignar-series/
+        console.log(response);
+
+         if ($.trim(response) != '') {
+         $("#sublote").empty();
+            response.forEach(element => {   
+            $("#sublote").append(`<option value='${element.sub_lote}'> ${element.sub_lote} </option>`);
+        });
+            } else {
+            $("#sublote").empty();  
+            $("#sublote").append(`<option value=''> No posee Sub lote </option>`);
+         }
+    }); 
+});
+
 
 //Permite filtrar y cargar el select tipologia de forma dinamica de forma dinamica.
 $('#sexo').change(function(event){
@@ -182,5 +186,99 @@ $('#status').on('change', function() {
     }
 });
 
+/*
+*Función que permie calcular la fecha final basado en 9 meses  
+*/
 
+$('#fecini').on('change',function(){
+       console.log('Hola Fecha');
+       var day = 290;
+       calculosumadias(day);
+});
 
+function calculosumadias(day)
+{
+    //var fecini = new Date(document.getElementById('fecini').value);
+    var fecini = new Date($('#fecini').val());
+    //console.log(fecini);    
+    var dias = day; //Equivale a 9 meses de toda la temporada de reproducción 11 meses
+    fecini.setDate(fecini.getDate() + dias);
+    console.log(fecini); 
+    fecfin = fecini.toJSON().slice(0,10); // Se transforma para que lo tome. 
+    $("#fecfin").val(fecfin);
+} 
+
+/*
+*Función que permie calcular la fecha final basado en 3 meses  
+*/
+
+$('#fechainicialciclo').on('change',function(){
+    //   console.log('Hola Fecha');
+       var day = 90;
+       caldate(90);
+       duracion();
+});
+
+$('#fechafinalciclo').on('change',function(){
+    //   console.log('Hola Fecha');
+       duracion();
+});
+
+function caldate(day)
+{
+    
+    var fecini = new Date($('#fechainicialciclo').val());
+    //var fecfin = new Date(document.getElementById('fechafinalciclo').value);
+    //console.log(fecini);    
+    var dias = day; //Equivale a 9 meses de toda la temporada de reproducción 11 meses
+    
+    fecini.setDate(fecini.getDate() + dias);
+    //console.log(fecini); 
+    fecfin = fecini.toJSON().slice(0,10); // Se transforma para que lo tome. 
+    $("#fechafinalciclo").val(fecfin);    
+   
+} 
+
+function duracion(){
+    //Fecha Inicial de Ciclo
+    var fechaini = new Date(document.getElementById('fechainicialciclo').value);
+    var fechafini = new Date(document.getElementById('fechafinalciclo').value);
+    var year1 = fechaini.getFullYear();
+    var year2 = fechafini.getFullYear();
+    var month1 = fechaini.getMonth()+1; 
+    var month2 = fechafini.getMonth();
+    
+    numberOfMonths=(year2-year1)*12+(month2-month1);
+
+     if  ( isNaN(fechafini) ) {
+
+         alert('Error en Fecha: Fecha Final no posee valor - Seleccione una Fecha');
+
+     }
+
+    if (fechaini > fechafini) {
+        alert('Error en Rango de Fecha: Fecha Inicial no puede ser mayor a la Fecha Final');
+        } else {
+            if (numberOfMonths==0) {
+               var difdia =fechafini.getTime() - fechaini.getTime();
+               var contdia = Math.round(difdia/(1000*60*60*24));
+               diadura = contdia;
+            } else {
+                var difdia =fechafini.getTime() - fechafini.getTime();
+                var contdia = Math.floor(difdia/(1000*60*60*24));
+                var daymes = fechafini.getDate();
+                diadura = daymes;
+            }    
+        }
+    if (diadura <0) {
+        diadura = diadura*(-1);
+    }
+
+    dura = numberOfMonths +"-"+ diadura;
+
+    $("#duracion").val(dura);  
+
+    
+}
+
+       

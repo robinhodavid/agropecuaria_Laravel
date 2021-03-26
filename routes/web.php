@@ -148,8 +148,6 @@ Route::put('/home/sisga-admin/finca/{id_finca}/diagnostico-palpaciones/{id}', [A
 Route::delete('/home/sisga-admin/finca/{id_finca}/diagnostico-palpaciones/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_diagnostico_palpaciones'])->name('diagnostico_palpaciones.eliminar'); 
 /*-->> End Ruta palpaciones*/
 
-
-
 /*Ruta para motivos de entrada y salidas de series*/
 
 Route::get('/home/sisga-admin/finca/{id_finca}/motivos-entrada-salida', [App\Http\Controllers\HomeController::class, 'motivo_entrada_salida'])->name('motivo_entrada_salida');
@@ -166,9 +164,6 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/motivos-entrada-salida/{id}', 
 /*-->> End Ruta motivos*/
 
 
-
-
-
 /*Ruta para el registro de patologías*/
 Route::get('/home/sisga-admin/finca/{id_finca}/patologia', [App\Http\Controllers\HomeController::class, 'patologia'])->name('patologia');
 
@@ -179,6 +174,25 @@ Route::get('/home/sisga-admin/finca/{id_finca}/patologia/{id}', [App\Http\Contro
 Route::put('/home/sisga-admin/finca/{id_finca}/patologia/{id}', [App\Http\Controllers\HomeController::class, 'update_patologia'])->name('patologia.update');
 
 Route::delete('/home/sisga-admin/finca/{id_finca}/patologia/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_patologia'])->name('patologia.eliminar'); 
+
+/***********************************************
+* Inicio Ruta de Variable de Control Tipo de Montas para cada Finca.
+************************************************/
+
+Route::get('/home/sisga-admin/finca/{id_finca}/tipo-monta', [App\Http\Controllers\HomeController::class, 'tipomonta'])->name('tipomonta');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/tipo-monta', [App\Http\Controllers\HomeController::class, 'crear_tipomonta'])->name('tipomonta.crear');
+
+Route::get('/home/sisga-admin/finca/{id_finca}/tipo-monta/{id}', [App\Http\Controllers\HomeController::class, 'editar_tipomonta'])->name('tipomonta.editar'); 
+
+Route::put('/home/sisga-admin/finca/{id_finca}/tipo-monta/{id}', [App\Http\Controllers\HomeController::class, 'update_tipomonta'])->name('tipomonta.update');
+
+Route::delete('/home/sisga-admin/finca/{id_finca}/tipo-monta/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_tipomonta'])->name('tipomonta.eliminar'); 
+
+/***********************************************
+* Fin de Ruta de Variable de Control Tipo de Montas para cada Finca.
+************************************************/
+
 
 
 
@@ -258,10 +272,14 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/lote/{id}', [App\Htt
 	
 	/*Ruta para la vista General para asignar series a un Lote o a un sublote en específico*/
 	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/asignar-series', [App\Http\Controllers\RutasController::class, 'asignarseries'])->name('asignarseries');
-
+/*
 	//--> Ruta para filtrar el select sub-lote en forma dinamica.
 	Route::get('/home/ganaderia/asignar-series/{nombre_lote}', [App\Http\Controllers\RutasController::class, 'filterName'])->name('filterName');
-	
+*/	
+	//--> Ruta para filtrar el select sub-lote en forma dinamica.
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/asignar-series/{nombre_lote}', [App\Http\Controllers\RutasController::class, 'filterName'])->name('filterName');
+
+
 	//--> Ruta para filtrar el select lote en forma dinamica.
 	Route::get('/home/ganaderia/asignar-series/tipo/{tipo}', [App\Http\Controllers\RutasController::class, 'filterTipo'])->name('filterTipo');
 
@@ -332,7 +350,60 @@ Route::get('/home/sisga-admin/finca/{id_finca}/reportes-generales', [App\Http\Co
 /***********************************************
 * Inicio Rutas Módulo de Reproducción Animal
 ************************************************/
-Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-monta', [App\Http\Controllers\ReprodController::class, 'temporada_monta'])->name('temporada_monta');
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva', [App\Http\Controllers\ReprodController::class, 'temporada_monta'])->name('temporada_monta');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva', [App\Http\Controllers\ReprodController::class, 'crear_temporada'])->name('temporada.crear'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva/{id}', [App\Http\Controllers\ReprodController::class, 'editar_temporada'])->name('temporada.editar'); 
+
+Route::put('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva/{id}', [App\Http\Controllers\ReprodController::class, 'update_temporada'])->name('temporada.update');
+
+Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva/eliminar/{id}', [App\Http\Controllers\ReprodController::class, 'eliminar_temporada'])->name('temporada.eliminar');
+
+Route::put('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-cierre/{id}', [App\Http\Controllers\ReprodController::class, 'cierre_temporada'])->name('temporada.cerrar');
+
+//Con esta Ruta Ingresamos dentro de la Temporada
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}', [App\Http\Controllers\ReprodController::class, 'temporada_detalle'])->name('temporada.detalle'); 
+
+//Con esta Ruta Creamos el Ciclo reproductivo
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo', [App\Http\Controllers\ReprodController::class, 'ciclo'])->name('ciclo'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/crear-ciclo', [App\Http\Controllers\ReprodController::class, 'crear_ciclo'])->name('ciclo.crear'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/editar-ciclo/{id_ciclo}', [App\Http\Controllers\ReprodController::class, 'editar_ciclo'])->name('ciclo.editar'); 
+
+Route::put('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/editar-ciclo/{id_ciclo}', [App\Http\Controllers\ReprodController::class, 'update_ciclo'])->name('ciclo.update');
+
+Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva/{id}/eliminar-ciclo/{id_ciclo}', [App\Http\Controllers\ReprodController::class, 'eliminar_ciclo'])->name('ciclo.eliminar');
+
+
+/*
+*	Aquí se coloca la ruta que mostrara el progreso de la temporada de monta
+*/
+	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}', [App\Http\Controllers\ReprodController::class, 'detalle_ciclo'])->name('ciclo.detalle'); 
+
+	// Creamos la ruta que permitira asignar las series a los lotes de montas. 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/lote-de-monta', [App\Http\Controllers\ReprodController::class, 'lotemonta'])->name('lotemonta'); 
+
+	Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/lote-de-monta', [App\Http\Controllers\ReprodController::class, 'crear_lotemonta'])->name('lotemonta.crear'); 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/editar-lote-de-monta/{id_lotemonta}', [App\Http\Controllers\ReprodController::class, 'editar_lotemonta'])->name('lotemonta.editar'); 
+
+	Route::put('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/editar-lote-de-monta/{id_lotemonta}', [App\Http\Controllers\ReprodController::class, 'update_lotemonta'])->name('lotemonta.update');
+
+	Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/eliminar-lote-de-monta/{id_lotemonta}', [App\Http\Controllers\ReprodController::class, 'eliminar_lotemonta'])->name('lotemonta.eliminar');
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/series-en-lote-de-monta', [App\Http\Controllers\ReprodController::class, 'serieslotemonta'])->name('serieslotemonta'); 
+
+
+	Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/asignando-series-en-lote-de-monta', [App\Http\Controllers\ReprodController::class, 'asignarserieslotemonta'])->name('asignarserieslotemonta'); 
+/*						
+* Rutas para el registro de cada proceso que se raliza en la monta 
+*/
+Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/registros', [App\Http\Controllers\ReprodController::class, 'formulario_registros_monta'])->name('registros.formulario');
+
+
 
 
 
