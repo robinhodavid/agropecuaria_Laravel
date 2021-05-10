@@ -51,7 +51,7 @@ Estilos Generales
 .form-select,
 .form-control 
 {
-	width: 97%; 
+	/*width: 97%; */
 	font-size: 12px;
 }
 .form-group
@@ -84,8 +84,8 @@ Estilos Generales
 }
 .text-area
 {
-	width:98%;
-	margin-bottom: 15px;
+/*	width:98%;
+	margin-bottom: 15px;*/
 }
 
 .form-check-input-paju {	
@@ -199,6 +199,12 @@ Estilos Para la ficha de Ganado
 	font-size: 15px;
 	font-weight: 700;
 	padding: 10px 0px 10px 0px;
+}
+
+.title-label 
+{
+	font-size: 15px;
+	font-weight: 700;
 }
 .card-ficha-ganado {
 	border-radius: 2px;
@@ -338,7 +344,7 @@ Estilos para las celdas del Progreso de la Temporada
 	font-weight: 900;
 	text-align: center;
 }
-.color-celo{color: #dc3545 !important;}
+.color-celo{color: #f2571a !important;}
 .color-palpaciones{color: #fd7e14 !important;}
 .color-servicios{color: #17a2b8 !important;}
 .color-prenhez{color: #007bff !important;}

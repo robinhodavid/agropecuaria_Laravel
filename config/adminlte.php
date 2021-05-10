@@ -242,13 +242,13 @@ return [
             'can'  => 'manage-blog',
         ],
     /*Aquí se colocarán las fincas a conectar*/
-    /*    [
+        [
             'text'        => 'pages',
             'url'         => 'admin/pages',
             'icon'        => 'far fa-fw fa-file',
             'label'       => 4,
             'label_color' => 'success',
-        ], */
+        ], 
         ['header' => 'Configuración de Perfil'],
         [
             'text' => 'Usuario',
@@ -260,181 +260,25 @@ return [
             'url'  => 'admin/settings',
             'icon' => 'fas fa-fw fa-lock',
         ],
+        [
+            'text' => 'Variables de Control',
+            'url'  => 'admin/settings',
+            'icon' => 'fas fa-fw fa-lock',
+        ],
         
         [
-            'text'    => 'Variables de Control',
+            'text'    => 'Menu 1',
             'icon'    => 'fas fa-fw fa fa-bullseye',
-            'submenu' => [
-             /*
-                [
-                    'text' => 'Finca',
-                    'icon_color' => 'cyan',
-                    'url'  => '/home/sisga-admin/fincas',
-                ],
-                
-                [
-                    'text' => 'Procesos',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ], */
-               
-                /*
-                [
-                    'text' => 'Especie',
-                    'icon_color' => 'cyan',
-                    'url'  => 'especie',
-                ],
-              
-                [
-                    'text' => 'Tipología',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/tipologias',
-                ],
-                  
-                [
-                    'text' => 'Condiciones Corporales',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/condicion-corporal',
-                ],
-                      
-                [
-                    'text' => 'Diagnósticos de Palpaciones',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/diagnostico-palpaciones',
-                ],
-                [
-                    'text' => 'Razas',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/raza',
-                ],
-                [
-                    'text' => 'Mótivos Entrada y Salida ',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/sisga-admin/motivos-entrada-salida',
-                ],
-                  [
-                    'text' => 'Patologías',
-                    'icon_color' => 'cyan',
-                    'url'  => '/home/sisga-admin/patologia',
-                ],
-                          */
-                
+            'submenu' => [               
             ],
         ],
 
         [
-            'text'    => 'Ganadería',
+            'text'    => 'Menu 2',
             'icon'    => 'fas fa-fw fa fa-id-card',
             'submenu' => [
-                /*
-                [
-                    'text' => 'Ficha de Ganado',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/ganaderia/ficha-de-ganado',
-                ],*/
-                
-               /*
-                [
-                    'text' => 'Lote',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/ganaderia/lote',
-                /*    'submenu' => [
-                            [
-                                'text' => 'Sub-Lotes',
-                                'icon_color' => 'cyan',
-                                'url'  => '#',
-                            ],
-                    ],
-                ],*/
-                
-                [
-                    'text' => 'Transferencia',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/ganaderia/transferencia',
-                ],
-
-/*
-                [
-                    'text' => 'Pajuela',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/ganaderia/pajuela',
-                ], 
-                */
-                [
-                    'text' => 'Pedigree',
-                    'icon_color' => 'cyan',
-                    'url'  => 'home/ganaderia/pedigree',
-                ],
             ],
         ],
-
-/*
-        [
-            'text'    => 'Reproducción',
-            'icon'    => 'fas fa-fw fa-project-diagram',
-            'submenu' => [
-                [
-                    'text' => 'Temporada de Monta',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-                
-                [
-                    'text' => 'Lechera / Lactancia',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-                
-                [
-                    'text' => 'Quesera',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-            ],
-        ],
-
-        [
-            'text'    => 'Campo',
-            'icon'    => 'fas fa-fw fa-share',
-            'url' => '#',
-        ],
-        
-        [
-            'text'    => 'Reportes',
-            'icon'    => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'Generales',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-                [
-                    'text' => 'Específicos',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-            ],
-        ],
-        
-        [
-            'text'    => 'Trabajo de Campo',
-            'icon'    => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'Inventario',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-                [
-                    'text' => 'Cojeto',
-                    'icon_color' => 'cyan',
-                    'url'  => '#',
-                ],
-            ],
-        ],
-
-*/
-
         ['header' => 'Recursos/ Utilidades'],
         [
             'text'       => 'Block de Notas',

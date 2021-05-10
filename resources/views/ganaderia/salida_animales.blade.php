@@ -13,7 +13,7 @@
     <div class="col-md-12"> <!-- Col1 -->
       <div class="card">
           <div class="card-header">
-            <h3 class="card-title title-header">Transferencia o Salida de Series</h3>
+            <h3 class="card-title title-header">Salida de Series</h3>
             <div class="card-tools">
               <form method="GET" action="{{route('transferencia',$finca->id_finca) }}" role="search">
                 <div class="card-tools search-table">
@@ -38,7 +38,7 @@
             <!-- /.card-header -->
           <div class="card-body">
               <div class="form-registro">
-                <form action="{{ route ('serie.transferir', $finca->id_finca) }}" method="POST">
+                <form action="{{ route ('serie.salida', $finca->id_finca) }}" method="POST">
                 @csrf
                 @error('id')
                   <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -60,16 +60,7 @@
                   </button>
                 </div>
                 @enderror
-                 @error('motivo')
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                  <span>
-                    <strong>Atención! </strong>El Campo Motivo es requerido.
-                  </span>         
-                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                @enderror
+                
                 @error('destino')
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
                   <span>
@@ -107,9 +98,7 @@
                         <th scope="col" style="width: 8%;text-align: center;">P. Ini</th>
                         <th scope="col" style="width: 8%;text-align: center;">P. act</th>
                          <th scope="col" style="width: 8%;text-align: center;">Sexo</th>
-                        <th scope="col">Lote</th>
-                        <th scope="col">Sub Lote</th>
-                        
+                        <th scope="col">Lote</th>   
                       </tr>
                    </thead>
                     <tbody>
@@ -154,10 +143,6 @@
                         <td style="width: 8%;text-align: center;">
                           {{ $item->nombrelote }}
                         </td>
-                        <td style="width: 8%;text-align: center;">
-                         {{ $item->sub_lote }}
-                        </td>
-
                       </tr>
                     </tbody>
                     @endforeach()
@@ -199,7 +184,7 @@
                     <select class="form-select" name="destino" aria-label="select example">
                         <option value="" selected>Seleccione una opción</option>
                         @foreach($destino as $item)
-                        <option value="{{ $item->id_finca}}"> {{ $item->nombre }}
+                        <option value="{{ $item->nombre}}"> {{ $item->nombre }}
                         </option>
                         @endforeach()
                     </select>
@@ -224,7 +209,7 @@
     <button type="submit" class="btn alert-success aling-boton">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-right" viewBox="0 0 16 16">
       <path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/>
-      </svg> Transferir</button>
+      </svg> Retirar</button>
   </div>
 </form>
 </div>
@@ -232,7 +217,7 @@
     <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title title-header">Series Transferidas</h3>
+          <h3 class="card-title title-header">Series Retiradas</h3>
           
           <a href="{{ route ('reportes_transferencia', $finca->id_finca) }}" title="Ver Reportes" class="btn btn-default float-right"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
           <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
@@ -246,55 +231,30 @@
                     <thead>
                       <tr>
                         <th scope="col" style="width: 8%;text-align: center;">Serie</th>
-                        <th scope="col" style="width: 12%;text-align: center;">Tipología</th>
                         <th scope="col" style="width: 8%;text-align: center;">F. Sal</th>
-                        <th scope="col" style="width: 8%;text-align: center;">C. Mad</th>
-                        <th scope="col" style="width: 8%;text-align: center;">C. Pad</th>
-                        <th scope="col" style="width: 8%;text-align: center;">C. Paj</th>
-                        <th scope="col" style="width: 8%;text-align: center;">P. act</th>
-                        <th scope="col" style="width: 8%;text-align: center;">F. Últ. Peso</th>
-                        <th scope="col">Lote</th>
-                        <th scope="col">Sub Lote</th>
-                        <th scope="col">Destino</th>
+                        <th scope="col" style="text-align: center;">Motivo</th>
+                        <th scope="col" style="text-align: center;">Destino</th>
+                        <th scope="col" style="text-align: center;">Observación</th>
                       </tr>
                    </thead>
                     <tbody>
-                   @foreach($transfrealizada as $item)
+                   @foreach($salidarealizada as $item)
                       <tr>
                         <td style="width: 8%;text-align: center;">
                           {{ $item->serie }}
                         </td>
                          <td style="width: 12%;text-align: center;">
-                          {{ $item->tipo }}
+                          {{ $item->fechs }}
                         </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->fecs }}
+                        <td style="text-align: center;">
+                          {{ $item->motivo }}
                         </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->codm}}
+                        <td style="text-align: center;">
+                          {{ $item->destino}}
                         </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->codp}}
+                        <td style="text-align: center;">
+                          {{ $item->obser}}
                         </td>
-                        <td style="width: 8%;text-align: center;">
-                         {{ $item->pajuela}}
-                        </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->pesoactual }}
-                        </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->fulpes }}  
-                        </td>
-                        <td style="width: 8%;text-align: center;">
-                          {{ $item->nombrelote }}
-                        </td>
-                        <td style="width: 8%;text-align: center;">
-                         {{ $item->sub_lote }}
-                        </td>
-                        <td style="width: 8%;text-align: center;">
-                         {{ $item->destino }}
-                        </td>
-
                       </tr>
                     </tbody>
                     @endforeach()

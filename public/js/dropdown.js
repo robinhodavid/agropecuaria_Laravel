@@ -126,9 +126,7 @@ function calculodia()
                 var contdia = Math.round(difdia/(1000*60*60*24));
                 $("#difdia").val(contdia);
             }      
-        }    
-
-    
+        }      
 } 
 /*
 *Función que permie calcular en tiempo real GDP 
@@ -192,7 +190,7 @@ $('#status').on('change', function() {
 
 $('#fecini').on('change',function(){
        console.log('Hola Fecha');
-       var day = 290;
+       var day = 365; //Días que duraría la temporada reproductiva
        calculosumadias(day);
 });
 
@@ -211,7 +209,6 @@ function calculosumadias(day)
 /*
 *Función que permie calcular la fecha final basado en 3 meses  
 */
-
 $('#fechainicialciclo').on('change',function(){
     //   console.log('Hola Fecha');
        var day = 90;
@@ -277,8 +274,571 @@ function duracion(){
     dura = numberOfMonths +"-"+ diadura;
 
     $("#duracion").val(dura);  
-
-    
 }
 
-       
+/*
+* Aqui el procedimiento o function que permite calcular los Intervalos entre Registro de Celos
+*/
+/*
+*Función que permie calcular en tiempo real la diferencia de dia 
+*para el calculo de peso.
+*/
+
+
+$('#fregistro').on('change',function(){
+    
+    var dec = document.getElementById('dec').value;
+    calproxcelo(dec);    
+    calculoier();
+    calintdiaabi();
+    
+});
+
+
+function calculoier()
+{
+    
+    var fregistro = new Date(document.getElementById('fregistro').value);    
+    var fecu = new Date(document.getElementById('fecu').value);
+ 
+
+    if  ( isNaN(fecu) ) {
+        if (fecu > fregistro) {
+        alert('Error en Rango de Fecha: Fecha de Último Celo o Servicio no puede ser mayor a la Fecha de Registro Actual');
+        } else {
+            var difdia = fregistro.getTime() - fregistro.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+           
+            $("#ier").val(contdia);
+        }
+        
+        } else {
+        if (fecu > fregistro) {
+         alert('Error en Rango de Fecha: Fecha de Último Celo o Servicio no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia =fregistro.getTime() - fecu.getTime();
+                var contdia = Math.round(difdia/(1000*60*60*24));
+                
+                $("#ier").val(contdia);
+            }      
+        }        
+}
+
+  function calproxcelo(day)
+{
+    
+    //var fechaini = new Date($('#fregistro').val());
+    var fechaini = new Date(document.getElementById('fregistro').value);   
+    var dias = parseInt(day);
+    //console.log(dias);     //Equivale a 9 meses de toda la temporada de reproducción 11 meses
+    fechaini.setDate(fechaini.getDate() + dias);
+    //console.log(fecini); 
+    fecfin = fechaini.toJSON().slice(0,10); // Se transforma para que lo tome. 
+    $("#fproxcelo").val(fecfin);    
+   
+} 
+
+function calintdiaabi()
+{
+    
+    var fregistro = new Date(document.getElementById('fregistro').value);    
+    var fecup = new Date(document.getElementById('fecup').value);
+    
+    if  ( isNaN(fecup) ) {
+    
+        if (fecup > fregistro) {
+            alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha de Registro Actual');
+        } else {
+            var difdia = fregistro.getTime() - fregistro.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+            $("#ida").val(contdia);
+        }
+        
+        } else {
+        if (fecup > fregistro) {
+         alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia = fregistro.getTime() - fecup.getTime();
+                 var contdia = Math.round(difdia/(1000*60*60*24));
+                $("#ida").val(contdia);
+            }      
+        }        
+}
+
+$('#fecharegistro').on('change',function(){
+    /*
+    * Esto es por cada cambio en el campo Fecha de Registro limpie los campos.
+    */
+    $("#festipre").val("");
+    $("#faprosecado").val(""); 
+    $("#faproparto").val("");  
+    diaprenez(); 
+    var tsecado = document.getElementById('tsecado').value;
+    fechaaproxsecado(tsecado);
+
+    var tgesta = document.getElementById('tgesta').value; 
+    fechaaproxparto(tgesta); 
+
+    intdiaabi();
+
+    calculoierparto();
+
+
+});
+$('#mesesprenez').on('change',function(){
+    /*
+    * Esto es por cada cambio en el campo Fecha de Registro limpie los campos.
+    */
+    $("#festipre").val("");
+    $("#faprosecado").val(""); 
+    $("#faproparto").val(""); 
+    diaprenez(); 
+    var tsecado = document.getElementById('tsecado').value;
+    fechaaproxsecado(tsecado);
+
+    var tgesta = document.getElementById('tgesta').value; 
+    fechaaproxparto(tgesta); 
+
+    intdiaabi();
+
+    calculoierparto();
+
+});
+
+function diaprenez()
+{
+    
+    var fregistro = new Date(document.getElementById('fecharegistro').value);    
+    var fecus = new Date(document.getElementById('fecus').value);
+    
+
+    if ($('#nral').prop('checked') ) {
+        if  ( isNaN(fecus) ) {
+            if (fecus > fregistro) {
+            alert('Error en Rango de Fecha: Fecha de Servicio Anterior no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia = fregistro.getTime() - fregistro.getTime();
+                //var contdia = Math.round(difdia/(1000*60*60*24));
+                //$("#diaprenez").val(contdia);
+                var mpz = document.getElementById('mesesprenez').value;
+                var contdia = (parseInt(mpz))*30; 
+                //Con esto calculamos en este mismo procedimiento la fecha aproximada de preñez
+                fregistro.setDate(fregistro.getDate() - contdia);
+                var fecprenez = fregistro.toJSON().slice(0,10);  
+                $("#festipre").val(fecprenez);
+            }
+        } else {
+        if (fecus > fregistro) {
+         alert('Error en Rango de Fecha: Fecha de Servicio Anterior no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia =fregistro.getTime() - fecus.getTime();
+                //var contdia = Math.round(difdia/(1000*60*60*24));
+                //$("#diaprenez").val(contdia);
+                var mpz = document.getElementById('mesesprenez').value;
+                var contdia = (parseInt(mpz))*30; 
+                //Con esto calculamos en este mismo procedimiento la fecha aproximada de preñez
+                fregistro.setDate(fregistro.getDate() - contdia);
+                var fecprenez = fregistro.toJSON().slice(0,10);
+                $("#festipre").val(fecprenez);
+            }      
+        }
+   
+    }else{
+    
+        if  ( isNaN(fecus) ) {
+        if (fecus > fregistro) {
+        alert('Error en Rango de Fecha: Fecha de Servicio Anterior no puede ser mayor a la Fecha de Registro Actual');
+        } else {
+            var difdia = fregistro.getTime() - fregistro.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+            $("#diaprenez").val(contdia);
+
+            //Con esto calculamos en este mismo procedimiento la fecha aproximada de preñez
+            fregistro.setDate(fregistro.getDate() - contdia);
+            var fecprenez = fregistro.toJSON().slice(0,10);
+            $("#festipre").val(fecprenez);
+        }
+        
+        } else {
+        if (fecus > fregistro) {
+         alert('Error en Rango de Fecha: Fecha de Servicio Anterior no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia =fregistro.getTime() - fecus.getTime();
+                var contdia = Math.round(difdia/(1000*60*60*24));
+                $("#diaprenez").val(contdia);
+                
+                //Con esto calculamos en este mismo procedimiento la fecha aproximada de preñez
+                fregistro.setDate(fregistro.getDate() - contdia);
+                var fecprenez = fregistro.toJSON().slice(0,10);
+                $("#festipre").val(fecprenez);
+            }      
+        }
+    }          
+}  
+
+function fechaaproxsecado(dias)
+{
+   //var fechaaproxparto = new Date(document.getElementById('faproparto').value);    
+
+    var fprenez = new Date(document.getElementById('festipre').value);    
+    var days = parseInt(dias);
+
+    fprenez.setDate(fprenez.getDate() + days);
+    var fechasecado = fprenez.toJSON().slice(0,10);
+            $("#faprosecado").val(fechasecado);
+           
+}
+
+function fechaaproxparto(dias)
+{
+    var fprenez = new Date(document.getElementById('festipre').value);    
+    
+    var days = parseInt(dias);
+
+    fprenez.setDate(fprenez.getDate() + days);
+    var fechaaproxparto = fprenez.toJSON().slice(0,10);
+            $("#faproparto").val(fechaaproxparto);
+           
+}
+
+function intdiaabi()
+{
+    
+    var fregistro = new Date(document.getElementById('fecharegistro').value);    
+    var fecup = new Date(document.getElementById('fecup').value);
+    
+    if  ( isNaN(fecup) ) {
+        if (fecup > fregistro) {
+        alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha de Registro Actual');
+        } else {
+            var difdia = fregistro.getTime() - fregistro.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+            $("#ida").val(contdia);
+        }
+        
+        } else {
+        if (fecup > fregistro) {
+         alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha de Registro Actual');
+            } else {
+                var difdia =fregistro.getTime() - fecup.getTime();
+                var contdia = Math.round(difdia/(1000*60*60*24));
+                $("#ida").val(contdia);
+            }      
+        }        
+}
+
+function calculoierparto()
+{
+    
+    var fecup = new Date(document.getElementById('fecup').value);    
+    var faproxparto = new Date(document.getElementById('faproparto').value);
+ 
+
+    if  ( isNaN(fecup) ) {
+        if (fecup > faproxparto) {
+        alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha Aproximada Parto');
+        } else {
+            var difdia = faproxparto.getTime() - faproxparto.getTime();
+            var contdia = Math.round(difdia/(1000*60*60*24));
+            $("#ier").val(contdia);
+        }
+        
+        } else {
+        if (fecup > faproxparto) {
+         alert('Error en Rango de Fecha: Fecha de Último Parto no puede ser mayor a la Fecha Aproximada Parto');
+            } else {
+                var difdia =faproxparto.getTime() - fecup.getTime();
+                var contdia = Math.round(difdia/(1000*60*60*24));
+                $("#ier").val(contdia);
+            }      
+        }        
+}
+
+/*
+*--> Aquí ocultamos los campos si es pajuela o Toro
+*/
+//Con esto llenaremos el campo campos. 
+if ($('#serie_paju').prop('checked') ) {
+    console.log("Checkbox seleccionado");
+        $(".col-toro").hide();
+        $(".col-paju").show();
+        //$("#cantpaju").show();
+        //$("#resp").show();
+    } else {
+        $(".col-toro").show();
+        $(".col-paju").hide();
+        //$("#cantpaju").hide();
+        //$("#resp").hide();
+}
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#serie_toro').on('change', function() {
+    if ($(this).is(':checked') ) {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Seleccionado");
+          $(".col-paju").hide();
+          $(".col-toro").show(); 
+    } else {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Deseleccionado");
+        $(".col-paju").show();
+        $(".col-toro").hide();
+    }
+});
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#serie_paju').on('change', function() {
+    if ($(this).is(':checked') ) {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Seleccionado");
+          $(".col-paju").show();
+          $(".col-toro").hide(); 
+    } else {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Deseleccionado");
+        $(".col-paju").hide();
+        $(".col-toro").show();
+    }
+});
+
+//Nos permitirá mostrar el campo Días de preñez si es de tipo inseminación. 
+if ($('#mia').prop('checked') ) {
+    console.log("Checkbox seleccionado");
+    $("#mesesprenez").hide();
+    $("#labelmeses").hide();
+    $("#diaprenez").show();
+    $("#labeldias").show();
+        } else {
+    $("#mesesprenez").show();
+    $("#labelmeses").show();
+    $("#diaprenez").hide();
+    $("#labeldias").hide();
+}
+
+//Si hay cambios en el input nos mostrará ya sea el campo díasde preñez o meses de preñez.
+$('#mia').on('change', function() {
+    if ($(this).is(':checked') ) {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Seleccionado");
+          $("#mesesprenez").hide();
+          $("#labelmeses").hide();
+          $("#diaprenez").show(); 
+          $("#labeldias").show();
+    } else {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Deseleccionado");
+        $("#mesesprenez").show();
+        $("#labelmeses").show();
+        $("#diaprenez").hide();
+        $("#labeldias").hide();
+
+    }
+});
+
+//Si hay cambios en el input nos mostrará ya sea el campo díasde preñez o meses de preñez.
+$('#monta_mixta').on('change', function() {
+    if ($(this).is(':checked') ) {
+        
+        $("#mesesprenez").show();
+        $("#labelmeses").show();
+        $("#diaprenez").hide();
+        $("#labeldias").hide();  
+    } else {        
+        $("#mesesprenez").hide();
+        $("#labelmeses").hide();
+        $("#diaprenez").show(); 
+        $("#labeldias").show();
+    }
+});
+
+//Si hay cambios en el input nos mostrará ya sea el campo díasde preñez o meses de preñez.
+$('#nral').on('change', function() {
+    if ($(this).is(':checked') ) {
+        
+        $("#mesesprenez").show();
+        $("#labelmeses").show();
+        $("#diaprenez").hide();
+        $("#labeldias").hide();  
+    } else {        
+        $("#mesesprenez").hide();
+        $("#labelmeses").hide();
+        $("#diaprenez").show(); 
+        $("#labeldias").show();
+    }
+});
+
+if ($('#customCheckbox1').prop('checked') ) {
+        $( '.tab-cri a[data-toggle=tab]' ).removeClass( 'disabled' );
+    } else {
+        $( '.tab-cri a[data-toggle=tab]' ).addClass( 'disabled' ); 
+}
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#customCheckbox1').on('change', function() {
+    if ($(this).is(':checked') ) {
+        //quitamos la clase disable
+        $( '.tab-cri a[data-toggle=tab]' ).removeClass( 'disabled' );
+    } else {
+        $( '.tab-cri a[data-toggle=tab]' ).addClass( 'disabled' ); 
+    }
+});
+/*
+* Esto es para ocultar o mostrar el form de nacimiento muerto
+*/
+
+$('#cria1').on('click', function() {
+
+    if ($('#vivo').prop('checked') ) {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide();
+        } else {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show();
+    }    
+});
+
+$('#cria2').on('click', function() {
+    
+    if ($('#vivo2').prop('checked') ) {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide();
+        } else {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show();
+    }    
+}); 
+
+if ($('#vivo').prop('checked') ) {
+    $(".becerrovivo").show();
+    $(".becerromuerto").hide();
+    } else {
+    $(".becerrovivo").hide();
+    $(".becerromuerto").show();
+}
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#vivo').on('change', function() {
+    if ($(this).is(':checked') ) {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide(); 
+    } else {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show();
+    }
+});
+
+if ($('#muerto').prop('checked') ) {
+    $(".becerrovivo").hide();
+    $(".becerromuerto").show();
+    } else {
+    $(".becerrovivo").show();
+    $(".becerromuerto").hide();
+}
+
+$('#muerto').on('change', function() {
+    if ($(this).is(':checked') ) {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show(); 
+    } else {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide();
+    }
+}); 
+
+if ($('#vivo2').prop('checked') ) {
+    $(".becerrovivo").show();
+    $(".becerromuerto").hide();
+    } else {
+    $(".becerrovivo").hide();
+    $(".becerromuerto").show();
+}
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#vivo2').on('change', function() {
+    if ($(this).is(':checked') ) {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide(); 
+    } else {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show();
+    }
+}); 
+
+if ($('#muerto2').prop('checked') ) {
+    $(".becerrovivo").hide();
+    $(".becerromuerto").show();
+    } else {
+    $(".becerrovivo").show();
+    $(".becerromuerto").hide();
+}
+
+$('#muerto2').on('change', function() {
+    if ($(this).is(':checked') ) {
+        $(".becerrovivo").hide();
+        $(".becerromuerto").show(); 
+    } else {
+        $(".becerrovivo").show();
+        $(".becerromuerto").hide();
+    }
+});     
+
+/*
+*-->>>>>>>>
+*/        
+
+if ($('#peso').prop('checked') ) {
+ 
+    $("#porpeso").removeAttr("readonly");
+    $("#poredad").attr("readonly","readonly");
+    //$("#pajuela").show();
+    } else {
+    $("#porpeso").attr("readonly","readonly");
+    $("#poredad").removeAttr("readonly");
+}
+
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#peso').on('click', function() {
+    if ($(this).is(':checked') ) {
+        $("#porpeso").removeAttr("readonly");
+        $("#poredad").attr("readonly","readonly");
+    } else {
+        $("#porpeso").attr("readonly","readonly");
+        $("#poredad").removeAttr("readonly");
+    }
+});
+
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#edad').on('change', function() {
+    if ($(this).is(':checked') ) {
+        $("#poredad").removeAttr("readonly");
+        $("#porpeso").attr("readonly","readonly");
+    } else {
+        $("#poredad").attr("readonly","readonly");
+        $("#porpeso").removeAttr("readonly");
+    }
+});
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#edad_peso').on('click', function() {
+    if ($(this).is(':checked') ) {
+       $("#porpeso").removeAttr("readonly");
+       $("#poredad").removeAttr("readonly");
+    } else {
+        $("#porpeso").attr("readonly","readonly");
+        $("#poredad").attr("readonly","readonly");
+    }
+});
+
+// Se harcode por efecto de rapidez
+$('#ta').on('change', function() {
+    var tipoactual = document.getElementById('ta').value;
+    
+    if (tipoactual=="MAUTE") {
+        var tipopropuesta = "TORETE"
+        $("#tipopropuesta").val(tipopropuesta);     
+    } else if (tipoactual=="TORETE") {
+        var tipopropuesta = "TORO PADROTE"
+        $("#tipopropuesta").val(tipopropuesta);
+    } else if (tipoactual=="MAUTA") {
+        var tipopropuesta = "NOVILLA"
+        $("#tipopropuesta").val(tipopropuesta);
+    } else {
+        var tipopropuesta = ""
+        $("#tipopropuesta").val(tipopropuesta);
+    }   
+});

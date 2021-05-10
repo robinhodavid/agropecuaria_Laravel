@@ -39,33 +39,8 @@
 				    @enderror
 	              <!-- /.card-header -->
 	              <div class="card-body">
-	              	<div class="row">
-	              		<div class="col">
-		              		<div class="form-group">
-		              			<label class="col-form-label">Lote de Monta</label>
-					                <select class="form-select" name="lote" 
-					                        id="lote" aria-label="select example">
-					                  <option value=" " selected>Seleccione una opción</option>
-					                  @foreach($lote as $item)
-					                    <option value="{{ $item->id_lote}}">{{ $item->nombre_lote}}</option>
-					                  @endforeach()
-					                </select>  
-							</div> 
-	              		</div>
-	              		<div class="col">
-	              			<div class="form-group">
-		              			<label class="col-form-label">Sublote de Monta</label>
-				                <select class="form-select" name="sublote" 
-				                  id="sexo" aria-label="select example">
-				                  <option value=" " selected>Seleccione una opción</option>
-				                    @foreach($sublote as $item)
-				                      <option value="{{ $item->sub_lote}}">{{ $item->sub_lote}}</option>
-				                    @endforeach()
-				                </select> 
-	                        </div>  	
-	              		</div>
-	              	</div>
 	              	<div class="row">	
+
 						<div class="col">
 							<label class="col-form-label form-group">F. Inicial.</label>
 						    	<div class="input-group mb-3 form-group">
@@ -114,7 +89,19 @@
 							    placeholder="(M-D)" 
 							    readonly="true" 
 							    value="{{ $duracion }}">
-		              	</div>	              	  
+		              	</div>
+		              	<div class="col">
+		              		<div class="form-group">
+		              			<label class="col-form-label">Lote de Monta</label>
+					                <select class="form-select" name="lote" 
+					                        id="lote" aria-label="select example">
+					                  <option value=" " selected>Seleccione una opción</option>
+					                  @foreach($lote as $item)
+					                    <option value="{{ $item->id_lote}}">{{ $item->nombre_lote}}</option>
+					                  @endforeach()
+					                </select>  
+							</div> 
+	              		</div>	              	  
 	              	</div>
 
 	              </div>
@@ -145,7 +132,6 @@
                   <thead>
                     <tr>
                       <th style="width: 10%">Lote</th>
-                      <th style="width: 10%">Sublote</th>
                       <th style="width: 10%">F. Inicial</th>
                       <th style="width: 10%">F. Final</th>
                       <th style="width: 10%">A. Inicial</th>
@@ -159,9 +145,6 @@
                     <tr>
                       <td style="width: 10%">
                       	{{ $item->nombre_lote }}
-                      </td>
-                      <td>
-                      	{{ $item->sub_lote }}
                       </td>
                       <td>
                 		{{ $item->fechainirea }}

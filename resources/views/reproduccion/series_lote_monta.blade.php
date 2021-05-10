@@ -23,6 +23,7 @@
           </div>
         @endif
           <form method="GET" action="{{ route ('serieslotemonta',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo]) }}" role="search">
+            @csrf
             <div class="card-tools search-table">
               <div class="input-group input-group-sm" style="width: 250px;">
                 <input type="text" name="serie" id="serie" class="form-control float-right" placeholder="Buscar Serie...">
@@ -59,6 +60,7 @@
                   @endforeach()
                 </select>  
             </div>
+            <!--
             <div class="col">
               <label class="col-form-label">Sublote de Monta</label>
                 <select class="form-select" name="sublote" 
@@ -69,6 +71,7 @@
                     @endforeach()
                 </select> 
             </div>
+          -->
             <div class="col">
               <label class="col-form-label form-group">F. Inicial.</label>
                   <div class="input-group mb-3 form-group">
@@ -132,8 +135,6 @@
                 <th style="width: 10%">P. Act</th>
                 <th style="width: 10%">Sexo</th>
                 <th style="width: 10%">Lote Est</th>
-                <th style="width: 10%">Sublote Est</th>
-                <th style="width: 20%; text-align: center;">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -167,13 +168,7 @@
                        {!! $item->sexo?"Macho":"Hembra" !!}  
                   </td>
                   <td>
-                  {{ $item->nombrelote}}
-                  </td>
-                  <td>
-                  {{ $item->sub_lote}}
-                  </td>
-                  <td style="width: 20%; text-align: center;">
-                  
+                    {{ $item->nombrelote}}
                   </td>
               </tr>
            @endforeach()
@@ -215,22 +210,20 @@
             <thead>
               <tr>
 
-                <th style="width: 8%"></th>
-                <th colspan="2" style="width: 16%;text-align: center;">Reprodución</th>
-                <th colspan="2" style="width: 16%;text-align: center;">Tipología</th>
-                <th colspan="2" style="width: 16%;text-align: center;">Fecha de Monta</th>
-                <th style="width: 20%; text-align: center;"></th>
+                <th></th>
+                <th colspan="1" style="text-align: center;">Reprodución</th>
+                <th colspan="2" style="text-align: center;">Tipología</th>
+                <th colspan="2" style="text-align: center;">Fecha de Monta</th>
+                <th style="text-align: center;"></th>
               </tr>
               <tr>
 
-                <th style="width: 8%">Serie</th>
-                <th style="width: 8%; text-align: center;">Lote</th>
-                <th style="width: 8%; text-align: center;">Sublote</th>
-                <th style="width: 8%; text-align: center;">Entrante</th>
-                <th style="width: 8%; text-align: center;">Saliente</th>
-                <th style="width: 8%; text-align: center;">Inicio</th>
-                <th style="width: 8%; text-align: center;">Final</th>
-                <th style="width: 20%; text-align: center;">Acción</th>
+                <th>Serie</th>
+                <th style="text-align: center;">Lote</th>
+                 <th style="text-align: center;">Entrante</th>
+                <th style="text-align: center;">Saliente</th>
+                <th style="text-align: center;">Inicio</th>
+                <th style="text-align: center;">Final</th>
               </tr>
             </thead>
             <tbody>
@@ -242,9 +235,7 @@
                   <td>
                    {{ $item->nombre_lote }}
                   </td>
-                  <td>
-                    {{ $item->sub_lote }}
-                  </td>
+
                   <td>
                     {{ $item->nombre_tipologia }}
                   </td>
@@ -256,9 +247,6 @@
                   </td>
                   <td>
                     {{ $item->ffinm }}
-                  </td>
-                  <td style="width: 20%; text-align: center;">
-                  
                   </td>
               </tr>
         @endforeach()

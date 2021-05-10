@@ -71,15 +71,61 @@ class HomeController extends Controller
                 ->where('sexo','=',0) //Sexo = hembra
                 ->where('id_finca', '=', $finca->id_finca)
                 ->distinct()->get();
-  
+        
+        #0.- Verificamos si existe la temporada
+        $temp_reprod = DB::table('sgtempreprods')
+          //  ->select(DB::raw('MAX(fecini) as ulttemporada'))
+            ->where('id_finca','=',$id_finca)
+            ->get();
 
-        $cantnodestetado = $seriesnodestetado->count(); //machos y hembras. 
-        $canthemrepro = $serieshembrasrepro->count(); //machos y hembras.          
+        $contTemp = $temp_reprod->count();
 
+        #1.- Validamos que exista la temporada    
+        if ($contTemp>0) {
+            # Si existe
+            $tempReprodRcciente = DB::table('sgtempreprods')
+                ->select(DB::raw('MAX(fecini) as ulttemporada'))
+                ->where('id_finca','=',$id_finca)
+                ->get();
+
+            foreach ($tempReprodRcciente as $key ) {
+                $fechultimatemp = $key->ulttemporada;
+            }
+            /*
+             * Extraemos el Nombre 
+            */    
+            $detalleTemporada = DB::table('sgtempreprods')
+                    ->where('fecini','=',$fechultimatemp)
+                    ->where('id_finca','=',$id_finca)
+                    ->get();
+            foreach ($detalleTemporada as $key ) {
+                $nombretemporada = $key->nombre; 
+                $idTempRepro = $key->id; 
+            } 
+
+             $tempCicloLoteMonta = DB::table('sgciclos')
+                ->join('sglotemontas','sglotemontas.id_ciclo','=','sgciclos.id_ciclo')
+                ->join('sgmontas','sgmontas.id_lotemonta','=','sglotemontas.id_lotemonta') 
+                ->where('sgciclos.id_finca','=',$id_finca)
+                ->where('sgciclos.id_temp_reprod','=',$idTempRepro)
+                ->get(); 
+
+            $cantseries = $tempCicloLoteMonta->count(); 
+            
+            $nombretemporada = $nombretemporada ;
+             
+            } else {
+                $cantseries = 0;
+                $nombretemporada="";
+            }
+
+            $cantnodestetado = $seriesnodestetado->count(); //machos y hembras. 
+            $canthemrepro = $serieshembrasrepro->count(); //machos y hembras.     
+       
         //return $seriestiponame->all();
                 
         return view('sisga-admin', compact('finca','cantregisactiv','cantregisinactiv'
-            ,'cantnodestetado','canthemrepro'));
+            ,'cantnodestetado','canthemrepro','nombretemporada','cantseries','contTemp'));
     }
 
 /*
@@ -263,7 +309,7 @@ class HomeController extends Controller
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();
 
-        return view('especie',compact('especie','finca'));
+        return view('varcontrol.especie',compact('especie','finca'));
     }
 
 
@@ -299,7 +345,7 @@ class HomeController extends Controller
         $finca =  \App\Models\sgfinca::findOrFail($id_finca); 
         $especie = \App\Models\sgespecie::findOrFail($id);
         
-        return view('editarespecie', compact('finca','especie'));
+        return view('varcontrol.editarespecie', compact('finca','especie'));
     }
 
     public function update_especie(Request $request, $id, $id_finca){
@@ -356,7 +402,7 @@ class HomeController extends Controller
                 ->where('sgrazas.id_finca','=',$finca->id_finca)->paginate(5);
 
         //return $raza;         
-        return view('raza', compact('raza','finca','especie'));
+        return view('varcontrol.raza', compact('raza','finca','especie'));
     }
 
     //Con esto Agregamos datos en la tabla raza.
@@ -406,7 +452,7 @@ class HomeController extends Controller
         $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();
 
         //return $tableraza;
-        return view('editarraza', compact('raza','finca','especie','tableraza'));
+        return view('varcontrol.editarraza', compact('raza','finca','especie','tableraza'));
     }
 
     public function update_raza(Request $request, $idraza, $id_finca){
@@ -468,7 +514,7 @@ class HomeController extends Controller
         //$tipologia = \App\Models\sgtipologia::all();
         $tipologia = \App\Models\sgtipologia::where('id_finca', '=', $finca->id_finca)->get();
         
-        return view('tipologia',compact('tipologia','finca'));
+        return view('varcontrol.tipologia',compact('tipologia','finca'));
     }
 
     //Con esto Agregamos datos en la tabla finca.
@@ -541,7 +587,7 @@ class HomeController extends Controller
            
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);    
         $tipologia = \App\Models\sgtipologia::findOrFail($id_tipologia);
-        return view('editartipo', compact('tipologia','finca'));
+        return view('varcontrol.editartipo', compact('tipologia','finca'));
     }
 
     public function update_tipo(Request $request, $id_tipologia, $id_finca){
@@ -627,7 +673,7 @@ class HomeController extends Controller
         
         $condicion_corporal = \App\Models\sgcondicioncorporal::where('id_finca', '=', $finca->id_finca)->paginate(5);
         
-        return view('condicioncorporal',compact('condicion_corporal','finca'));
+        return view('varcontrol.condicioncorporal',compact('condicion_corporal','finca'));
     }
 
     //Con esto Agregamos datos en la tabla finca.
@@ -658,7 +704,7 @@ class HomeController extends Controller
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $condicion_corporal = \App\Models\sgcondicioncorporal::findOrFail($id_condicion);
         
-        return view('editarcondicion', compact('condicion_corporal','finca'));
+        return view('varcontrol.editarcondicion', compact('condicion_corporal','finca'));
     }
 
     public function update_condicion(Request $request, $id_condicion, $id_finca){
@@ -710,7 +756,7 @@ class HomeController extends Controller
         //$diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::all();
         $diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::where('id_finca', '=', $finca->id_finca)->paginate(4);
 
-        return view('diagnosticopalpaciones',compact('diagnostico_palpaciones','finca'));
+        return view('varcontrol.diagnosticopalpaciones',compact('diagnostico_palpaciones','finca'));
     }
     //Con esto Agregamos datos en la tabla finca.
         public function crear_diagnosticopalpaciones(Request $request, $id_finca)
@@ -746,7 +792,7 @@ class HomeController extends Controller
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::findOrFail($id_diagnostico);
         
-        return view('editardiagnosticopalpaciones', compact('diagnostico_palpaciones','finca'));
+        return view('varcontrol.editardiagnosticopalpaciones', compact('diagnostico_palpaciones','finca'));
     }
 
     public function update_diagnostico_palpaciones(Request $request, $id_diagnostico,$id_finca)
@@ -802,7 +848,7 @@ class HomeController extends Controller
         //$motivo_entrada_salida = \App\Models\sgmotivoentradasalida::all();
         $motivo_entrada_salida = \App\Models\sgmotivoentradasalida::where('id_finca', '=', $finca->id_finca)->paginate(5);
 
-        return view('motivoentradasalida', compact('motivo_entrada_salida','finca'));
+        return view('varcontrol.motivoentradasalida', compact('motivo_entrada_salida','finca'));
     }
 
 //Con esto Agregamos datos en la tabla finca.
@@ -837,7 +883,7 @@ class HomeController extends Controller
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $motivo_entrada_salida = \App\Models\sgmotivoentradasalida::findOrFail($id);
         
-        return view('editarmotivoentradasalida', compact('motivo_entrada_salida','finca'));
+        return view('varcontrol.editarmotivoentradasalida', compact('motivo_entrada_salida','finca'));
     }
 
     public function update_motivo_entrada_salida(Request $request, $id, $id_finca)
@@ -888,7 +934,7 @@ class HomeController extends Controller
         //$patologia = \App\Models\sgpatologia::all();
         $patologia = \App\Models\sgpatologia::where('id_finca', '=', $finca->id_finca)->paginate(5);
 
-        return view('patologia', compact('patologia','finca'));
+        return view('varcontrol.patologia', compact('patologia','finca'));
     }
 
      public function crear_patologia(Request $request, $id_finca)
@@ -924,7 +970,7 @@ class HomeController extends Controller
 
         $patologia = \App\Models\sgpatologia::findOrFail($id);
         
-        return view('editarpatologia', compact('patologia', 'finca'));
+        return view('varcontrol.editarpatologia', compact('patologia', 'finca'));
     }
 
     public function update_patologia(Request $request, $id, $id_finca){
@@ -964,6 +1010,165 @@ class HomeController extends Controller
             return back()->with('mensaje', 'error');
         }
     }
+
+/************************************************************
+* Retorna a la vista Parametros.
+************************************************************
+*/  
+     public function parametros($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $parametrosGanaderia = \App\Models\sgparametros_ganaderia::where('id_finca', '=', $finca->id_finca)->get();
+
+        $parametrosReproduccion = \App\Models\sgparametros_reproduccion_animal::where('id_finca', '=', $finca->id_finca)->get();
+
+        $parametrosProduccion = \App\Models\sgparametros_reproduccion_leche::where('id_finca', '=', $finca->id_finca)->get();
+
+        $contpG = $parametrosGanaderia->count();
+        $contpR = $parametrosReproduccion->count();
+        $contpP = $parametrosProduccion->count();
+
+    
+
+        return view('varcontrol.var_control_parametros', compact('parametrosGanaderia','parametrosReproduccion','parametrosProduccion','finca','contpG','contpR','contpP'));
+    }
+
+     public function crear_parametros_ganaderia(Request $request, $id_finca)
+    {
+        
+        $pgNuevo = new \App\Models\sgparametros_ganaderia;
+
+        $pgNuevo->diasaldestete = $request->diasaldestete;
+        $pgNuevo->pesoajustado18m = $request->pajust18m;
+        $pgNuevo->pesoajustado12m = $request->pajust12m;
+        $pgNuevo->pesoajustado24m = $request->pajust24m;
+        $pgNuevo->pesoajustadoaldestete  = $request->pajustdestete;
+        $pgNuevo->id_finca = $id_finca;
+
+        $pgNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+     public function editar_parametros_ganaderia(Request $request, $id_finca, $id)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        $parametrosGanaderia = \App\Models\sgparametros_ganaderia::findOrFail($id);
+
+
+        return view('varcontrol.editar_parametro_ganaderia', compact('parametrosGanaderia','finca'));
+    }
+
+     public function update_parametros_ganaderia(Request $request, $id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       
+
+        $pgUpdate = \App\Models\sgparametros_ganaderia::findOrFail($id);
+
+        $pgUpdate->diasaldestete = $request->diasaldestete;
+        $pgUpdate->pesoajustado18m = $request->pajust18m;
+        $pgUpdate->pesoajustado12m = $request->pajust12m;
+        $pgUpdate->pesoajustado24m = $request->pajust24m;
+        $pgUpdate->pesoajustadoaldestete  = $request->pajustdestete;
+        
+        $pgUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }    
+
+
+     public function crear_parametros_reproduccion(Request $request, $id_finca)
+    {
+      
+
+        $prNuevo = new \App\Models\sgparametros_reproduccion_animal;
+
+        $prNuevo->diasentrecelo  = $request->diasentrecelo;
+        $prNuevo->tiempogestacion = $request->tiempogestacion;
+        $prNuevo->id_finca = $id_finca;
+
+        $prNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_parametros_reproduccion(Request $request, $id_finca, $id)
+    {
+        
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+       
+        $parametrosReproduccion = \App\Models\sgparametros_reproduccion_animal::findOrFail($id);
+
+        return view('varcontrol.editar_parametro_reproduccion', compact('parametrosReproduccion','finca'));
+    }
+
+     public function update_parametros_reproduccion(Request $request, $id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+    
+        $pRUpdate = \App\Models\sgparametros_reproduccion_animal::findOrFail($id);
+
+        $pRUpdate->diasentrecelo  = $request->diasentrecelo;
+        $pRUpdate->tiempogestacion = $request->tiempogestacion;
+        
+        $pRUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }    
+
+    public function crear_parametros_produccion_leche(Request $request, $id_finca)
+    {
+      
+
+
+        $pPNuevo = new \App\Models\sgparametros_reproduccion_leche;
+
+        $pPNuevo->diassecado = $request->diassecado;
+        $pPNuevo->diaslactanciaestimada = $request->diaslactanciaestimada;
+        $pPNuevo->diasproducionalmes = $request->diasproducionalmes;
+        $pPNuevo->lactanciaajustada = $request->lactanciaajustada;
+        $pPNuevo->litrospromedioaldia = $request->litrospromedioaldia;
+        $pPNuevo->produccionideal = $request->produccionideal;
+        
+        $pPNuevo->id_finca = $id_finca;
+
+        $pPNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+     public function editar_parametros_produccion_leche(Request $request, $id_finca, $id)
+        {
+            
+            $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+           
+            $parametrosProduccion = \App\Models\sgparametros_reproduccion_leche::findOrFail($id);
+
+            return view('varcontrol.editar_parametro_produccion', compact('parametrosProduccion','finca'));
+        }
+
+    public function update_parametros_produccion_leche(Request $request, $id_finca, $id){
+           
+            $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        
+            $pPUpdate = \App\Models\sgparametros_reproduccion_leche::findOrFail($id);
+
+            $pPUpdate->diassecado = $request->diassecado;
+            $pPUpdate->diaslactanciaestimada = $request->diaslactanciaestimada;
+            $pPUpdate->diasproducionalmes = $request->diasproducionalmes;
+            $pPUpdate->lactanciaajustada = $request->lactanciaajustada;
+            $pPUpdate->litrospromedioaldia = $request->litrospromedioaldia;
+            $pPUpdate->produccionideal = $request->produccionideal;
+            
+            $pPUpdate->save();
+
+            return back()->with('msj', 'Registro actualizado satisfactoriamente');
+        }    
 
     /*
     * Creamos las Clases para el tipo de monta - Variables de Control
@@ -1052,7 +1257,476 @@ class HomeController extends Controller
         }
     }
 
+/*
+************************************************************
+* Retorna a la vista de Tablas Menores para Causa de Muerte
+************************************************************
+*/  
+     public function causamuerte($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $causamuerte = \App\Models\sgcausamuerte::where('id_finca', '=', $finca->id_finca)->paginate(5);
 
+        return view('varcontrol.causa_muerte', compact('causamuerte','finca'));
+    }
+
+     public function crear_causamuerte(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgcausamuertes,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $causamuerteNuevo = new \App\Models\sgcausamuerte;
+
+        $causamuerteNuevo->nombre = $request->nombre;
+
+        $causamuerteNuevo->id_finca = $id_finca;
+
+        $causamuerteNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_causamuerte($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $causamuerte = \App\Models\sgcausamuerte::findOrFail($id);
+        
+        return view('varcontrol.editar_causa_muerte', compact('causamuerte', 'finca'));
+    }
+
+    public function update_causamuerte(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $causamuerteUpdate = \App\Models\sgcausamuerte::findOrFail($id);
+
+        $causamuerteUpdate->nombre=$request->nombre;
+        
+        $causamuerteUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_causamuerte($id_finca, $id){
+            
+        $causamuerteEliminar = \App\Models\sgcausamuerte::findOrFail($id);
+            
+        try {
+        $causamuerteEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }    
+
+/*
+************************************************************
+* Retorna a la vista de Tablas Menores para Destino de Salida
+************************************************************
+*/  
+     public function destinosalida($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $destinosalida = \App\Models\sgdestinosalida::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.destino_salida', compact('destinosalida','finca'));
+    }
+
+     public function crear_destinosalida(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgdestinosalidas,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $destinosalidaNuevo = new \App\Models\sgdestinosalida;
+
+        $destinosalidaNuevo->nombre = $request->nombre;
+
+        $destinosalidaNuevo->id_finca = $id_finca;
+
+        $destinosalidaNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_destinosalida($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $destinosalida = \App\Models\sgdestinosalida::findOrFail($id);
+        
+        return view('varcontrol.editar_destino_salida', compact('destinosalida', 'finca'));
+    }
+
+    public function update_destinosalida(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $destinosalidaUpdate = \App\Models\sgdestinosalida::findOrFail($id);
+
+        $destinosalidaUpdate->nombre=$request->nombre;
+        
+        $destinosalidaUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_destinosalida($id_finca, $id){
+            
+        $destinosalidaEliminar = \App\Models\sgdestinosalida::findOrFail($id);
+            
+        try {
+        $destinosalidaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }    
+
+/*
+************************************************************
+* Retorna a la vista de Tablas Menores para Procedencia
+************************************************************
+*/  
+     public function procedencia($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $procedencia = \App\Models\sgprocedencia::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.procedencia', compact('procedencia','finca'));
+    }
+
+     public function crear_procedencia(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgprocedencias,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $procedenciaNueva = new \App\Models\sgprocedencia;
+
+        $procedenciaNueva->nombre = $request->nombre;
+
+        $procedenciaNueva->id_finca = $id_finca;
+
+        $procedenciaNueva-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_procedencia($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $procedencia = \App\Models\sgprocedencia::findOrFail($id);
+        
+        return view('varcontrol.editar_procedencia', compact('procedencia', 'finca'));
+    }
+
+    public function update_procedencia(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $procedenciaUpdate = \App\Models\sgprocedencia::findOrFail($id);
+
+        $procedenciaUpdate->nombre=$request->nombre;
+        
+        $procedenciaUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_procedencia($id_finca, $id){
+            
+        $procedenciaEliminar = \App\Models\sgprocedencia::findOrFail($id);
+            
+        try {
+        $procedenciaEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }
+
+    /*
+
+/*
+************************************************************
+* Retorna a la vista de Tablas Menores para Procedencia
+************************************************************
+*/  
+     public function colores($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $colores = \App\Models\colorescampo::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.colorescampos', compact('colores','finca'));
+    }
+
+     public function crear_colores(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgprocedencias,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $colorNuevo = new \App\Models\colorescampo;
+
+        $colorNuevo->nombre = $request->nombre;
+
+        $colorNuevo->id_finca = $id_finca;
+
+        $colorNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_colores($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $colores = \App\Models\colorescampo::findOrFail($id);
+        
+        return view('varcontrol.editar_colores_campo', compact('colores', 'finca'));
+    }
+
+    public function update_colores(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $colorUpdate = \App\Models\colorescampo::findOrFail($id);
+
+        $colorUpdate->nombre=$request->nombre;
+        
+        $colorUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_colores($id_finca, $id){
+            
+        $colorEliminar = \App\Models\colorescampo::findOrFail($id);
+            
+        try {
+        $colorEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }
+
+    /*
+
+************************************************************
+* Retorna a la vista de Tablas Menores para Sala ordeno
+************************************************************
+*/  
+     public function salaordeno($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $salaordeno = \App\Models\sgsaladeordeno::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.sala_ordeno', compact('salaordeno','finca'));
+    }
+
+     public function crear_salaordeno(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgsaladeordenos,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $salaordenoNueva = new \App\Models\sgsaladeordeno;
+
+        $salaordenoNueva->nombre = $request->nombre;
+
+        $salaordenoNueva->id_finca = $id_finca;
+
+        $salaordenoNueva-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_salaordeno($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $salaordeno = \App\Models\sgsaladeordeno::findOrFail($id);
+        
+        return view('varcontrol.editar_sala_ordeno', compact('salaordeno', 'finca'));
+    }
+
+    public function update_salaordeno(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $salaordenoUpdate = \App\Models\sgsaladeordeno::findOrFail($id);
+
+        $salaordenoUpdate->nombre=$request->nombre;
+        
+        $salaordenoUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_salaordeno($id_finca, $id){
+            
+        $salaordenoEliminar = \App\Models\sgsaladeordeno::findOrFail($id);
+            
+        try {
+        $salaordenoEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }        
+
+ /*
+************************************************************
+* Retorna a la vista de Tablas Menores para Sala ordeno
+************************************************************
+*/  
+     public function tanque($id_finca)
+    {
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+        //$patologia = \App\Models\sgpatologia::all();
+        $tanque = \App\Models\sgtanque::where('id_finca', '=', $finca->id_finca)->paginate(5);
+
+        return view('varcontrol.tanque', compact('tanque','finca'));
+    }
+
+     public function crear_tanque(Request $request, $id_finca)
+    {
+        
+        //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+                'unique:sgtanques,nombre,NULL,NULL,id_finca,'. $id_finca,
+            ],
+        ]);
+        
+        $tanqueNuevo = new \App\Models\sgtanque;
+
+        $tanqueNuevo->nombre = $request->nombre;
+
+        $tanqueNuevo->id_finca = $id_finca;
+
+        $tanqueNuevo-> save(); 
+   
+        return back()->with('msj', 'Registro agregado satisfactoriamente');
+    }
+
+    public function editar_tanque($id_finca, $id){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+        $tanque = \App\Models\sgtanque::findOrFail($id);
+        
+        return view('varcontrol.editar_tanque', compact('tanque', 'finca'));
+    }
+
+    public function update_tanque(Request $request, $id, $id_finca){
+       
+        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+
+       //Validando los datos
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+        ]);
+
+        $tanqueUpdate = \App\Models\sgtanque::findOrFail($id);
+
+        $tanqueUpdate->nombre=$request->nombre;
+        
+        $tanqueUpdate->save();
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+    }
+    
+    public function eliminar_tanque($id_finca, $id){
+            
+        $tanqueEliminar = \App\Models\sgtanque::findOrFail($id);
+            
+        try {
+        $tanqueEliminar->delete();
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+    }        
     
 
 }

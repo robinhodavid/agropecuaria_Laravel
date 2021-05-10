@@ -144,11 +144,11 @@
 		                          	<option value="1">Macho</option>
 		                          	</select> 
 								</div>
-								<div class="col-4">
+								<div class="col-3">
 					  				<label class="col-form-label">Tipología:</label>
 								    {!! Form::select('tipologia',[''=>'Seleccione un opción'],null,['id'=>'tipologia' ,'class'=>'form-select']) !!}
 								</div>
-							    <div class="col-4">
+							    <div class="col-3">
 					  				<label class="col-form-label">Raza:</label>
 			                      	<select class="form-select" name="raza" aria-label="select example">
                           			<option value="" selected>Seleccione una opción</option>
@@ -158,7 +158,17 @@
                           			@endforeach()	
                             		</select>  
 								</div>
-								<div class="col-4">
+								<div class="col-3">
+					  				<label class="col-form-label">Color de Pelaje:</label>
+			                      	<select class="form-select" name="colorpelaje" aria-label="select example">
+                          			<option value="" selected>Seleccione una opción</option>
+                          			@foreach ($colorpelaje as $item)
+	                          		<option value="{{ $item->nombre }}">{{ $item->nombre}}
+	                          		</option>
+                          			@endforeach()	
+                            		</select>  
+								</div>
+								<div class="col-3">
 								    <label class="col-form-label">Condición Corporal:</label>
 						    		<select class="form-select" name="condicion_corporal" aria-label="select example">
                           			<option value="" selected>Seleccione una opción</option>
@@ -257,14 +267,21 @@
 								    value="{{ old('pesoi') }}">	
 								</div>
 								<div class="col-4">
-								    <label class="col-form-label">Procedencia:</label>
-								    <input 
-								    class="form-control" 
-								    id="procede" 
-								    type="text" 
-								    name="procede"  
-								    placeholder="Procedencia" 
-								    value="{{ old('procede') }}">
+									<label class="col-form-label">Procedencia:</label>
+									<select class="form-select" id="procede"
+									name="procede" aria-label="select example">
+                          			<option value="" selected>Seleccione una opción</option>
+                          			
+                          			@foreach ($procedencia as $item)
+	                          		<option value="{{ $item->nombre}}">{{ $item->nombre}}
+	                          		</option>
+                          			@endforeach()
+
+                          			@foreach ($procedenciaFinca as $item)
+	                          		<option value="{{ $item->nombre }}">{{ $item->nombre }}
+	                          		</option>
+                          			@endforeach()	
+                            		</select>
 							    </div>
 				  				<div class="col">
 			  					<label class="col-form-label">Observación:</label>

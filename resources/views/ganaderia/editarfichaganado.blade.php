@@ -124,129 +124,139 @@
 		                value="{{ $serie->serie }}">
 		        </div>
 		        <div class="row">
-          		<div class="col-mini-siderbar label-activo">
-            		<div class="form-check form-switch">
-	             	<input 
-			            class="form-check-input"
-			            name="status" 
-			            type="checkbox" 
-			            id="status" 
-			            {!! $serie->status?"checked disabled":"" !!}
-			            >
-	              	<label class="form-check-label" for="status">Activo</label>
-           			</div>
-          		</div>
-          		<label class="col-form-label" id="label_motivo_e">Motivo de Entrada:</label>
-	             	<select class="form-select" name="motivoentrada" aria-label="select example" id="motivo_e">
-	                  <option value="">Seleccione una opción</option>
-	                      @foreach ($motivoentrada as $item)
-	                        <option value="{{ $item->nombremotivo }}" selected> {{ $item->nombremotivo}} </option>
-	                      @endforeach() 
-	            	</select>   
-          		</div>
-          		<div class="col-mini-siderbar label-tipologia">
-            		<label>Tipología</label>  
-            		<label class="col-form-label">Tipología:</label>
-			       {!! Form::select('tipologia',[$serie->id_tipologia=>$serie->tipo],null,['id'=>'tipologia' ,'class'=>'form-select']) !!}
-			    </div>
-         		<div class="col-mini-siderbar label-lote-estrategic">
-        			<label class="col-form-label">Lote Estratégico:</label>
-		            <select class="form-select" name="lote" aria-label="select example">
-		                <option value="" selected>Seleccione una opción</option>
-		                <option value="{{ $serie->nombrelote }}" selected>{{ $serie->nombrelote }}</option>
-		                @foreach ($lote as $item)
-		                <option value="{{ $item->nombre_lote }}">{{ $item->nombre_lote }}
-		                    </option>
-		              @endforeach()
-		            </select>   
-          		</div>
+		          		<div class="col-mini-siderbar label-activo">
+		            		<div class="form-check form-switch">
+			             	<input 
+					            class="form-check-input"
+					            name="status" 
+					            type="checkbox" 
+					            id="status" 
+					            {!! $serie->status?"checked":"" !!}
+					            >
+			              	<label class="form-check-label" for="status">Activo</label>
+		           			</div>
+		          		</div>
+		          		<label class="col-form-label" id="label_motivo_e">Motivo de Entrada:</label>
+			             	<select class="form-select" name="motivoentrada" aria-label="select example" id="motivo_e">
+			                  <option value="">Seleccione una opción</option>
+			                      @foreach ($motivoentrada as $item)
+			                        <option value="{{ $item->nombremotivo }}" selected> {{ $item->nombremotivo}} </option>
+			                      @endforeach() 
+			            	</select>   
+		          		</div>
+		          		<div class="col-mini-siderbar label-tipologia">
+		            		<label>Tipología</label>  
+		            		<label class="col-form-label">Tipología:</label>
+					       {!! Form::select('tipologia',[$serie->id_tipologia=>$serie->tipo],null,['id'=>'tipologia' ,'class'=>'form-select']) !!}
+					    </div>
+		         		<div class="col-mini-siderbar label-lote-estrategic">
+		        			<label class="col-form-label">Lote Estratégico:</label>
+				            <select class="form-select" name="lote" aria-label="select example">
+				                <option value="" selected>Seleccione una opción</option>
+				                <option value="{{ $serie->nombrelote }}" selected>{{ $serie->nombrelote }}</option>
+				                @foreach ($lote as $item)
+				                <option value="{{ $item->nombre_lote }}">{{ $item->nombre_lote }}
+				                    </option>
+				              @endforeach()
+				            </select>   
+		          		</div>
 	       		<div class="row">
-	            <div class="col-mini-siderbar col">   
-	                <label class="col-form-label">Edad:</label>
-	                    <input 
-	                    	class="form-control" 
-	                    	id="edad" 
-	                    	type="text" 
-	                    	name="edad"  
-	                    	readonly="true" 
-	                    	value="{{ $serie->edad }}">
-	          	</div>
-	          	<div class="col-mini-siderbar col">
-	                <label class="col-form-label">Nro. Monta</label>
-	                    <input 
-		                  	class="form-control" 
-		                  	id="nro_monta" 
-		                  	type="text" 
-		                  	name="nro_monta"  
-		                  	readonly="true" 
-		                  	value="{{ $serie->nro_monta }}"> 
+		            <div class="col-mini-siderbar col">   
+		                <label class="col-form-label">Edad:</label>
+		                    <input 
+		                    	class="form-control" 
+		                    	id="edad" 
+		                    	type="text" 
+		                    	name="edad"  
+		                    	readonly="true" 
+		                    	value="{{ $serie->edad }}">
+		          	</div>
+		          	<div class="col-mini-siderbar col">
+		                <label class="col-form-label">Nro. Monta</label>
+		                    <input 
+			                  	class="form-control" 
+			                  	id="nro_monta" 
+			                  	type="text" 
+			                  	name="nro_monta"  
+			                  	readonly="true" 
+			                  	value="{{ $serie->nro_monta }}"> 
 	           </div>
 	        </div>
 			</div>
-          		<div class="col">
-          			<div class="row">
-	          			<div class="col">
-	          				<label class="col-form-label">Sexo:</label>
-			                <select class="form-select" name="sexo" id="sexo" aria-label="select example">
-			                    <option value="">Seleccione una opción</option>
-			                    <option value="0" {!! $serie->sexo?"":"selected" !!} >Hembra</option>
-			                    <option value="1"{!! $serie->sexo?"selected":"" !!} >Macho</option>
-			                </select>
-	          			</div>
-	          			<div class="col">
-	          				<label class="col-form-label">Raza:</label>
-			                 	<select class="form-select" name="raza" aria-label="select example">
-			                      <option value="">Seleccione una opción</option>
-			                          @foreach ($serieraza as $item)
-			                            <option value="{{ $item->idraza }}" selected> {{ $item->descripcion." (".$item->nombreraza.")" }} </option>
-			                          @endforeach() 
-			                          @foreach ($raza as $item)
-			                            <option value="{{ $item->idraza }}">{{ $item->descripcion." (".$item->nombreraza.")" }}
-			                              </option>
-			                          @endforeach() 
-			                	</select> 
-	          			</div>	
-	          		<div class="row">
-	               		<div class="col">
-	               			<label class="col-form-label">Fec. Nac.:</label>
-		           			<div class="input-group mb-3">
-		               			<input 
-				                	type="date" 
-				                    name="fnac"
-				                    class="form-control" 
-				                    min="1980-01-01" 
-				                    max="2031-12-31"
-				                    value="{{ $serie->fnac }}"
-				                    aria-label="Recipient's username" aria-describedby="basic-addon2">
-		                  			<span class="input-group-text" id="basic-addon2">
-			                      	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
-			                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
-			                        <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-			                      	</svg>
-			                  		</span>
-		              		</div>          
-	               		</div>
-			               		<div class="col">
-			               			 <label class="col-form-label">Fec. Registro:</label>
-				              			<div class="input-group mb-3">
-				                  			<input 
-								                type="date" 
-								                name="fecr"
-								                class="form-control"
-								                value="{{ $serie->fecr }}" 
-								                min="1980-01-01" 
-								                max="2031-12-31"
-								                aria-label="Recipient's username" aria-describedby="basic-addon2">
-							                 	<span class="input-group-text" id="basic-addon2">
-								                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
-								                      <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
-								                      <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-								                    </svg>
-							                	</span>
-				              			</div>   	
-			               		</div>
-			               		<div class="col">
-			               			<label class="col-form-label">Condición corporal:</label>
+      		<div class="col">
+      			<div class="row">
+          			<div class="col">
+          				<label class="col-form-label">Sexo:</label>
+		                <select class="form-select" name="sexo" id="sexo" aria-label="select example">
+		                    <option value="">Seleccione una opción</option>
+		                    <option value="0" {!! $serie->sexo?"":"selected" !!} >Hembra</option>
+		                    <option value="1"{!! $serie->sexo?"selected":"" !!} >Macho</option>
+		                </select>
+          			</div>
+          			<div class="col">
+          				<label class="col-form-label">Raza:</label>
+		                 	<select class="form-select" name="raza" aria-label="select example">
+		                      <option value="">Seleccione una opción</option>
+		                          @foreach ($serieraza as $item)
+		                            <option value="{{ $item->idraza }}" selected> {{ $item->descripcion." (".$item->nombreraza.")" }} </option>
+		                          @endforeach() 
+		                          @foreach ($raza as $item)
+		                            <option value="{{ $item->idraza }}">{{ $item->descripcion." (".$item->nombreraza.")" }}
+		                              </option>
+		                          @endforeach() 
+		                	</select> 
+          			</div>
+          			<div class="col">
+			  			<label class="col-form-label">Color de Pelaje:</label>
+	                      	<select class="form-select" name="colorpelaje" aria-label="select example">
+                  				<option value="{{$serie->color_pelaje}}" selected>{{$serie->color_pelaje}} </option>
+                  			@foreach ($colorpelaje as $item)
+                      			<option value="{{ $item->nombre }}">{{ $item->nombre}}
+                      		</option>
+                  			@endforeach()	
+                    		</select>  
+					</div>	
+          		<div class="row">
+               		<div class="col">
+               			<label class="col-form-label">Fec. Nac.:</label>
+	           			<div class="input-group mb-3">
+	               			<input 
+			                	type="date" 
+			                    name="fnac"
+			                    class="form-control" 
+			                    min="1980-01-01" 
+			                    max="2031-12-31"
+			                    value="{{ $serie->fnac }}"
+			                    aria-label="Recipient's username" aria-describedby="basic-addon2">
+	                  			<span class="input-group-text" id="basic-addon2">
+		                      	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
+		                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+		                        <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+		                      	</svg>
+		                  		</span>
+	              		</div>          
+               		</div>
+		               		<div class="col">
+		               			 <label class="col-form-label">Fec. Registro:</label>
+			              			<div class="input-group mb-3">
+			                  			<input 
+							                type="date" 
+							                name="fecr"
+							                class="form-control"
+							                value="{{ $serie->fecr }}" 
+							                min="1980-01-01" 
+							                max="2031-12-31"
+							                aria-label="Recipient's username" aria-describedby="basic-addon2">
+						                 	<span class="input-group-text" id="basic-addon2">
+							                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
+							                      <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+							                      <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+							                    </svg>
+						                	</span>
+			              			</div>   	
+		               		</div>
+		               		<div class="col">
+		               			<label class="col-form-label">Condición corporal:</label>
 			                    <select class="form-select" name="condicion_corporal" aria-label="select example">
 			                        <option value="">Seleccione una opción</option>
 			                        @foreach ($seriecondicion as $item)
@@ -257,66 +267,117 @@
 			                            </option>
 			                        @endforeach() 
 			                    </select>   
-			               		</div>
-			               </div>	
-              		</div>	
-              		<div class="row">
-              				<div class="col">
-              					 <label class="col-form-label">Cod. Madre</label>
-			                  <input 
-				                  class="form-control text-input" 
-				                  id="codmadre" 
-				                  type="text" 
-				                  name="codmadre"  
-				                  placeholder="Serie Madre" 
-				                  value="{{ $serie->codmadre }}">	
-              				</div>
-      
-              				<div class="col">
-              					<div class="row">
-              					<div class="col">
-                    				<label class="col-form-label">Cod. Padre</label>
-                				</div>
-                				<div class="col">		
-	                        		<div class="form-check form-switch">
-	                        			<input class="form-check-input form-check-input-paju"
-					                        type="checkbox" 
-					                        id="espajuela"
-					                        name="espajuela"
-					                        {!! $serie->espajuela?"checked":"" !!}
-					                        >
-	                        			<label class="col-form-label" for="espajuela">¿Es Pajuela?</label>
-	                   				</div>
-                   				</div>
-                   				</div>
-                   				<select class="form-select" id="pajuela" name="pajuela" aria-label="select example">
-			                    	<option value="" selected>Seleccione una opción</option>
-				                    @foreach ($pajuela as $item)
-				                    <option value="{{ $item->serie }}">{{ $item->serie }}</option>
-				                    @endforeach()
-                				</select>
-              					<select class="form-select" id="seriepadre" name="seriepadre" aria-label="select example">
-				                    <option value="" selected>Seleccione una opción</option>
-				                    @foreach ($serietoro as $item)
-				                      <option value="{{ $item->codpadre }}">{{ $item->codpadre }}</option>
-				                    @endforeach()
-				              	</select> 
-                			</div>
-	              	</div>
-	              	<div class="row">
-	              		  <div class="col">
-            <label class="col-form-label">Observación:</label>
-                <input 
-                class="form-control text-area" 
-                id="observa" 
-                type="text"
-                name="observa"
-                maxlength="130"                   
-                value="{{ $serie->observa }}">  
-              </div>
-	              	</div>
+		               		</div>
+		               </div>	
           		</div>	
-		    </div>
+          		<div class="row">
+          				<div class="col">
+          					 <label class="col-form-label">Cod. Madre</label>
+		                  <input 
+			                  class="form-control text-input" 
+			                  id="codmadre" 
+			                  type="text" 
+			                  name="codmadre"  
+			                  placeholder="Serie Madre" 
+			                  value="{{ $serie->codmadre }}">	
+          				</div>
+  
+          				<div class="col">
+          					<div class="row">
+          					<div class="col">
+                				<label class="col-form-label">Cod. Padre</label>
+            				</div>
+            				<div class="col">		
+                        		<div class="form-check form-switch">
+                        			<input class="form-check-input form-check-input-paju"
+				                        type="checkbox" 
+				                        id="espajuela"
+				                        name="espajuela"
+				                        {!! $serie->espajuela?"checked":"" !!}
+				                        >
+                        			<label class="col-form-label" for="espajuela">¿Es Pajuela?</label>
+                   				</div>
+               				</div>
+               				</div>
+               				<select class="form-select" id="pajuela" name="pajuela" aria-label="select example">
+		                    	<option value="" selected>Seleccione una opción</option>
+			                    @foreach ($pajuela as $item)
+			                    <option value="{{ $item->serie }}">{{ $item->serie }}</option>
+			                    @endforeach()
+            				</select>
+          					<select class="form-select" id="seriepadre" name="seriepadre" aria-label="select example">
+			                    <option value="" selected>Seleccione una opción</option>
+			                    @foreach ($serietoro as $item)
+			                      <option value="{{ $item->codpadre }}">{{ $item->codpadre }}</option>
+			                    @endforeach()
+			              	</select> 
+            			</div>
+              	</div>
+              	<div class="row">
+              		<div class="col">
+	            		<label class="col-form-label">Observación:</label>
+		                <input 
+		                class="form-control text-area" 
+		                id="observa" 
+		                type="text"
+		                name="observa"
+		                maxlength="130"                   
+		                value="{{ $serie->observa }}">  
+		            </div>
+              	</div>
+      		</div>
+      		@if( $serie->sexo==0 )
+	      		<div class="row my-2">
+	      			<div class="col ">
+		  				<!--Nro de Partos -->
+		  				<label class="col-form-label">Nro. Partos:</label>
+		  				<input 
+		                  class="form-control text-input" 
+		                  id="nrocria" 
+		                  type="number" 
+		                  name="nparto"  
+		                  placeholder="0"
+		                  readonly="true" 
+		                  value="{{ $serie->nparto }}">	
+	      			</div>
+	      			<div class="col ">
+	      				<!--Nro de Abortos -->
+		  				<label class="col-form-label">Nro. Abortos:</label>
+		  				<input 
+		                  class="form-control text-input" 
+		                  id="nabortoreport" 
+		                  type="number" 
+		                  name="nabortoreport"  
+		                  placeholder="0"
+		                  readonly="true" 
+		                  value="{{ $serie->nabortoreport  }}">	
+	      			</div>
+	      			<div class="col ">
+	      				<!-- Fecha de Ultima Preñez-->
+	      				<label class="col-form-label">Fec. Ult. Preñez:</label>
+		  				<input 
+		                  class="form-control text-input" 
+		                  id="ultimapreñez" 
+		                  type="date" 
+		                  name="ultimapreñez"  
+		                  readonly="true" 
+		                  value="{{ $serie->fecup }}">	
+	      			</div>
+	      			<div class="col ">
+	      				<!--Nro Hijos-->
+	      				<label class="col-form-label">Nro. Hijos:</label>
+			  				<input 
+			                  class="form-control text-input" 
+			                  id="nrohijos" 
+			                  type="number" 
+			                  name="nrohijos"  
+			                  placeholder="0"
+			                  readonly="true" 
+			                  value="{{ $nrohijos }}">	
+	      			</div>
+	      		</div>	
+      		@endif	
+		</div>
 	    </div>
 	   </div>
           <!-- /.card-body -->
@@ -504,7 +565,7 @@
 		<div class="col">
 			<div class="card">
 	              <div class="card-header">
-	                <div class=" col title-header">Árbol de Descendencia</div>
+	                <div class=" col title-header">Árbol de Ascendencia</div>
 	              </div>
 	              <!-- /.card-header -->
 	              <div class="card-body">
@@ -585,8 +646,8 @@
           </div>
           
         <div class="row nodo">
-            <label for="padre">Serie Padre.: 
-              <a href="#"> {{$serie->codpadre}}</a> 
+            <label for="padre">Serie Padre.: @if(!empty($serie->codpadre)) 
+              <a href="#"> {{$serie->codpadre}}</a> @endif
             </label>
           </div>
           <div class="row div-vacio">
@@ -623,8 +684,8 @@
                 
           </div>
           <div class="row nodo">
-            <label for="madre">Serie Madre.: 
-              <a href="#">{{$serie->codmadre}}</a> 
+            <label for="madre">Serie Madre.: @if(!empty($serie->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $serie->codmadre]) }}">{{$serie->codmadre}}</a> @endif
             </label>
           </div>
           <div class="row div-vacio">
@@ -645,10 +706,10 @@
             
           <div class="row nodo">
             @foreach($codabuelopaterno as $item)
-            <label for="abuelo">Serie Padre.:
-              <a href="#">{{$item->codpadre}}</a>
-             </label>
-             @endforeach()
+             	<label for="padre">Serie Padre.: @if(!empty($item->codpadre)) 
+              		<a href="#"> {{$item->codpadre}}</a> @endif
+            	</label>
+            @endforeach()
           </div>
             
           <div class="row div-vacio">
@@ -665,9 +726,12 @@
             </div>
             <div class="row nodo">  
             @foreach($codabuelapaterna as $item)
-              <label for="madre">Serie Madre.:  
-                <a href="#"> {{$item->codpadre}}</a> 
-              </label>
+            <!-- <label for="madre">Serie Madre.:  
+                <a href="#"> {{$item->codmadre}}</a> 
+              </label> -->
+              <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+            </label> 
             @endforeach()
             </div>
           <div class="row div-vacio">
@@ -687,9 +751,12 @@
           </div>
             <div class="row nodo">
             @foreach($codabuelomaterno as $item)
-              <label for="padre">Serie Padre.:
+              <!--<label for="padre">Serie Padre.:
                 <a href="#">{{$item->codpadre}}</a>
-              </label>  
+              </label>-->
+              <label for="padre">Serie Padre.: @if(!empty($item->codpadre))
+              <a href="#">{{$item->codpadre}}</a> @endif
+            </label> 
             @endforeach()
             </div>
           <div class="row div-vacio">
@@ -706,9 +773,12 @@
           </div>
             <div class="row nodo">    
             @foreach($codabuelamaterna as $item)  
-              <label for="madre">Serie Madre.: 
+              <!--<label for="madre">Serie Madre.: 
                 <a href=""> {{$item->codmadre}} </a> 
-              </label>
+              </label> -->
+              <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+            </label> 
             @endforeach()
             </div>  
           <div class="row div-vacio">
@@ -719,18 +789,24 @@
         <div class="col">
           <div class="row nodo">
             @foreach($codbisabuelospaternospadre as $item)
-            <label for="padre">Serie Padre.:
+            <!--<label for="padre">Serie Padre.:
              <a href="#">{{ $item->codpadre }}</a>
-            </label>
+            </label>-->
+            <label for="padre">Serie Padre.: @if(!empty($item->codpadre))
+              <a href="#">{{$item->codpadre}}</a> @endif
+            </label> 
             @endforeach()
           </div>
           <div class="row div-vacio">
           </div>
           <div class="row nodo">
             @foreach($codbisabuelospaternospadre as $item)
-              <label for="madre">Serie Madre.:
+              <!--<label for="madre">Serie Madre.:
                <a href="#">{{ $item->codmadre }}</a>
-              </label>
+              </label>-->
+                 <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+            </label> 
             @endforeach()
           </div>
           <div class="row div-vacio">
@@ -738,7 +814,10 @@
           </div>
           <div class="row nodo">
             @foreach($codbisabuelospaternomadre as $item)
-            <label for="padre">Serie Padre.: <a href="#">{{ $item->codpadre }}</a></label>
+           <!-- <label for="padre">Serie Padress.: <a href="#">{{ $item->codpadre }}</a></label>-->
+            <label for="padre">Serie Padre.: @if(!empty($item->codpadre))
+              <a href="#">{{$item->codpadre}}</a> @endif
+            </label> 
             @endforeach()
           </div>
           <div class="row div-vacio">
@@ -746,7 +825,10 @@
           </div>
           <div class="row nodo">
             @foreach($codbisabuelospaternomadre as $item)
-            <label for="madre">Serie Madre.: <a href="#">{{ $item->codmadre }}</a></label>
+            <!--<label for="madre">Serie Madre.: <a href="#">{{ $item->codmadre }}</a></label>-->
+            <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+            </label> 
             @endforeach()
           </div>
           
@@ -758,8 +840,11 @@
           </div>
           <div class="row nodo">
           @foreach($codbisabuelosmaternospadre as $item)
-          <label for="padre">Serie Padre.: 
+          <!--<label for="padre">Serie Padre.: 
             <a href="#">{{ $item->codpadre }}</a>
+          </label>-->
+          <label for="padre">Serie Padre.: @if(!empty($item->codpadre))
+              <a href="#">{{$item->codpadre}}</a> @endif
           </label>
           @endforeach()
           </div>
@@ -767,7 +852,11 @@
           </div>
           <div class="row nodo">
             @foreach($codbisabuelosmaternospadre as $item)
-            <label for="madre">Serie Madre.: <a href="#">{{ $item->codmadre }}</a></label>
+            <!--<label for="madre">Serie Madre.: <a href="#">{{ $item->codmadre }}</a></label>-->
+
+              <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+          </label>
             @endforeach()
           </div>
           <div class="row div-vacio">
@@ -775,9 +864,14 @@
             
             <div class="row nodo">
             @foreach($codbisabuelosmaternomadre as $item)
-              <label for="padre">Serie Padre.:<a href="">
+              <!--<label for="padre">Serie Padre.:<a href="">
                 {{ $item->codpadre }}
-              </a></label>
+              </a></label>-->
+            
+            <label for="padre">Serie Padre.: @if(!empty($item->codpadre))
+              <a href="#">{{$item->codpadre}}</a> @endif
+          	</label>
+            
             @endforeach()
             </div>
             <div class="row div-vacio">
@@ -785,9 +879,13 @@
             </div>
             <div class="row nodo">
             @foreach($codbisabuelosmaternomadre as $item) 
-              <label for="padre">Serie Madre.:<a href="">
+              <!--<label for="padre">Serie Madre.:<a href="">
                 {{ $item->codmadre }} 
-              </a></label>  
+              </a></label>-->
+
+              <label for="madre">Serie Madre.: @if(!empty($item->codmadre))
+              <a href="{{ route('fichaganado.editar', [$finca->id_finca, $item->codmadre]) }}">{{$item->codmadre}}</a> @endif
+          	</label>
             @endforeach()
             </div>
         </div>
@@ -820,6 +918,17 @@
 });
     </script>
 	{!! Html::script('js/jquery-3.5.1.min.js')!!}
-    {!! Html::script('js/dropdown.js')!!}    
+    {!! Html::script('js/dropdown.js')!!}
+    {!! Html::script('js/sweetalert2.js')!!}	
+    
+  	@if(session('mensaje')=='ok')
+	  	<script>
+	  		Swal.fire({
+				title: '¡Ficha de Ganado no disponible!',
+				text:  'No se encontró registros para esta Serie',
+				icon:  'info'
+			})
+	  	</script>
+	@endif    
 
 @stop

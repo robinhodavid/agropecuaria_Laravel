@@ -20,4 +20,13 @@ class sgtipologia extends Model
         return \App\Models\sgtipologia::where ('sexo','=', $sexo)
         ->get();
     }
+
+
+    // Filtra las tipologia 
+    public static function filtrartipologia($id_tipologia)
+    {
+        return \App\Models\sgtipologia::where ('id_tipologia','=', $id_tipologia)
+            
+        ->get();
+    }
 }

@@ -450,6 +450,259 @@ class ReportController extends Controller
             return view('reports.seriestransferidas',compact('finca','transfrealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
         }
 
+        #Vista para el reporte de Salida de Animales
+        public function report_salida (Request $request,  $id_finca)
+        {
+            
+        if (($request->tipo == null) && ($request->destino == null) && ($request->motivo == null) && ($request->desde == null) && ($request->hasta == null)) {
+        
+            $salidarealizada = \App\Models\sghsal::where('id_finca','=',$id_finca)
+                ->get(); 
+        } 
+
+        if (! ($request->tipo == null) && ($request->destino == null) && ($request->motivo == null)&& ($request->desde == null) && ($request->hasta == null)) {
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&($request->motivo == null) && ($request->desde == null) && ($request->hasta == null) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('destino','=',$request->destino)->get(); 
+        }
+
+        if ( ($request->tipo == null) && ($request->destino == null) && (!($request->motivo == null)) && ($request->desde == null) && ($request->hasta == null) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        //Aquí comiena por rango
+        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])->get(); 
+        }  
+
+        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)->get(); 
+        }
+        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)->get(); 
+        }               
+
+
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('destino','=',$request->destino)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        if (!($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        
+        if (!($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('destino','=',$request->destino)->get(); 
+        }
+
+         if (!($request->tipo == null) && (!($request->destino == null)) &&(! ($request->motivo == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('destino','=',$request->destino)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        //Aqui validamos El campo motivo  con rango de fecha.
+        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        //Aqui validamos El campo destino  con rango de fecha.
+        if ( ($request->tipo == null) && ((!$request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('destino','=',$request->destino)->get(); 
+        }
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('destino','=',$request->destino)->get(); 
+        }
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('destino','=',$request->destino)->get(); 
+        }
+
+         //Aqui validamos El campo tipo con rango de fecha.
+        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+        if ( (!$request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+
+
+         //Aqui validamos El campo tipo y destino  con rango de fecha.
+        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+        if ( (!$request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)->get(); 
+        }
+
+        //Aqui validamos El campo destino y motivo  con rango de fecha.
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('destino','=',$request->destino)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('destino','=',$request->destino)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('destino','=',$request->destino)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        //Aqui validamos El campo Tipologia y motivo  con rango de fecha.
+        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if (! ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+         //Aqui validamos todos los campos con rango de fecha.
+        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->whereBetween('fecs',[$request->desde,$request->hasta])
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','>=',$request->desde)
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+        if (! ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
+           
+           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
+            ->where('fecs','<=',$request->hasta)
+            ->where('destino','=',$request->destino)
+            ->where('id_tipologia','=',$request->tipo)
+            ->where('id_motivo_salida','=',$request->motivo)->get(); 
+        }
+
+        $fechadereporte = Carbon::now();
+        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $destino = \App\Models\sgfinca::all();
+        
+        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+            ->get();
+
+        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
+        
+        $cantregistro = $salidarealizada->count();
+
+            return view('reports.seriesretiradas',compact('finca','salidarealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
+        }
+
+
+
+
+
+
          public function report_catalogoseries (Request $request,  $id_finca)
         {
     
@@ -1479,12 +1732,105 @@ class ReportController extends Controller
             return view('reports.movimiento_lote',compact('finca','movimientolote','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
         }
 
+        /*
+        public function report_pesoajustado (Request $request,  $id_finca)
+        {
+            
+            //dd($id_finca, $ser);
+            $fechadereporte = Carbon::now();
 
+           // dd($fechadereporte); 
+            
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
+            $fecharegistro = Carbon::now();
 
+            $ajust = DB::table('sgajusts')
+                ->join('sganims','sganims.id','=','sgajusts.id_serie')
+                ->where('sgajusts.id_finca','=',$id_finca)
+                ->whereDate('sgajusts.fecha','=',$fecharegistro)
+                ->get();  
 
+            $cantregistro=$ajust->count(); 
+            
+            $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);
+            $promPa1 = round(collect($ajust)->avg('pa1'),2);
+            $promPa2 = round(collect($ajust)->avg('pa2'),2);
+            $promPa3 = round(collect($ajust)->avg('pa3'),2);
+            $promPa4 = round(collect($ajust)->avg('pa4'),2);
+            
+            
+            $pdf = PDF::loadView('reports.pesoajustado',compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));  
+              
+           return $pdf->stream('Peso_Ajustado.pdf');
+                  
+           //return view('reports.pesoajustado', compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));
+        }
+        */
 
+        public function report_pa (Request $request,  $id_finca)
+        {
+            
+           // return $request; 
+            //dd($id_finca, $ser);
+            $fechadereporte = Carbon::now()->subDay(1);
+ 
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
+            #0. En caso Desde inactivo y Hasta Ianctivo
+            if ( ($request->desde == null) and ($request->hasta==null) ) {
+               
+               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                   ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
+                   ->get();
+            }
 
+            #1.- Caso Desde activo Hasta Inactivo
+            if ( !($request->desde == null) and ($request->hasta==null) ) {
+               
+               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                   ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
+                   ->whereDate('fecha','>=',$request->desde)
+                   ->get();
+            }
+
+            #2.- Caso Desde inactivo Hasta Activo
+
+            if ( ($request->desde == null) and !($request->hasta==null) ) {
+               
+               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
+                   ->whereDate('fecha','<=',$request->hasta)
+                   ->get();
+            }
+
+            #3.- Caso Desde Activo y Hasta Activo
+
+            if ( !($request->desde == null) and !($request->hasta==null) ) {
+               
+               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                    ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
+                   ->whereDate('fecha','>=',$request->desde)
+                   ->whereDate('fecha','<=',$request->hasta)
+                   ->get();
+            }
+     
+            $cantregistro=$ajust->count(); 
+            
+            $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);
+            $promPa1 = round(collect($ajust)->avg('pa1'),2);
+            $promPa2 = round(collect($ajust)->avg('pa2'),2);
+            $promPa3 = round(collect($ajust)->avg('pa3'),2);
+            $promPa4 = round(collect($ajust)->avg('pa4'),2);
+            
+            $pdf = PDF::loadView('reports.pesoajustado',compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));  
+               
+           return $pdf->stream('Peso_Ajustado.pdf');
+                
+           //return view('reports.pesoajustado', compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));
+        }
 
 }

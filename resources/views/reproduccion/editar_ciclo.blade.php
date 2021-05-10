@@ -72,7 +72,7 @@
 								    id="sexo" aria-label="select example">
 			                            <option value="{{ $ciclo->tipomonta }}" selected>{{ $ciclo->tipomonta }}</option>
 			                         	@foreach($tipomonta as $item)
-			                         	<option value="{{ $item->nombre}}">{{ $item->nombre}}</option>
+			                         	<option value="{{ $item->id}}">{{ $item->nombre}}</option>
 			                          	@endforeach()
 		                          	</select> 
 	                        </div>  	

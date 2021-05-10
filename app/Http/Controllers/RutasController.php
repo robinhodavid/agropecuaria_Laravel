@@ -76,6 +76,12 @@ class RutasController extends Controller
             ->where('id_tipologia','=',18)
             ->where('status','=',$status)->get();
 
+        $colorpelaje = \App\Models\colorescampo::where('id_finca', '=', $finca->id_finca)
+            ->get(); 
+        $procedencia = \App\Models\sgprocedencia::where('id_finca', '=', $finca->id_finca)
+            ->get();
+        $procedenciaFinca = \App\Models\sgfinca::all();       
+
         //return $serietoro->all();
         //Modelo donde a través de un id se ubica la información en otra tabla.
         $seriesrecords = DB::table('sganims')
@@ -85,14 +91,24 @@ class RutasController extends Controller
         $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->get();
 
     
-        return view('fichaganado',compact('finca', 'raza','pajuela', 'tipologia','condicion_corporal','serie','seriesrecords','lote','serie','serietoro'));
+        return view('ganaderia.fichaganado',compact('finca', 'raza','pajuela', 'tipologia','condicion_corporal','serie','seriesrecords','lote','serie','serietoro','colorpelaje','procedencia','procedenciaFinca'));
     }
+
 
     //Filtra la tipologia por sexo
     public function filterSexo(Request $request, $sexo)
     {
         if($request->ajax()){
             $tipologia=\App\Models\sgtipologia::filtrartiposexo($sexo); 
+        return response()->json($tipologia);
+      }
+    }
+
+         //Filtra la tipologia por sexo
+    public function filterTipologia(Request $request, $id_tipologia)
+    {
+        if($request->ajax()){
+            $tipologia=\App\Models\sgtipologia::filtrartipologia($id_tipologia); 
         return response()->json($tipologia);
       }
     }
@@ -159,6 +175,7 @@ class RutasController extends Controller
         
         $serieNueva->serie = $request->serie;
         $serieNueva->sexo = $request->sexo;
+        $serieNueva->color_pelaje = $request->colorpelaje;
         $serieNueva->fnac = $request->fnac;
         
 
@@ -201,7 +218,7 @@ class RutasController extends Controller
 
     public function editar_fichaganado($id_finca, $ser)
         {
-           
+     
             //Se buscala finca por su id - Segun modelo
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -209,15 +226,20 @@ class RutasController extends Controller
             $codserie = DB::table('sganims')->select('id')
                 ->where('serie', '=', $ser)
                 ->where('id_finca', '=', $id_finca)->get();
-            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
-            foreach ($codserie as $serieid) {
-                $id= (int) $serieid->id;
-            }
-                         
-             // $idraza = $codserie->pluck('idraza');
-           // $id_condicion = $codserie->pluck('id_condicion');
+
+            if ($codserie->count()>0) {
+                    //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+                    foreach ($codserie as $serieid) {
+                        $id= (int) $serieid->id;
+                    }
+                } else {
+                    return back()->with('mensaje','ok'); 
+                }
+
+            // $idraza = $codserie->pluck('idraza');
+            // $id_condicion = $codserie->pluck('id_condicion');
             // $codpadre = $codserie->pluck('codpadre');
-           //$codmadre = $codserie->pluck('codmadre');
+            //$codmadre = $codserie->pluck('codmadre');
             
             $motivoentrada = \App\Models\sgmotivoentradasalida::where('tipo','=','Entrada')->get();
 
@@ -243,6 +265,14 @@ class RutasController extends Controller
                 ->where('id_condicion','=',$serie->id_condicion)
                 ->get();
 
+            $colorpelaje = \App\Models\colorescampo::where('id_finca', '=', $id_finca)
+                ->get();
+            
+            $procedencia = \App\Models\sgprocedencia::where('id_finca', '=', $finca->id_finca)
+            ->get();
+            
+            $procedenciaFinca = \App\Models\sgfinca::all();           
+
             $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->get();
              //return $serieraza->all();
              //Se trae el modelo de pajuela por el id de finca
@@ -254,6 +284,15 @@ class RutasController extends Controller
             ->where('id_tipologia','=',18)
             ->where('status','=',1)->get();
 
+            /*
+            * Aqui sacaremos el número de Hijos que posee esta serie como vientre
+            */
+            $mv1 = DB::table('sgmv1s')
+                ->where('codmadre','=',$ser)
+                ->get();
+            #Contamos cuantos hijos posee    
+            $nrohijos = $mv1->count();    
+
             /*****************************************************************
             * Colocamos un procedimiento para obtener la descendencia
             * La variable Codigo padre y codigo madre provienen de la busqueda en $serie.
@@ -263,7 +302,8 @@ class RutasController extends Controller
 
            //Obtenemos el código (Abuelo) por parte padre
             $codabuelopaterno = \App\Models\sganim::where('serie', '=', $serie->codpadre)
-                ->get();  
+                ->get(); 
+
                if (  ( $codabuelopaterno->count() > 0) ) {
                     //$codbisabuelospaternospadre = "Bisabuelos Aqui";
                    
@@ -278,7 +318,7 @@ class RutasController extends Controller
                    //$codbisabuelospaternospadre = \App\Models\sganim::where('serie', '=', $codpadrepa)
                      //   ->get(); 
                }
-            
+           
             //Obtenemos el código (Abuela) por parte padre
             $codabuelapaterna = \App\Models\sganim::where('serie', '=', $serie->codpadre)
                 ->get();
@@ -295,23 +335,23 @@ class RutasController extends Controller
                        ->get(); 
                }
                 
-          
             //Obtenemos la serie (abuelo)  maternos
             $codabuelomaterno = \App\Models\sganim::where('serie', '=', $serie->codmadre)
                 ->get();
-               
 
             if ( ($codabuelomaterno->count() > 0) ) {
                 //$codbisabuelosmaternomadre = "Bisabuelos maternos por parte madre";
                 
                 //Obtenemos los bisabuelos maternos por parte madre
                 $codmadre = $codabuelomaterno->pluck('codmadre');
-                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=', $serie->codmadre)
+                $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=',$codmadre)
                         ->get(); 
                } else {
                 $codbisabuelosmaternomadre = \App\Models\sganim::where('serie', '=',"")
                         ->get(); 
             } 
+
+           //return $codbisabuelosmaternomadre;
 
             //Obtenemos la serie (abuela)  maternos
             $codabuelamaterna = \App\Models\sganim::where('serie', '=', $serie->codmadre)
@@ -329,23 +369,22 @@ class RutasController extends Controller
                 $codbisabuelosmaternospadre = \App\Models\sganim::where('serie', '=', "")
                         ->get();   
             }    
-                       
-                  
-                
 
             //return $codbisabuelospaternospadre;
 
-            return view('editarfichaganado', 
+            return view('ganaderia.editarfichaganado', 
                    compact('serie','tipologia','raza','serieraza',
                     'condicion_corporal','seriecondicion','lote','pajuela','serietoro',
                     'codabuelopaterno', 'codabuelapaterna','codbisabuelospaternospadre',
                     'codbisabuelospaternomadre',
                     'codabuelomaterno','codabuelamaterna','codbisabuelosmaternomadre',
-                    'codbisabuelosmaternospadre','finca','motivoentrada'));
+                    'codbisabuelosmaternospadre','finca','motivoentrada','colorpelaje','procedencia','procedenciaFinca','nrohijos'));
         }
 
     public function update_fichaganado(Request $request, $ser, $id_finca)
     {
+        
+
         if ($request->status=="on") {
             $request->validate([
             'motivoentrada'=>[
@@ -414,13 +453,17 @@ class RutasController extends Controller
         $tipologia = \App\Models\sgtipologia::findOrFail($request->tipologia);        
         $serieUpdate = \App\Models\sganim::findOrFail($id);
         
+        $tipoanterior = $serieUpdate->tipo; 
+
         $serieUpdate->serie = $request->serie;
         $serieUpdate->sexo = $request->sexo;
+        $serieUpdate->color_pelaje = $request->colorpelaje;
         $serieUpdate->fnac = $request->fnac;
         
         $serieUpdate->idraza = $request->raza;
         $serieUpdate->id_tipologia = $request->tipologia;
         $serieUpdate->tipo = $tipologia->nombre_tipologia;
+        $serieUpdate->tipoanterior = $tipoanterior;
         $serieUpdate->id_condicion = $request->condicion_corporal;
 
         $serieUpdate->nombrelote = $request->lote;
@@ -499,38 +542,100 @@ class RutasController extends Controller
 
             //return $graficapeso->all();
 
-            return view('pesoespecifico', compact('serie', 'finca', 'registropeso','dias','graficapeso','graficafecha'));
+            return view('ganaderia.pesoespecifico', compact('serie', 'finca', 'registropeso','dias','graficapeso','graficafecha'));
         } 
 
 
     public function crear_pesoespecifico (Request $request,  $id_finca, $ser)
         {
-           //dd($id_finca, $ser); 
-            //return $request->all();
-            //Se buscala finca por su id - Segun modelo
-
+         # Se validan los campos   
             $request->validate([
                 'fecha'=>[
                     'required',
+                    //'unique:sgpesos,fecha,NULL,NULL,id_finca,'.$id_finca,
+                    # Va a permitir que no se creen pesos específicos para la misma fecha
                 ],
                 'peso'=>[
                     'required',
                 ],
             ]);
+         # Obtenemos los datos de la finca con el id_finca   
             $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-              //A través del código serie se obtiene el id y lo pasamos al modelo
+         # A través del código serie se obtiene el id y lo pasamos al modelo
             $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
-            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+
+         # Recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
             foreach ($codserie as $serieid) {
                 $id= (int) $serieid->id;
             }
 
             $serie = \App\Models\sganim::findOrFail($id);
             
-            //validamos la condicion si se trata de un peso de destete
+        # validamos la condicion si se trata de un peso de destete
             $request->destatado = ($request->destatado=="on")?($request->destatado=true):($request->destatado=false);
 
+            /*
+            * Edad minima y edad maxima
+            */
+            $edadmin = DB::table('sgtipologias')
+                ->select(DB::raw('MIN(edad) as edadminima'))
+                ->where('id_finca','=',$id_finca)
+                ->get();
+
+            foreach ($edadmin as $key ) {
+                $emin = (int) $key->edadminima;    
+                }    
+
+            $edadmax = DB::table('sgtipologias')
+                ->select(DB::raw('MAX(edad) as edadmax'))
+                ->where('id_finca','=',$id_finca)
+                ->get();    
+
+            foreach ($edadmax as $key ) {
+                $emax = (int) $key->edadmax;    
+                }     
+
+            /*
+            * Peso minimo y máximo
+            */    
+            $pesomin = DB::table('sgtipologias')
+                ->select(DB::raw('MIN(peso) as pesominimo'))
+                ->where('id_finca','=',$id_finca)
+                ->get();
+    
+            foreach ($pesomin as $key ) {
+                $pmin = (int) $key->pesominimo;    
+                }
+       
+            $pesomax = DB::table('sgtipologias')
+                ->select(DB::raw('MAX(peso) as pesomaximo'))
+                ->where('id_finca','=',$id_finca)
+                ->get();    
+
+            foreach ($pesomax as $key ) {
+                $pmax = (int) $key->pesomaximo;    
+                }         
+            $edad = Carbon::parse($serie->fnac)->diffInDays($request->fecha);
+
+            $tipoanterior = $serie->tipo; 
+
+            /*
+            * Aquí obtenemos el parametro tiempo de secado.
+            */
+             $pG = \App\Models\sgparametros_ganaderia::where('id_finca', '=', $finca->id_finca)->get();
+            
+            foreach ($pG as $key) {
+                //$tgesta = Tiempo de Gestación (días)
+                $pAjust12 = $key->pesoajustado12m;
+                $pAjust18 = $key->pesoajustado18m;
+                $pAjust24 = $key->pesoajustado24m; 
+                $pAjustDestete = $key->pesoajustadoaldestete; 
+            }
+
+        if ($request->destatado=="on")  {
+            # Si e trata de un peso de destete.
+            # Se comprueba que la edad de la serie cumple
             $pesoNuevo = new \App\Models\sgpeso;
 
             $pesoNuevo->id_finca = $finca->id_finca;
@@ -544,44 +649,47 @@ class RutasController extends Controller
             $pesoNuevo->difdia = $request->difdia;
             $pesoNuevo->destetado = $request->destatado;
 
-
             $pesoNuevo-> save();
- 
+
             /*
-            * Actualizar la Tipología en caso de un destete 
-            * de forma automática
+            * Identificamos que el peso registrado es un peso de destete
+            * Para así cambiar la tipologia.
             */
-            $edad = Carbon::parse($serie->fnac)->diffInDays(Carbon::now());
+            $pesaje = DB::table('sgpesos')
+                ->where('fecha','=',$request->fecha)
+                ->where('serie', '=', $serie->serie)
+                ->where('id_finca','=',$id_finca)
+                ->get();   
 
-            if ($request->destatado =="on") {
-                
+                //return $pesaje;
+
+                foreach ($pesaje as $key ) {
+                    $fechadestete = $key->fecha;
+                    $peso = $key->peso;
+                    $dias = $key->dias;
+                    $destetado= $key->destetado; 
+                }  
+                /*
+                * Buscamo la Tipologia para luego Actualizarla   
+                * de forma automática, para efectuar el cambio de la misma.
+                * Aqui se hace el destete y se pasa a la tipologia de destete.
+                */  
                 $buscatipologia = DB::table('sgtipologias')->select('id_tipologia')
-                   ->where('id_finca','=',$id_finca)
-                   ->where('destetado','=',$request->destatado)
-                   ->where('sexo','=',$serie->sexo)
-                   ->where('edad','<',365)
-                   ->whereBetween('peso',[$request->pesoi,$request->peso])
-                   ->where('nro_monta','=',$serie->nro_monta)
-                   ->where('prenada','=',$serie->prenada)
-                   ->where('parida','=',$serie->parida)
-                   ->where('tienecria','=',$serie->tienecria)
-                   ->where('criaviva','=',$serie->criaviva)
-                   ->where('ordenho','=',$serie->ordenho)
-                   ->where('detectacelo','=',$serie->detectacelo)->get();
-              
-
-            foreach ($buscatipologia as $id_tipo) 
-            {
-                $idtipo = (int) $id_tipo->id_tipologia;
-            }     
+                       ->where('id_finca','=',$id_finca)
+                       ->where('destetado','=',$destetado)
+                       ->where('sexo','=',$serie->sexo)
+                        ->where('peso','>=',$request->peso)
+                        ->where('peso','<',$pmax)
+                        ->get();
+                foreach ($buscatipologia as $id_tipo) 
+                {
+                    $idtipo = (int) $id_tipo->id_tipologia;
+                }     
 
 
-                $tipologia = \App\Models\sgtipologia::findOrFail($idtipo);
-
-               // $tipologianame = $buscatipologia->pluck('nombre_tipologia');     
-               // $tipologia_id = $buscatipologia->pluck('id_tipologia');     
+                $tipologia = \App\Models\sgtipologia::findOrFail(4);
                 
-                $fuedestetado = $request->destatado;
+                $fuedestetado = $destetado;
                 $pesodedestete = $request->peso;
                 $fecdes = $request->fecha;
 
@@ -596,28 +704,139 @@ class RutasController extends Controller
                                     'fecdes'      => $fecdes, 
                                     'ultgdp'      => $request->gdp,
                                     'tipo'        => $tipologia->nombre_tipologia,
+                                    'tipoanterior'=> $tipoanterior,
                                     'id_tipologia'=> $tipologia->id_tipologia,
-                                    ]);
+                                    'nro_monta'=> $tipologia->nro_monta,
+                                    'prenada'=> $tipologia->prenada,
+                                    'parida'=> $tipologia->parida,
+                                    'tienecria'=> $tipologia->tienecria,
+                                    'criaviva'=> $tipologia->criaviva,
+                                    'ordenho'=> $tipologia->ordenho,
+                                    'detectacelo'=> $tipologia->detectacelo]);
 
-                return back()->with('mensaje', 'ok');     
-                                        
-            } else {
-                //Los cambios se dan por sugerencia
+                return back()->with('mensaje', 'ok'); 
+        } else {
+                # Si Es un registro de peso normal
+          
+                # Si se hace un registro de peso no destete
+                $pesoNuevo = new \App\Models\sgpeso;
+
+                $pesoNuevo->id_finca = $finca->id_finca;
+                $pesoNuevo->id_serie = $serie->id;
+                $pesoNuevo->serie = $serie->serie;
+                $pesoNuevo->peso = $request->peso;
+                $pesoNuevo->gdp = $request->gdp;
+                $pesoNuevo->dias = $request->dias;
+                $pesoNuevo->pgan = $request->pgan;
+                $pesoNuevo->fecha = $request->fecha;
+                $pesoNuevo->difdia = $request->difdia;
+                $pesoNuevo->destetado = $request->destatado;
+
+                $pesoNuevo-> save(); 
+
+                # Se realiza la actualización de la tabla Sganims.  
                 $updatepesoserie = DB::table('sganims')
                                     ->where('id',$serie->id)
                                     ->where('id_finca', $finca->id_finca)
                                     ->update(['pesoactual'=>$request->peso,
                                         'fulpes'=>$request->fecha,
-                                    //    'destatado'=> $fuedestetado,
-                                    //    'pesodestete'=>$pesodedestete, 
-                                    //    'fecdes'=>$pesodedestete, 
                                         'ultgdp'=>$request->gdp]);
+                return back()->with('msj', 'Registro creado satisfactoriamente');
+  
+        } //End /.if
+    }
+
+    public function eliminar_pesoespecifico($id_finca, $id_peso)
+        {
             
-            return back()->with('msj', 'Registro creado satisfactoriamente');
-            //return view('editarfichaganado')->with('msj', 'Registro creado satisfactoriamente');
+            $pesoEspecificoEliminar = \App\Models\sgpeso::findOrFail($id_peso);
+            
+            #con este valor sabremos si la fecha a eliminar se trata de una 
+            #fecha de destete.
+            $pesodestete = $pesoEspecificoEliminar->destetado;
+
+            #Obtenemos el Id de la Serie segun el peso a eliminar
+            $serie = \App\Models\sganim::findOrFail($pesoEspecificoEliminar->id_serie);
+
+            #Con la Tiplologia anterior buscamos el id y el nombre de la tipología para actualizar
+            $tipologia = \App\Models\sgtipologia::where('nombre_tipologia','=',$serie->tipoanterior)->get();
+
+           // dd($pesodestete, $serie); 
+
+            foreach ($tipologia as $key) {
+                    $idtipoAnte = $key->id_tipologia;
+                }   
+
+            try {
+            
+            $pesoEspecificoEliminar->delete();
+
+            if ($pesodestete==1) {
+                   #si es un peso de destete que fue eliminado, actualzamos la tabla sganims 
+                   # de la siguiente forma
+                $ultimaFechaPeso = DB::table('sgpesos')
+                    ->select(DB::raw('MAX(fecha) as ultpeso'))
+                    ->where('serie', '=', $serie->serie)
+                    ->where('id_finca','=',$id_finca)
+                    ->get(); 
+                /*
+                *->| Comprueba el ultimo peso y se actualiza el campo Fecha ultimo pesaje en la tabla sganims.  
+                */  
+                foreach ($ultimaFechaPeso as $key) {
+                    $ultpesaje = $key->ultpeso;
+                }
+                # Con la Fecha Actualizamos buscamo el peso y actualiamos la tabla sganim
+                $uP = DB::table('sgpesos')
+                    ->where('serie', '=', $serie->serie)
+                    ->where('id_finca','=',$id_finca)
+                    ->where('fecha','=',$ultpesaje)
+                    ->get(); 
+
+                foreach ($uP as $key) {
+                    $peso = $key->peso;
+                }            
+                
+                $ultimoPesaje = DB::table('sganims')
+                                    ->where('id','=',$serie->id)
+                                    ->where('id_finca','=', $id_finca)
+                                    ->update(['fulpes'=>$ultpesaje,
+                                              'pesodestete'=>NULL,
+                                              'fecdes'=>NULL,
+                                              'destatado'=>NULL,
+                                              'pesoactual'=>$peso,
+                                              'id_tipologia'=>$idtipoAnte,
+                                              'tipo'=>$serie->tipoanterior]);  
+
+                return back()->with('mensaje', 'dok');                      
+
+                } else {
+
+                $ultimaFechaPeso = DB::table('sgpesos')
+                    ->select(DB::raw('MAX(fecha) as ultpeso'))
+                    ->where('serie', '=', $serie->serie)
+                    ->where('id_finca','=',$id_finca)
+                    ->get();
+                /*
+                *->| Comprueba el ultimo peso y se actualiza el campo Fecha ultimo pesaje en la tabla sganims.  
+                */  
+                foreach ($ultimaFechaPeso as $key) {
+                        $ultpesaje = $key->ultpeso;
+                    }   
+                $ultimoPesaje = DB::table('sganims')
+                                    ->where('id','=',$serie->id_serie)
+                                    ->where('id_finca','=', $id_finca)
+                                    ->update(['fulpes'=>$ultpesaje]);
+                }
+                return back()->with('mensaje', 'dok');  
+
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }
+
         }
 
-    }       
+
+
     
     //Retorna a la vista lote
     public function lote($id_finca)
@@ -628,7 +847,7 @@ class RutasController extends Controller
         //$lote = \App\Models\sglote::paginate(4);
         $lote = \App\Models\sglote::where('id_finca', '=', $finca->id_finca)->paginate(4);
 
-        return view('lote', compact('lote', 'finca'));
+        return view('ganaderia.lote', compact('lote', 'finca'));
         //return view('lote');
     }
 
@@ -665,7 +884,7 @@ class RutasController extends Controller
         {
             $finca =  \App\Models\sgfinca::findOrFail($id_finca);   
             $lote = \App\Models\sglote::findOrFail($id_lote);
-            return view('editarlote', compact('lote', 'finca'));
+            return view('ganaderia.editarlote', compact('lote', 'finca'));
         }
 
         public function update_lote(Request $request, $id_lote, $id_finca)
@@ -724,7 +943,7 @@ class RutasController extends Controller
 		      	$sublote = \App\Models\sgsublote::where('nombre_lote', '=', $lote->nombre_lote)
                     ->where('id_finca', '=', $finca->id_finca)->get();
 		        
-		        return view('sublote', compact('sublote','lote','finca'));
+		        return view('ganaderia.sublote', compact('sublote','lote','finca'));
 		        //return view('lote');
 		    }
 		  
@@ -799,7 +1018,7 @@ class RutasController extends Controller
 		      	
 		      //$serieasignarlote = \App\Models\sganim::paginate(5);
 		        
-		        return view('detalleserielote', compact('seriesenlote','lote','finca'));
+		        return view('ganaderia.detalleserielote', compact('seriesenlote','lote','finca'));
 		        //return view('lote');
 		        
 		    }
@@ -822,7 +1041,7 @@ class RutasController extends Controller
                         ->where('nombrelote','=',$sublote->nombre_lote)->get();
                 }
                 
-                return view('detalleseriesublote', compact('seriesensublote','sublote','finca'));
+                return view('ganaderia.detalleseriesublote', compact('seriesensublote','sublote','finca'));
                 //return view('lote');                
             }
 
@@ -846,7 +1065,7 @@ class RutasController extends Controller
 
 		      	$lote = \App\Models\sglote::all()->pluck('nombre_lote');	
 						    
-		     	return view('asignarseries', compact('asignarseries','lote', 'finca'));
+		     	return view('ganaderia.asignarseries', compact('asignarseries','lote', 'finca'));
 
 		    }
 
@@ -937,7 +1156,7 @@ class RutasController extends Controller
 
 
             //return $records->all();
-            return view('pajuela', compact('pajuela','finca','raza','records','especie'));
+            return view('ganaderia.pajuela', compact('pajuela','finca','raza','records','especie'));
         }
     
         //Con esto Agregamos datos en la tabla pajuela
@@ -1000,7 +1219,7 @@ class RutasController extends Controller
             $raza = \App\Models\sgraza::where('id_finca', '=', $finca->id_finca)->get();
             
 
-            return view('editarpajuela', compact('pajuela','finca','raza','especie'));
+            return view('ganadria.editarpajuela', compact('pajuela','finca','raza','especie'));
         }
 
         public function update_pajuela(Request $request, $id, $id_finca)
@@ -1070,8 +1289,11 @@ class RutasController extends Controller
                 ->take(7)->paginate(7);
             }
             
-            $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=',"Salida") 
-            ->get();
+            $idtrans = 4; //Hardcode
+            
+            $motivo = \App\Models\sgmotivoentradasalida::where('id','=',$idtrans)
+                ->get(); //Harcode
+
             /*
              $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=',"Salida") 
             ->where('id_finca','=',$id_finca)->get();
@@ -1088,7 +1310,7 @@ class RutasController extends Controller
 
         //return $destino->all();     
 
-        return view('transferencia',compact('finca','transferseries','motivo', 'destino','transfrealizada'));
+        return view('ganaderia.transferencia',compact('finca','transferseries','motivo', 'destino','transfrealizada'));
     }
 
     public function transferir_series(Request $request, $id_finca)
@@ -1105,9 +1327,6 @@ class RutasController extends Controller
                 'required',
             ],
             'motivo'=>[
-                'required',
-            ],
-            'destino'=>[
                 'required',
             ],
             'obser'=>[
@@ -1499,6 +1718,143 @@ class RutasController extends Controller
         return view('info.transferencias_realizadas',compact('finca','transfrealizada','tipologia','destino','motivo'));
     }
 
+
+    /*
+    * Inicio de Salida de Animales
+    */
+
+    //Retorna a la vista transferencia
+        public function salida(Request $request, $id_finca)
+    {
+
+            //Se buscala finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+            //->Se muestran las series 
+            //$asignarseries = \App\Models\sganim::paginate(7);
+            if (! empty($request->serie) ) {
+               $transferseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                ->where('id_finca','=',$id_finca)
+                ->where('status','=',1)
+                ->take(7)->paginate(7);
+            } else {
+                $transferseries = \App\Models\sganim::where('serie', 'like', $request->serie."%")
+                ->where('id_finca','=',$id_finca)
+                ->where('status','=',1)
+                ->take(7)->paginate(7);
+            }
+            
+            $idtrans = 4; //hardcode
+            $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')
+                ->where('id','<>',$idtrans)
+                ->get(); //Harcode
+            
+            $destino = \App\Models\sgdestinosalida::where('id_finca','=',$id_finca)->get();  
+
+            $fecsalida = Carbon::now()->subDay(1)->format('Y-m-d');
+
+            $salidarealizada = \App\Models\sghsal::whereDate('fechs','=',$fecsalida) 
+                ->where('id_finca','=',$id_finca)
+                ->get();
+
+        return view('ganaderia.salida_animales',compact('finca','transferseries','motivo', 'destino','salidarealizada'));
+    }
+
+    public function salida_series(Request $request, $id_finca)
+    {
+   
+        //Finca de origen        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $request->validate([
+            'id'=>[
+                'required',
+            ],
+            'fecs'=>[
+                'required',
+            ],
+            'motivo'=>[
+                'required',
+            ],
+            'obser'=>[
+                'required',
+            ],
+            'destino'=>[
+                'required',
+            ],    
+        ]);
+        
+        //Aquí ubicamos destino        
+        $destino = \App\Models\sgdestinosalida::where('id_finca','=',$id_finca)->get();
+
+        //Corremos el indice para cada serie qe viene en el array[$request]
+        $cont = count($request->id);
+        for($i=0; $i < $cont; $i++){    
+            
+            //Obtenemos las series que se van a transferir con su ID
+            $series = \App\Models\sganim::findOrFail($request->id[$i]);
+            //Obtenemos  el motivo de salida
+            $motivosal = \App\Models\sgmotivoentradasalida::findOrFail($request->motivo);
+             /*
+             * Se comprueba que la serie existe $seriefincadestino
+             * Luego se ubica (n)  la (s) serie (s)
+             * Se registran en sghsal
+             * Luego seactualizan (update) de los datos de la serie transferida 
+             */
+                $fecsalida = Carbon::now();
+                
+                $serieHistoriaSal = new \App\Models\sghsal;
+
+                $serieHistoriaSal->id_serie = $request->id[$i];
+                $serieHistoriaSal->serie = $series->serie;
+                $serieHistoriaSal->motivo = $motivosal->nombremotivo;
+                $serieHistoriaSal->fechs = $request->fecs;
+                $serieHistoriaSal->procede = $finca->nombre;
+                $serieHistoriaSal->destino = $request->destino;
+                $serieHistoriaSal->peso = $series->pesoactual;
+                $serieHistoriaSal->feche = $series->fecr;
+                $serieHistoriaSal->e_s = 0;
+                $serieHistoriaSal->id_motsal = $request->motivo;
+                $serieHistoriaSal->obser = $request->obser;
+                $serieHistoriaSal->id_finca = $finca->id_finca;
+
+                $serieHistoriaSal-> save();
+
+                //Luego acualizamos el status a inactivo en serie origen
+                $updateserie = DB::table('sganims')
+                            ->where('id',$request->id[$i])
+                            ->where('id_finca', $finca->id_finca)
+                            ->update(['status'=>0,'motivo'=>$motivosal->nombremotivo,
+                                'fecs'=>$fecsalida]);    
+        }            
+        return back()->with('msj', 'Serie (s) transferida (s) satisfactoriamente');
+
+    }
+
+
+    //Retorna a la vista de transferencia.
+    public function vista_reportes_salida(Request $request, $id_finca)
+    {
+       
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+    
+        $destino = \App\Models\sgdestinosalida::all();
+        
+        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+            ->get();
+
+        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get();  
+        
+        $salidarealizada = \App\Models\sghsal::where('id_finca','=',$id_finca)
+           ->paginate(10); 
+
+        
+        return view('info.salidas_realizadas',compact('finca','salidarealizada','tipologia','destino','motivo'));
+    }
+
+    /*
+    * FIN SALIDA DE SERIES
+    */
+
      //Retorna a la vista general de reportes
         public function vista_reportesgenerales($id_finca)
     {
@@ -1585,6 +1941,1497 @@ class RutasController extends Controller
                 
         return view('info.movimiento_lote',compact('finca','movimientolote'));
     }
+
+    /*
+    * Aquí los controller de la vista Cambio de Tipologia
+    */
+
+        //Retorna a la vista lote
+    public function cambio_tipologia ($id_finca)
+    {
+        //Se buscala finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        $tipologiaActualMacho = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->where('sexo','=',1)
+            ->whereIn('secuencia',[0,1,2])
+            ->where('secuencia','<>',null) 
+            ->get();
+        $tipologiaActualHembra = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->where('sexo','=',0)
+            ->whereIn('secuencia',[0,1])
+            ->where('secuencia','<>',null) 
+            ->get();    
+
+        return view('ganaderia.cambio_tipologia', compact('finca','tipologiaActualMacho','tipologiaActualHembra'));
+        //return view('lote');
+    }
+
+     //Con esto Agregamos datos en la tabla lote
+        public function cambiar_tipo(Request $request, $id_finca)
+    {
+        
+        $tipoActual = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->where('nombre_tipologia','=',$request->tipo_actual)
+            ->get();
+
+        foreach ($tipoActual as $key ) {
+            # obtenermos el id de la tipologia actual ...
+            $idtipoAct = $key->id_tipologia;
+            }
+        $tipoPropuest = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->where('nombre_tipologia','=',$request->tipopropuesta)
+            ->get();
+            
+        foreach ($tipoActual as $key ) {
+            # obtenermos el id de la tipologia Propuesta
+            $idtipoPropuesta = $key->id_tipologia;
+            }        
+
+        #Primer caso Por peso
+        if ($request->criterio == 0) {
+            # Buscamos la tipo logia actual con el peso actual
+
+            $serieUpdate = DB::table('sganims')
+                    ->where('id_tipologia',$idtipoAct)
+                    ->where('id_finca', $id_finca)
+                    ->where('pesoactual','>=',$request->peso)
+                    ->update(['id_tipologia'=>$idtipoPropuesta,
+                    'tipo'=>$request->tipopropuesta,
+                    'tipoanterior'=>$request->tipo_actual]);
+        }
+
+        #Segundo caso Por Edad
+        if ($request->criterio == 1) {
+            # Buscamos la tipo logia actual con el peso actual
+
+            $serieUpdate = DB::table('sganims')
+                    ->where('id_tipologia',$idtipoAct)
+                    ->where('id_finca', $id_finca)
+                    ->where('edad','=',$request->edad)
+                    ->update(['id_tipologia'=>$idtipoPropuesta,
+                    'tipo'=>$request->tipopropuesta,
+                    'tipoanterior'=>$request->tipo_actual]);
+        }
+
+        #Segundo caso Por Peso y Edad
+        if ($request->criterio == 2) {
+            # Buscamos la tipo logia actual con el peso actual
+
+            $serieUpdate = DB::table('sganims')
+                    ->where('id_tipologia',$idtipoAct)
+                    ->where('id_finca', $id_finca)
+                    ->where('pesoactual','>=',$request->peso)
+                    ->where('edad','=',$request->edad)
+                    ->update(['id_tipologia'=>$idtipoPropuesta,
+                    'tipo'=>$request->tipopropuesta,
+                    'tipoanterior'=>$request->tipo_actual]);
+        }
+ 
+        //return response()->json(['slug' => $loteNuevo->slug]);
+        return back()->with('msj', 'Cambio realizado satisfactoriamente');
+    }
+
+   //Peso Ajustado
+    public function peso_ajustado (Request $request, $id_finca)
+    {
+       
+        //return $request; 
+        
+        //Se buscala finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $pG = \App\Models\sgparametros_ganaderia::all();
+
+         foreach ($pG as $key ) {
+            $pGDiasDestete = $key->diasaldestete;
+            $pGPesoAjustadoAlDestete = $key->pesoajustadoaldestete;
+            $pGPesoAjustado12m = $key->pesoajustado12m;
+            $pGPesoAjustado18m = $key->pesoajustado18m;
+            $pGPesoAjustado24m = $key->pesoajustado24m;
+        }
+       
+        #1.- Caso Cuando Estan todos los campos Vacios
+        if ($request->sexo==null and $request->desde==null and $request->hasta==null) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+                ->take(10)->paginate(10);
+        }
+
+        #2.- Caso cuando se filtra solo por sexo        
+        if ( !($request->sexo==null) and $request->desde==null and $request->hasta==null) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+                ->where('sexo','=',$request->sexo)
+                ->take(10)->paginate(10);
+        }  
+
+        #3.- Cuando se filtrar por sexo y fecha inicial de destete
+        if ( !($request->sexo==null) and !($request->desde==null) and $request->hasta==null) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+                ->where('sexo','=',$request->sexo)
+                ->where('fecdes','>=',$request->desde)
+                ->take(10)->paginate(10);
+        }  
+
+        #4.- Cuando se filtrar por sexo, fecha inicial y fecha final de destete
+        if ( !($request->sexo==null) and !($request->desde==null) and !($request->hasta==null) ) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+                ->where('sexo','=',$request->sexo)
+                ->where('fecdes','>=',$request->desde)
+                ->where('fecdes','<=',$request->hasta)
+                ->take(10)->paginate(10);
+        }
+
+        #5.- Cuando se filtrar por fecha inicial y fecha final de destete
+        if ( ($request->sexo==null) and !($request->desde==null) and !($request->hasta==null) ) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+               // ->where('sexo','=',$request->sexo)
+                ->where('fecdes','>=',$request->desde)
+                ->where('fecdes','<=',$request->hasta)
+                ->take(10)->paginate(10);
+        }
+
+        #6.- Cuando se filtrar por fecha final de destete
+        if ( ($request->sexo==null) and ($request->desde==null) and !($request->hasta==null) ) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+               // ->where('sexo','=',$request->sexo)
+                //->where('fecdes','>=',$request->desde)
+                ->where('fecdes','<=',$request->hasta)
+                ->take(10)->paginate(10);
+        }
+
+        #7.- #6.- Cuando se filtrar por fecha Inicial de estet
+        if ( ($request->sexo==null) and !($request->desde==null) and ($request->hasta==null) ) {
+            
+            $seriesMaute = DB::table('sganims')
+                ->select(DB::raw('DATEDIFF(fecdes,fnac) as diasaldestete, id, serie,sexo ,DATEDIFF(CURDATE(),fnac) as edaddias, tipo, codmadre, codpadre, fecdes, pesodestete'))
+                ->whereRaw("DATEDIFF(fecdes,fnac)  >".$pGDiasDestete)
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=', 180)
+                ->where('pesoactual','<', 300)
+               // ->where('sexo','=',$request->sexo)
+                //->where('fecdes','>=',$request->desde)
+                ->where('fecdes','>=',$request->desde)
+                ->take(10)->paginate(10);
+        }               
+               
+    
+        return view('ganaderia.peso_ajustado', compact('finca','seriesMaute'));
+        //return view('lote');
+    }
+    
+
+     public function calcular_peso_ajustado (Request $request, $id_finca)
+    {
+        //return $request; 
+
+        //Se buscala finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $pG = \App\Models\sgparametros_ganaderia::all();
+
+        foreach ($pG as $key ) {
+            $pGDiasDestete = $key->diasaldestete;
+            $pGPesoAjustadoAlDestete = $key->pesoajustadoaldestete;
+            $pGPesoAjustado12m = $key->pesoajustado12m;
+            $pGPesoAjustado18m = $key->pesoajustado18m;
+            $pGPesoAjustado24m = $key->pesoajustado24m;
+        }
+
+        # 0.-Caso  de Ajuste  ninguno activo
+
+        if (!($request->paj205=="on") and !($request->paj365=="on") and !($request->paj540=="on") and !($request->paj730=="on") ) {
+             return back()->with('mensaje', 'info');    
+        }
+
+        # 1.-Primer Caso de Ajuste Paj205
+        if ( ($request->paj205=="on") and !($request->paj365=="on") and !($request->paj540=="on") and !($request->paj730=="on") ) {
+          
+          $cont = count($request->id);
+                # Este for es para grabar en la base de datos
+                for($i=0; $i < $cont; $i++){
+
+                                    
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+                    $ajusteNuevo->pa1 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+                }
+
+                #Este for es para Calcular los promedios y actualizar los resultados
+                for($i=0; $i < $cont; $i++){
+                    $paj205Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa1) as prompaj205'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj205Prom as $key ) {
+                        $prom205 = $key->prompaj205;       
+                    } 
+
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa1 = $key->pa1;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa1/$prom205)*100;  
+
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c1'=>$indice]);
+                    $rpa1 =((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;    
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa1'=>$rpa1]);       
+                }
+        }
+
+        # 2.- Segundo caso de Ajuste paj365
+        if ( !($request->paj205=="on") and ($request->paj365=="on") and !($request->paj540=="on") and !($request->paj730=="on") ) {
+          
+          $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+
+                                    
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+                    $ajusteNuevo->pa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+
+                }
+
+                for($i=0; $i < $cont; $i++){
+                   $paj365Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa2) as prompaj365'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj365Prom as $key ) {
+                        $prom365 = $key->prompaj365;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa2 = $key->pa2;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa2/$prom365)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c2'=>$indice]);
+
+                    $rpa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;   
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa2'=>$rpa2]);    
+
+                }
+        }
+
+        # 3.- Caso de Ajuste de Peso Paj540
+        if (!($request->paj205=="on") and !($request->paj365=="on") and ($request->paj540=="on") and !($request->paj730=="on")) {
+           $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+
+                                    
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+                    $ajusteNuevo->pa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+
+                }  
+                for($i=0; $i < $cont; $i++){
+                  $paj540Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa3) as prompaj540'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj540Prom as $key ) {
+                        $prom540 = $key->prompaj540;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa3 = $key->pa3;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa3/$prom540)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c3'=>$indice]);
+                    $rpa3 =((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;    
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa3'=>$rpa3]);      
+                } 
+        }
+
+        # 4.- Caso de Ajuste de Peso Paj730
+        if (!($request->paj205=="on") and !($request->paj365=="on") and !($request->paj540=="on") and ($request->paj730=="on")) {
+           $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+
+                                    
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+                    $ajusteNuevo->pa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+                }
+
+                for($i=0; $i < $cont; $i++){   
+                $paj730Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa4) as prompaj730'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj730Prom as $key ) {
+                        $prom730 = $key->prompaj730;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa4 = $key->pa4;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa4/$prom730)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c4'=>$indice]);
+                    $rpa4 =((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;    
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa4'=>$rpa4]);        
+
+                }
+        }
+
+        # 5.- Quinto Caso de Ajuste de Peso Paj205 y Paj365
+        if (($request->paj205=="on") and ($request->paj365=="on") and !($request->paj540=="on") and !($request->paj730=="on")) {
+          
+          $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+
+                                    
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+                    $ajusteNuevo->pa1 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+                    $ajusteNuevo->pa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+        
+                }
+
+                for($i=0; $i < $cont; $i++){ 
+                /*
+                    * Promedios 205
+                    */
+                    $paj205Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa1) as prompaj205'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj205Prom as $key ) {
+                        $prom205 = $key->prompaj205;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa1 = $key->pa1;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa1/$prom205)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c1'=>$indice]);
+
+
+                    /*
+                    * Promedios de 365
+                    */
+                    $paj365Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa2) as prompaj365'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj365Prom as $key ) {
+                        $prom365 = $key->prompaj365;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa2 = $key->pa2;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa2/$prom365)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c2'=>$indice]);
+
+                    $rpa1= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+                    $rpa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa1'=>$rpa1,
+                                              'pa2'=>$rpa2]);
+
+                }
+
+            #      
+        }
+
+        # 6.- Caso de Ajuste de Peso Paj205 y Paj540
+        if (($request->paj205=="on") and !($request->paj365=="on") and ($request->paj540=="on") and !($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa1 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $ajusteNuevo->pa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+    
+                }
+
+                for($i=0; $i < $cont; $i++){
+                  /*
+                    * Promedios 205
+                    */
+                    $paj205Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa1) as prompaj205'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj205Prom as $key ) {
+                        $prom205 = $key->prompaj205;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa1 = $key->pa1;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa1/$prom205)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c1'=>$indice]);
+                    /*
+                    * Promedios de 540
+                    */
+                    $paj540Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa3) as prompaj540'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj540Prom as $key ) {
+                        $prom540 = $key->prompaj540;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa3 = $key->pa3;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa3/$prom540)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c3'=>$indice]);
+
+                    $rpa1= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $rpa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa1'=>$rpa1,
+                                              'pa3'=>$rpa3]);    
+                }
+
+            #      
+        }
+
+        # 7.- Caso de Ajuste de Peso Paj205 y Paj730
+        if (($request->paj205=="on") and !($request->paj365=="on") and !($request->paj540=="on") and ($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa1 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $ajusteNuevo->pa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+                }
+
+                for($i=0; $i < $cont; $i++){
+                  /*
+                    * Promedios 205
+                    */
+                    $paj205Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa1) as prompaj205'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj205Prom as $key ) {
+                        $prom205 = $key->prompaj205;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa1 = $key->pa1;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa1/$prom205)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c1'=>$indice]);
+                    /*
+                    * Promedios de 730
+                    */
+                    $paj730Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa4) as prompaj730'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj730Prom as $key ) {
+                        $prom730 = $key->prompaj730;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa4 = $key->pa4;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa4/$prom730)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c4'=>$indice]);
+
+                    $rpa1= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $rpa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa1'=>$rpa1,
+                                              'pa4'=>$rpa4]);   
+                }
+
+            #      
+        }
+
+        # 8.- Caso de Ajuste de Peso Paj365 y Paj540
+        if (!($request->paj205=="on") and ($request->paj365=="on") and ($request->paj540=="on") and !($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $ajusteNuevo->pa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+
+                    
+                }
+                
+                for($i=0; $i < $cont; $i++){
+                /*
+                    * Promedios 205
+                    */
+                    $paj365Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa2) as prompaj365'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj365Prom as $key ) {
+                        $prom365 = $key->prompaj365;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa2 = $key->pa2;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa2/$prom365)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c2'=>$indice]);
+                    /*
+                    * Promedios de 730
+                    */
+                    $paj540Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa3) as prompaj540'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj540Prom as $key ) {
+                        $prom540 = $key->prompaj540;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa3 = $key->pa3;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa3/$prom540)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c3'=>$indice]);
+
+                    $rpa2= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $rpa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa2'=>$rpa2,
+                                              'pa3'=>$rpa3]);       
+                }
+
+            #      
+        }
+
+        # 9.- Caso de Ajuste de Peso Paj365 y Paj730
+        if (!($request->paj205=="on") and ($request->paj365=="on") and !($request->paj540=="on") and ($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $ajusteNuevo->pa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save();    
+                }
+
+                for($i=0; $i < $cont; $i++){
+                    /*
+                    * Promedios 365
+                    */
+                    $paj365Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa2) as prompaj365'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj365Prom as $key ) {
+                        $prom365 = $key->prompaj365;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa2 = $key->pa2;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa2/$prom365)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c2'=>$indice]);
+                    /*
+                    * Promedios de 730
+                    */
+                    $paj730Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa4) as prompaj730'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj730Prom as $key ) {
+                        $prom730 = $key->prompaj730;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa4 = $key->pa4;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa4/$prom730)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c4'=>$indice]);
+
+                    $rpa2= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $rpa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa2'=>$rpa2,
+                                              'pa4'=>$rpa4]); 
+                }
+
+            #      
+        }
+
+        # 10.- Caso de Ajuste de Peso Paj540 y Paj730
+        if (!($request->paj205=="on") and !($request->paj365=="on") and ($request->paj540=="on") and ($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $ajusteNuevo->pa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save();   
+                }
+
+                for($i=0; $i < $cont; $i++){ 
+                 /*
+                    * Promedios 540
+                    */
+                    $paj540Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa3) as prompaj540'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj540Prom as $key ) {
+                        $prom540 = $key->prompaj540;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa3 = $key->pa3;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa3/$prom540)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c3'=>$indice]);
+                    /*
+                    * Promedios de 730
+                    */
+                    $paj730Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa4) as prompaj730'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj730Prom as $key ) {
+                        $prom730 = $key->prompaj730;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa4 = $key->pa4;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa4/$prom730)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c4'=>$indice]);
+
+                    $rpa3= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $rpa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa3'=>$rpa3,
+                                              'pa4'=>$rpa4]);      
+                }
+
+            #      
+        }
+
+        # 11.- Caso de Ajuste de Peso Paj205, Paj365, Paj540 y Paj730
+        if (($request->paj205=="on") and ($request->paj365=="on") and ($request->paj540=="on") and ($request->paj730=="on")) {
+          
+            $cont = count($request->id);
+                for($i=0; $i < $cont; $i++){
+         
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                
+                    $fecregistro = Carbon::now();
+
+                    $edad =  Carbon::parse($series->fnac)->diffInDays($series->fecdes);
+
+                    $ajusteNuevo = new \App\Models\sgajust;
+
+                    $ajusteNuevo->id_serie = $request->id[$i];
+                    $ajusteNuevo->serie = $series->serie;
+                    $ajusteNuevo->sexo = $series->sexo;
+                    $ajusteNuevo->fecha = $fecregistro;
+                    $ajusteNuevo->pesdes = $series->pesodestete;
+                    $ajusteNuevo->peso = $series->pesoactual;
+                    $ajusteNuevo->difdia = $edad;
+                    $ajusteNuevo->difpeso = $series->pesoactual - $series->pesoi;
+                    $ajusteNuevo->pesoi = $series->pesoi;
+
+                    $ajusteNuevo->pa1 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $ajusteNuevo->pa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+
+                    $ajusteNuevo->pa3 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $ajusteNuevo->pa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $ajusteNuevo->gdp = ($series->pesodestete - $series->pesoi) / $edad;
+                    $ajusteNuevo->fnac = $series->fnac;
+                    $ajusteNuevo->idraza = $series->idraza;
+                    $ajusteNuevo->lote = $series->nombrelote;
+                    
+                    $ajusteNuevo->id_finca = $id_finca;
+
+                    $ajusteNuevo-> save(); 
+                }
+
+                for($i=0; $i < $cont; $i++){
+                 /*
+                    * Promedios 205
+                    */
+                    $paj205Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa1) as prompaj205'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj205Prom as $key ) {
+                        $prom205 = $key->prompaj205;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa1 = $key->pa1;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa1/$prom205)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c1'=>$indice]);
+                    /*
+                    * Promedios de 365
+                    */
+                    $paj365Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa2) as prompaj365'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj365Prom as $key ) {
+                        $prom365 = $key->prompaj365;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa2 = $key->pa2;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa2/$prom365)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c2'=>$indice]);
+                    /*
+                    * Promedios 540
+                    */
+                    $paj540Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa3) as prompaj540'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj540Prom as $key ) {
+                        $prom540 = $key->prompaj540;       
+                    }  
+
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa3 = $key->pa3;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa3/$prom540)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c3'=>$indice]);
+                    /*
+                    * Promedios de 730
+                    */
+                    $paj730Prom = DB::table('sgajusts')
+                        ->select(DB::raw('AVG(pa4) as prompaj730'))
+                        ->where('id_finca','=',$id_finca)
+                        ->whereDate('fecha','=',$fecregistro)
+                        ->get();
+                    #Obtenemos el promedio del peso ajustado para poder calcular el indice    
+                    foreach ($paj730Prom as $key ) {
+                        $prom730 = $key->prompaj730;       
+                    }  
+                    #Obtenemos el peso Ajustado individual 
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->get();
+
+                    foreach ($ajustSerie as $key ) {
+                            $pa4 = $key->pa4;
+                        }    
+                    #Calculamos el Promedio
+                    $indice = ($pa4/$prom730)*100;    
+
+                    #Actualizamos la tabla sgajusts con e indice para cada id serie
+                    $ajustSerie = DB::table('sgajusts')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id_serie','=',$request->id[$i])
+                        ->update(['c4'=>$indice]);
+
+                    $rpa1= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustadoAlDestete ) + $series->pesoi;
+
+                    $rpa2 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado12m ) + $series->pesoi;
+                        
+                    $rpa3= ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado18m ) + $series->pesoi;
+
+                    $rpa4 = ((($series->pesodestete - $series->pesoi) / $edad) *$pGPesoAjustado24m ) + $series->pesoi;
+
+                    $pajserie = DB::table('sganims')
+                                    ->where('id',$request->id[$i])
+                                    ->where('id_finca', $finca->id_finca)
+                                    ->update(['pa1'=>$rpa1,
+                                              'pa2'=>$rpa2,
+                                              'pa3'=>$rpa3,
+                                              'pa4'=>$rpa4]);   
+                
+                }
+
+            #      
+        }
+        
+        return back()->with('msj', 'Ajuste de Peso realizado satisfactoriamente');
+       
+    }
+
+    public function detalle_ajustepeso ($id_finca)
+    {
+
+        $fecha= Carbon::now();
+
+        $ajust = DB::table('sgajusts')
+            ->where('id_finca','=',$id_finca)
+            ->whereDate('fecha','=',$fecha)
+            ->get(); 
+
+        $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);            
+
+        $promPa1 = round(collect($ajust)->avg('pa1'),2);
+
+        $promPa2 = round(collect($ajust)->avg('pa2'),2);
+        $promPa3 = round(collect($ajust)->avg('pa3'),2);
+        $promPa4 = round(collect($ajust)->avg('pa4'),2);            
+        
+    
+       return view('ganaderia.pesoajustado_results', compact('finca','ajust','promPesoDestete','promPa1','promPa2','promPa3','promPa4'));
+
+    }
+
+
+
+     //Retorna a la vista de transferencia.
+    public function vista_reportespesoajustado(Request $request, $id_finca)
+    {
+       
+        //return $request; 
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        
+        #0. En caso Desde inactivo y Hasta Ianctivo
+        if ( ($request->desde == null) and ($request->hasta==null) ) {
+           
+           $pesAjusReal = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+               ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad' )
+
+               ->join('sganims','sganims.id','=','sgajusts.id_serie')
+               ->take(7)->paginate(7);
+            //return $pesAjusReal;    
+        }
+
+        #1.- Caso Desde activo Hasta Inactivo
+        if ( !($request->desde == null) and ($request->hasta==null) ) {
+           
+           $pesAjusReal = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad' )
+
+               ->join('sganims','sganims.id','=','sgajusts.id_serie')
+               ->whereDate('fecha','>=',$request->desde)
+               ->take(7)->paginate(7);
+
+        }
+
+        #2.- Caso Desde inactivo Hasta Activo
+
+        if ( ($request->desde == null) and !($request->hasta==null) ) {
+           
+           $pesAjusReal = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+               ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+               ->join('sganims','sganims.id','=','sgajusts.id_serie')
+               ->whereDate('fecha','<=',$request->hasta)
+               ->take(7)->paginate(7);
+        }
+
+        #3.- Caso Desde Activo y Hasta Activo
+
+        if ( !($request->desde == null) and !($request->hasta==null) ) {
+           
+           $pesAjusReal = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
+                ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+               ->join('sganims','sganims.id','=','sgajusts.id_serie')
+               ->whereDate('fecha','>=',$request->desde)
+               ->whereDate('fecha','<=',$request->hasta)
+               ->take(7)->paginate(7);
+        }
+
+       // return $pesAjusReal;  
+
+        return view('info.pesosajustados_realizados',compact('finca','pesAjusReal'));
+    }
+
 
 
 }

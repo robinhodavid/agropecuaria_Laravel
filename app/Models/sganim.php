@@ -24,7 +24,6 @@ class sganim extends Model
   //    	'fulpes',
       	'fecdes',
       	'fecua',
-      	'fecup'
       ]; 
   
 }
