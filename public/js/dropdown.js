@@ -842,3 +842,41 @@ $('#ta').on('change', function() {
         $("#tipopropuesta").val(tipopropuesta);
     }   
 });
+
+
+/*
+if ($('#tipo2').prop('checked') ) {
+        $(".list").hide();
+        $(".tip").show();
+    } else {
+        $(".list").show();
+        $(".tip").hide();
+}
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#tipo2').on('click', function() {
+    if ($(this).is(':checked') ) {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Seleccionado");
+          $(".list").hide();
+          $(".tip").show(); 
+    } else {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Deseleccionado");
+        $(".list").show();
+        $(".tip").hide();
+    }
+});
+
+//Con este los llenaremos si se hacen cambios en tiempo real
+$('#tipo1').on('click', function() {
+    if ($(this).is(':checked') ) {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Seleccionado");
+          $(".tip").hide();
+          $(".list").show(); 
+    } else {
+        //console.log("Checkbox " + $(this).prop("id") +  " (" + $(this).val() + ") => Deseleccionado");
+        $(".tip").show();
+        $(".list").hide();
+    }
+});
+
+*/

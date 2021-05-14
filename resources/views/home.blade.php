@@ -3,7 +3,7 @@
 @section('title', 'Sistema de Gestión Agropecuaría')
 
 @section('content_header')
-   
+
 @stop
 
 @section('content')

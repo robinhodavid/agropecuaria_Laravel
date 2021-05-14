@@ -85,6 +85,14 @@
         </button>
       </div>
     @endif
+    @error('id')
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <strong>Atención!</strong> Debe seleccionar al menos un Nro de Serie.
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+   @enderror
       <div class="table">
           <table class="table">
             <thead class="title-table">

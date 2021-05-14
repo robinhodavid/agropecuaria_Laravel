@@ -366,7 +366,7 @@
     </script>  
 
 
-     <script>
+    <script>
     
     $('.form-trans').submit(function(e){
   

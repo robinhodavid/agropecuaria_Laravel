@@ -644,6 +644,25 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reprodu
 * Fin Rutas Módulo de  Reproducción Animal
 ************************************************/
 
+/*
+* Trabajo de Campo - Inventario
+*/
+Route::get('/home/sisga-admin/finca/{id_finca}/inventario/trabajo-de-campo', [App\Http\Controllers\RutasController::class, 'tc_inventario'])->name('inventario'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/inventario/crear-trabajo-de-campo', [App\Http\Controllers\RutasController::class, 'crear_tc'])->name('tc.crear'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/inventario/trabajo-de-campo/detalle/{id_tc}', [App\Http\Controllers\RutasController::class, 'detalle_tc'])->name('tc.detalle');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/inventario/guardar-trabajo-de-campo/{id_tc}', [App\Http\Controllers\RutasController::class, 'guardar_tc'])->name('tc.guardar');
+
+Route::delete('/home/sisga-admin/finca/{id_finca}/inventario/eliminar-trabajo-de-campo/{id_tc}', [App\Http\Controllers\RutasController::class, 'eliminar_tc'])->name('tc.eliminar'); 
+
+Route::get('/home/sisga-admin/finca/{id_finca}/comparar/trabajo-de-campo', [App\Http\Controllers\RutasController::class, 'tc_comparar'])->name('vistacomparar'); 
+
+
+/*
+* Fin de reutas de trabajo de campo
+*/
 
 
 Auth::routes();

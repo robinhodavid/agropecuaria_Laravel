@@ -15,7 +15,7 @@
           <div class="card-header">
             <h3 class="card-title title-header">Salida de Series</h3>
             <div class="card-tools">
-              <form method="GET" action="{{route('transferencia',$finca->id_finca) }}" role="search">
+              <form method="GET" action="{{route('salida',$finca->id_finca) }}" role="search">
                 <div class="card-tools search-table">
                   <div class="input-group input-group-sm" style="width: 185px;">
                     <input type="text" name="serie" id="buscaserie" class="form-control float-right" placeholder="Buscar serie...">

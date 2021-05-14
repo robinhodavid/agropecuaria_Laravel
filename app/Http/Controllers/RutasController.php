@@ -16,6 +16,9 @@ use App\Lote;
 use App\Models\sgsublote;
 use Carbon\Carbon; 
 use Barryvdh\DomPDF\Facade as PDF;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Arr;
 
 
 
@@ -1090,6 +1093,7 @@ class RutasController extends Controller
     		{
     			$finca = \App\Models\sgfinca::findOrFail($id_finca);
 
+
                 //Validamos los campos Nombre de lote y las series a través de su id
     			$request->validate([
     	            'nombrelote'=>[
@@ -1987,7 +1991,7 @@ class RutasController extends Controller
             ->where('nombre_tipologia','=',$request->tipopropuesta)
             ->get();
             
-        foreach ($tipoActual as $key ) {
+        foreach ($tipoPropuest as $key ) {
             # obtenermos el id de la tipologia Propuesta
             $idtipoPropuesta = $key->id_tipologia;
             }        
@@ -2185,7 +2189,11 @@ class RutasController extends Controller
 
         # 1.-Primer Caso de Ajuste Paj205
         if ( ($request->paj205=="on") and !($request->paj365=="on") and !($request->paj540=="on") and !($request->paj730=="on") ) {
-          
+            $request->validate([
+                'id'=>[
+                    'required',
+                ],
+            ]);
           $cont = count($request->id);
                 # Este for es para grabar en la base de datos
                 for($i=0; $i < $cont; $i++){
@@ -3374,7 +3382,7 @@ class RutasController extends Controller
 
 
 
-     //Retorna a la vista de transferencia.
+    #Retorna a la vista de reortes peso ajustados
     public function vista_reportespesoajustado(Request $request, $id_finca)
     {
        
@@ -3432,6 +3440,427 @@ class RutasController extends Controller
         return view('info.pesosajustados_realizados',compact('finca','pesAjusReal'));
     }
 
+    /*
+    * Trabajo de Campo en 
+    */
+    public function tc_inventario(Request $request, $id_finca)
+    {
+        //return $request; 
+        $finca = \App\Models\sgfinca::findOrFail($id_finca); 
 
+        if (($request->tc == null) or empty($request->tc)) {
+            # Si tc es nulo que muestre todo
+            $trabajoCampo = DB::table('trabajocampos')
+            ->where('id_finca','=',$id_finca)
+            ->paginate(5);
+        } else {
+            
+            $trabajoCampo = DB::table('trabajocampos')
+                ->where('id_finca','=',$id_finca)
+                ->where('nombre','like',"%".$request->tc."%")
+                ->take(3)->paginate(5);
+        }
+        # 0. debemos comprobar si existe
+
+        # 1.- Si existe comprobar que tenga registros para evitar division por cero
+
+        # 2.- Si existe mostrar sino dejar vacio.
+
+        return view('trabajocampo.vista_principal_inventario', compact('finca','trabajoCampo'));
+    }
+
+    public function crear_tc(Request $request, $id_finca)
+    {
+        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca); 
+
+        $request->validate([
+            'nombre'=>[
+                'required',
+            ],
+            'fi'=>[
+                'required',
+            ],
+            'ff'=>[
+                'required',
+            ],
+        ]);
+
+        #Aqui Guardamos los datos del trabajo de campo
+
+        $trabajoCampoNuevo = new \App\Models\trabajocampo;
+
+        $trabajoCampoNuevo->nombre = $request->nombre;
+        $trabajoCampoNuevo->fi = $request->fi;
+        $trabajoCampoNuevo->ff = $request->ff;
+
+        $trabajoCampoNuevo->id_finca = $id_finca;
+
+        $trabajoCampoNuevo->save();
+
+
+       return back()->with('msj', 'Registro realizado satisfactoriamente');
+    }
+
+    public function detalle_tc(Request $request, $id_finca, $id_tc)
+    {
+        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $tc = \App\Models\trabajocampo::findOrFail($id_tc);
+ 
+        $tipologia = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->get();
+
+        $diagnostic = DB::table('sgdiagnosticpalpaciones')
+            ->where('id_finca','=',$id_finca)
+            ->get();    
+        
+        $patologias =DB::table('sgpatologias')
+            ->where('id_finca','=',$id_finca)
+            ->get();    
+
+        #Se filtran las series segun        
+        if (($request->tipo==null) and ($request->serie==null)){ 
+            $series = DB::table('sganims')
+                ->where('id_finca','=',$id_finca)
+                ->take(7)->paginate(7);
+        } 
+
+        if (!($request->tipo==null) and ($request->serie==null)){
+            $series = DB::table('sganims')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_tipologia','=',$request->tipo)
+                ->take(7)->paginate(7);
+        }
+
+        if (($request->tipo==null) and !($request->serie==null)){
+            $series = DB::table('sganims')
+                ->where('id_finca','=',$id_finca)
+                ->where('serie','like',$request->serie."%")
+                ->take(7)->paginate(7);
+        }
+
+        if (!($request->tipo==null) and !($request->serie==null)){
+            $series = DB::table('sganims')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_tipologia','=',$request->tipo)
+                ->where('serie','like',$request->serie."%")
+                ->take(7)->paginate(7);
+        }
+
+        $tcdetalle = DB::table('detalle_trabajo_campos')
+            ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+            ->where('detalle_trabajo_campos.id_tc','=', $id_tc)
+            ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+            ->paginate(7);
+
+        return view('trabajocampo.detalle_trabajocampo', compact('finca', 'tipologia','series','diagnostic','patologias','tc','tcdetalle'));
+    }
+
+    public function guardar_tc(Request $request, $id_finca, $id_tc)
+    {
+        
+
+
+        if ($request->id==null) {
+            return back()->with('msjinfo','ok');
+        } else {
+            #Si no es nulo que lo active el contador con la cantidad de registros
+            $cont = count($request->id);
+            #recorremos el Array
+            for($i=0; $i < $cont; $i++){
+
+            #Comprobamos que exista el serial    
+            $serieDtc = DB::table('detalle_trabajo_campos')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_serie','=',$request->id[$i])
+                ->get();
+
+                if ($serieDtc->count()>0) {
+                    #Si existe que no lo guarde
+                     return back()->with('mesaj', 'Registro Seleccionado ya existe');
+                } else {
+                    #Si no existe que lo guarde
+                    $series = \App\Models\sganim::findOrFail($request->id[$i]);
+                     
+                    $detalleTrabajoNuevo = new \App\Models\detalle_trabajo_campo;
+
+                    $detalleTrabajoNuevo->id_serie = $request->id[$i];
+                    $detalleTrabajoNuevo->serie = $series->serie;
+                    $detalleTrabajoNuevo->sexo = $series->sexo;
+                    $detalleTrabajoNuevo->observacion = $request->observacion[$i];
+                    $detalleTrabajoNuevo->paso = $request->paso[$i];
+                    $detalleTrabajoNuevo->diagnostico = $request->diagnostico[$i];
+                    $detalleTrabajoNuevo->evaluacion = $request->patologia[$i];
+                    $detalleTrabajoNuevo->caso = $series->tipo; //Manejamos la Tipologia
+
+                    $detalleTrabajoNuevo->id_finca = $id_finca;
+                    $detalleTrabajoNuevo->id_tc = $id_tc;
+
+                    $detalleTrabajoNuevo->save();
+
+                    $observa = $request->observacion[$i];
+                    #Actualizamos la tabla sganims el campo de observacion 
+                    $updateSerie = DB::table ('sganims')
+                        ->where('id','=',$request->id[$i])
+                        ->where('id_finca','=',$id_finca)
+                        ->update(['observa'=>$observa]); 
+                }
+            
+
+             }
+                    
+            return back()->with('msj', 'Registro realizado satisfactoriamente');    
+            
+        }
+        
+    }  
+
+     public function tc_comparar(Request $request, $id_finca)
+    {
+     
+        //return $request;    
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $tc = \App\Models\trabajocampo::where('id_finca','=',$id_finca)
+            ->get();
+
+        #0.- Si los Select estan en null o vacío que no muestre nada
+        
+        if (($request->tca==null) or empty($request->tca) or ($request->tcb==null) or empty($request->tcb) ) {
+             # Paso para que se carguen los select
+          
+            $tcABarray = [$request->tca, $request->tcb]; 
+
+            $tcA = DB::table('detalle_trabajo_campos')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_tc','=',$request->tca)
+                ->get();
+            
+            $tcB = DB::table('detalle_trabajo_campos')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_tc','=',$request->tcb)
+                ->get();
+            
+            #Con este Modelo Obtenemos los que no pasó en A ni en B
+            $tcABNoPaso = DB::table('detalle_trabajo_campos')
+                ->where('id_finca','=',$id_finca)
+                ->where('paso','=',0)
+                ->whereIn('id_tc',$tcABarray)
+                //->where('id_tc','=',$request->tca)
+                //->where('id_tc','=',$request->tcb)
+                ->distinct()->get();
+            
+            #Con este Modelo Obtenemos los que pasaron en A ni en B
+            $tcABPaso = DB::table('detalle_trabajo_campos')
+                ->where('id_finca','=',$id_finca)
+                ->where('paso','=',1)
+                ->whereIn('id_tc',$tcABarray)
+                //->where('id_tc','=',$request->tca)
+                //->where('id_tc','=',$request->tcb)
+                ->distinct()->get(); 
+
+            #Modelo 1 Todos los que pasan en A        
+            $modelo1 = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',1)
+                    ->where('id_tc','=',$request->tca)
+                    ->get();
+
+            #Almacenams en un Array todos las series
+            foreach ($modelo1 as $key ) {
+                        $arrayIdSerie [] = $key->serie;  
+            }
+
+            $arrayIdSerie = [0]; 
+
+            #Modelo A Todos los que no pasaron en A        
+            $modeloA = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',0)
+                    ->where('id_tc','=',$request->tca)
+                    ->get();
+
+            #Almacenams en un Array todos las series
+            foreach ($modeloA as $key ) {
+                        $arrayIdSerieNp [] = $key->serie;  
+            }    
+
+            $arrayIdSerieNp = [0]; 
+
+            #Modelo 2 Animales que pasaron en A y en B.
+            $modelo2 = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',1)
+                    ->where('id_tc','=',$request->tcb)
+                    ->whereIn('serie',$arrayIdSerie)
+                    ->get();
+
+            $contm2 = $modelo2->count();
+
+            #Modelo 3 Animales que Pasaron en A y no B 
+            $modelo3 = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',0)
+                    ->where('id_tc','=',$request->tcb)
+                    ->whereIn('serie',$arrayIdSerie)
+                    ->get();
+
+            $contm3 = $modelo3->count();                   
+                    
+            #Los contadores los colocamos a 0 para que las variables no den error. 
+            $contA = 0;
+            $contB = 0;
+            $contABNp = 0;
+            $contABp = 0;
+            $contm2 = 0; 
+            $contm3 = 0; 
+
+            $tcANombre=null; 
+            $tcBNombre=null; 
+
+        } else {
+
+
+            if ($request->tca == $request->tcb) {
+                return back()->with('mensaje','equal');
+            } else {
+             $tcABarray = [$request->tca, $request->tcb];    
+        
+            $tcA = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.id_tc','=',$request->tca)
+                    ->get();
+
+            $contA = $tcA->count(); 
+
+            foreach ($tcA as $key) {
+                $idtcA = $key->id_tc; 
+            }
+            #Con el Id_tc buscamo enl nombre del trabajo de campo.
+            $tcAname = \App\Models\trabajocampo::findOrFail($idtcA);
+
+            $tcB = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.id_tc','=',$request->tcb)
+                    ->get();     
+
+            $contB = $tcB->count();
+
+            foreach ($tcB as $key) {
+                $idtcB = $key->id_tc; 
+            }
+            #Con el Id_tc buscamo enl nombre del trabajo de campo.
+            $tcBname = \App\Models\trabajocampo::findOrFail($idtcB);         
+            
+            #Con este Modelo Obtenemos los que no pasó en A ni en B
+            $tcABNoPaso = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.paso','=',0)
+                    ->whereIn('detalle_trabajo_campos.id_tc',$tcABarray)
+                    //->where('id_tc','=',$request->tca)
+                    //->where('id_tc','=',$request->tcb)
+                    ->distinct()->get();
+            
+            $contABNp = $tcABNoPaso->count();
+
+            #Con este Modelo Obtenemos los que pasaron en A ni en B
+            $tcABPaso = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.paso','=',1)
+                    ->whereIn('detalle_trabajo_campos.id_tc',$tcABarray)
+                    //->where('id_tc','=',$request->tca)
+                    //->where('id_tc','=',$request->tcb)
+                    ->distinct()->get();
+
+            $contABp = $tcABPaso->count();        
+                            
+            #Modelo 1 Todos los que pasan en A        
+            $modelo1 = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',1)
+                    ->where('id_tc','=',$request->tca)
+                    ->get();
+
+            #Almacenams en un Array todos las series
+            foreach ($modelo1 as $key ) {
+                        $arrayIdSerie [] = $key->serie;  
+            }
+
+            #Modelo A Todos los que no pasaron en A        
+            $modeloA = DB::table('detalle_trabajo_campos')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('paso','=',0)
+                    ->where('id_tc','=',$request->tca)
+                    ->get();
+
+            #Almacenams en un Array todos las series
+            foreach ($modeloA as $key ) {
+                        $arrayIdSerieNp [] = $key->serie;  
+            }
+
+            #Modelo 2 Animales que no pasaron en A y y tampoco en B.
+            $modelo2 = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.paso','=',0)
+                    ->where('detalle_trabajo_campos.id_tc','=',$request->tcb)
+                    ->whereIn('detalle_trabajo_campos.serie',$arrayIdSerieNp)
+                    ->get();
+
+            $contm2 = $modelo2->count();
+
+            #Modelo 3 Animales que Pasaron en A y no B 
+            $modelo3 = DB::table('detalle_trabajo_campos')
+                    ->join('sganims','sganims.id','=','detalle_trabajo_campos.id_serie')
+                    ->where('detalle_trabajo_campos.id_finca','=',$id_finca)
+                    ->where('detalle_trabajo_campos.paso','=',0)
+                    ->where('detalle_trabajo_campos.id_tc','=',$request->tcb)
+                    ->whereIn('detalle_trabajo_campos.serie',$arrayIdSerie)
+                    ->get();
+
+            $contm3 = $modelo3->count();        
+            
+
+            $tcANombre = $tcAname->nombre; 
+            $tcBNombre = $tcBname->nombre;
+
+            #Con esto identificamos y lo colocamos en un Array los id que pasaron en A.
+
+
+            }
+        }
+                  
+
+        return view('trabajocampo.comparar_tc', compact('finca','tc','tcA','tcB','tcABNoPaso','tcABPaso','contA','contB','contABNp','contABp','contm2','tcANombre','tcBNombre','contm3','modelo3','modelo2'));
+    }
+
+    public function eliminar_tc(Request $request, $id_finca, $id_tc)
+    {
+         
+        $tcEliminar = \App\Models\trabajocampo::findOrFail($id_tc);
+           
+       // return $tcEliminar;
+        try {
+        $detalleTc = DB::table('detalle_trabajo_campos')
+            ->where('id_finca','=',$id_finca)
+            ->where('id_tc','=',$id_tc)
+            ->delete();
+
+        $tcEliminar->delete();    
+        
+        return back()->with('mensaje', 'ok');     
+
+        }catch (\Illuminate\Database\QueryException $e){
+            return back()->with('mensaje', 'error');
+        }
+
+    }
 
 }

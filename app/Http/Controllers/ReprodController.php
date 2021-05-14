@@ -161,6 +161,7 @@ class ReprodController extends Controller
             $cierreCiclo = DB::table('sgciclos')
                                     ->where('id_temp_reprod',$temporadaCierre->id)
                                     ->update(['fecfincierre'=>$fechacierre]); 
+            
             return back()->with('msje', 'ok');     
 
             }catch (\Illuminate\Database\QueryException $e){

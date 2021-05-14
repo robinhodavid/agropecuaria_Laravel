@@ -80,11 +80,13 @@
           </ul>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Trabajo de Campo
+            Inventario de Animales
           </a>
           <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="#">Inventario</a></li>
-            <li><a class="dropdown-item" href="#">Cotejo</a></li>
+            <li>
+              <a class="dropdown-item" href="{{route('inventario',$finca->id_finca)}}">Trabajo de Campo</a>
+            </li>
+        
           </ul>
         </li>
       </ul>
@@ -367,7 +369,7 @@
 
 </script>
 
-   <!-- {!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!} -->
+ <!--{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!} -->
     {!! Html::script('js/jquery-3.5.1.min.js')!!}
   	{!! Html::script('js/dropdown.js')!!}
 
