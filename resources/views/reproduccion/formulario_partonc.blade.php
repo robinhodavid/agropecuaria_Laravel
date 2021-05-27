@@ -12,11 +12,11 @@
     <div class="row"> <!-- Datos de Preñez-->
         <div class="col-md-12"> <!-- Col1 -->
             <div class="card">
-            <form action="{{ route('aborto.crear', [$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $series->id]) }}" method="POST" class="form-trans">
+            <form action="{{ route('partonc.crear', [$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $series->id]) }}" method="POST" class="form-trans">
                 @csrf
                 <div class="card-header">
                 	<div class="col">
-                		<h3 class="card-title title-header">Registro de Aborto</h3>	
+                		<h3 class="card-title title-header">Registro de Parto No Concluido</h3>	
                 	</div>
                     @if(session('msj'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -308,6 +308,15 @@
                                 </div>
                             </div>
                             <div class="col">
+                                <label class="col-form-label title-tipo">Trimestre Gestación:</label>
+                                    <select class="form-select" name="trimestre" aria-label="select example">
+                                      <option value="" selected>Seleccione una opción</option>
+                                      <option value="1er. Trimestre">1er. Trimestre</option>
+                                      <option value="2do. Trimestre">2do. Trimestre</option>
+                                      <option value="3er. Trimestre">3er. Trimestre</option>
+                                    </select>  
+                            </div>
+                            <div class="col">
                                 <label class="col-form-label title-tipo">Causa:</label>
                                     <select class="form-select" name="causa" aria-label="select example">
                                       <option value="" selected>Seleccione una opción</option>
@@ -349,7 +358,7 @@
           <div class="col-md-12"> <!-- Listado de Nacimiento para la serie -->
               <div class="card ">
                 <div class="card-header">
-                  <h3 class="card-title title-header">Lista de Abortos Registrados</h3>
+                  <h3 class="card-title title-header">Lista de Partos No Concluidos</h3>
                 </div>
                 <!-- /.card-header -->
                 <div class="card-body table-responsive p-0">
@@ -358,6 +367,7 @@
                    <tr>
                     <th scope="col">Serie</th>
                     <th scope="col">Fecha de Registro</th>
+                    <th scope="col">Trimeste</th>
                     <th scope="col">Causa</th>
                     <th scope="col" style="text-align: center; ">D.Preñez</th>
                     <th scope="col">Observación</th>
@@ -365,25 +375,28 @@
                   </tr>
                 </thead>
                 <tbody>
-                 @foreach($aborto as $item)
+                 @foreach($partonc as $item)
                   <tr>
                     <td>
                       {{ $item->serie }}
                     </td>
                     <td>
-                      {{ $item->fecr }}
+                      {{ $item->fecregistro }}
+                    </td>
+                    <td>
+                      {{ $item->trimestre }}
                     </td>
                     <td>
                       {{ $item->causa}}
                     </td>
                     <td style="text-align: center; ">
-                      {{ $item->diap}}
+                      {{ $item->diaprenez}}
                     </td>
                     <td>
                       {{ $item->obser }}
                     </td>
                     <td>
-                      <form action="{{route('aborto.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $series->id, $item->id]) }}" class="d-inline form-delete" method="POST">
+                      <form action="{{route('partonc.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $series->id, $item->id]) }}" class="d-inline form-delete" method="POST">
                       @method('DELETE')
                       @csrf
                         <button type="submit" class="btn btn-danger btn-sm">

@@ -212,6 +212,7 @@
                     id="eval" 
                     type="text" 
                     name="eval"
+                    maxlength="180"
                     placeholder="Ingrese las observaciones diagnosticadas" 
                     value="{{old('eval')}}">
                 </div>

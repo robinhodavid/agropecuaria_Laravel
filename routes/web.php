@@ -619,7 +619,7 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reprodu
 
 
 /*
-*--->| Registro de Preñez
+*--->| Registro de Parto
 */
 Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/parto', [App\Http\Controllers\ReprodController::class,'parto'])->name('parto');
 
@@ -629,7 +629,7 @@ Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproduct
 Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/eliminar-registro-de-parto/{id_parto}', [App\Http\Controllers\ReprodController::class, 'eliminar_parto'])->name('parto.eliminar');
 
 /*
-*--->| Registro de Preñez
+*--->| Registro de Aborto
 */
 Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/aborto', [App\Http\Controllers\ReprodController::class,'aborto'])->name('aborto');
 
@@ -637,6 +637,18 @@ Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproducti
 Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/crear-aborto', [App\Http\Controllers\ReprodController::class, 'crear_aborto'])->name('aborto.crear');
 
 Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/eliminar-registro-de-aborto/{id_aborto}', [App\Http\Controllers\ReprodController::class, 'eliminar_aborto'])->name('aborto.eliminar');
+
+/*
+*--->| Registro de Parto No concluido
+*/
+Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/parto-no-concluido', [App\Http\Controllers\ReprodController::class,'partonc'])->name('partonc');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/crear-parto-no-concluido', [App\Http\Controllers\ReprodController::class, 'crear_partonc'])->name('partonc.crear');
+
+Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/serie/{id_serie}/eliminar-registro-de-parto-no-concluido/{id_partonc}', [App\Http\Controllers\ReprodController::class, 'eliminar_partonc'])->name('partonc.eliminar');
+
+
+
 
 Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}/retirar-serie/{id_serie}', [App\Http\Controllers\ReprodController::class, 'eliminar_seriemonta'])->name('seriemonta.eliminar');
 
@@ -659,6 +671,7 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/inventario/eliminar-trabajo-de
 
 Route::get('/home/sisga-admin/finca/{id_finca}/comparar/trabajo-de-campo', [App\Http\Controllers\RutasController::class, 'tc_comparar'])->name('vistacomparar'); 
 
+Route::get('/home/sisga-admin/finca/{id_finca}/comparar/trabajo-de-campo-print', [App\Http\Controllers\RutasController::class, 'tc_imprimir'])->name('imprimircomparar'); 
 
 /*
 * Fin de reutas de trabajo de campo

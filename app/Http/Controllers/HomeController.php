@@ -10,6 +10,9 @@ use Illuminate\Validation\Rule;
 use App\Models;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
+use Carbon\Carbon; 
+use Carbon\CarbonPeriod;
+use Illuminate\Support\Arr;
 
 class HomeController extends Controller
 {
@@ -113,10 +116,201 @@ class HomeController extends Controller
             $cantseries = $tempCicloLoteMonta->count(); 
             
             $nombretemporada = $nombretemporada ;
+            
+            # Con esta consulta obtenemos los meses a partir de la fechasregistradas
+            $meses = DB::table('sghistoricotemprepros')
+                ->select(DB::raw('MonthName(sghistoricotemprepros.fecharegistro) as mestempo'))
+                ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                //->distinct()->get();
+                ->distinct()->pluck('mestempo');
+            
+            #Con esta consulta calculamos el numero de Servicio por mes.
+            $mServices = DB::table('sghistoricotemprepros')
+                ->select(DB::raw('Month(sghistoricotemprepros.fecharegistro) as mestmp'))
+                ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                ->distinct()->get();
+            
+            foreach ($mServices as $key) {
+                $nroMes = $key->mestmp;
+                #Aqui lo calculamos el número de servicios por mes
+                $nservicio[]  = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nroservicio) as nroservicio'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->whereMonth('sghistoricotemprepros.fecharegistro',$nroMes)
+                    ->pluck('nroservicio');
+                #Aqui lo calculamos el número de preñez por mes    
+                $nprenez[]  = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropre) as nroprenez'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->whereMonth('sghistoricotemprepros.fecharegistro',$nroMes)
+                    ->pluck('nroprenez');    
+                #Aqui calculamos el número de partos    
+                $nparto[]  = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropart) as nroparto'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->whereMonth('sghistoricotemprepros.fecharegistro',$nroMes)
+                    ->pluck('nroparto'); 
+
+                #Aqui calculamos el nro aborto     
+                $naborto[]  = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nroabort) as nroaborto'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->whereMonth('sghistoricotemprepros.fecharegistro',$nroMes)
+                    ->pluck('nroaborto');
+                #Aqui calculamos el nro partos no culminados     
+                $npartnc[]  = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropartnc) as nropartnc'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->whereMonth('sghistoricotemprepros.fecharegistro',$nroMes)
+                    ->pluck('nropartnc');             
+            }
+
+
+            #Aqui sacamos el Total de servicios registrados
+            $totalServicio = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nroservicio) as totalservicio'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->get('totalservicio');
+            #Obtenemos el Numero consultado
+            foreach ($totalServicio as $key) {
+                $ts = $key->totalservicio;           
+                }
+            #Consultamos el total de preñeces registradas.    
+            $totalPrenez = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropre) as totalprenez'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->get('totalprenez');
+            #Obtenemos el total de preñeces registradas.         
+            foreach ($totalPrenez as $key) {
+                $tp = $key->totalprenez;           
+                }
+            #consultamos el total de partos registrados    
+            $totalParto = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropart) as totalpartos'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->get('totalpartos');
+            #Obtenemos el total de partos registrados         
+            foreach ($totalParto as $key) {
+                $tpa = $key->totalpartos;           
+                } 
+            #consultamos el total de abortos Registrados    
+            $totalAbortos = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nroabort) as totalabortos'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->get('totalabortos');
+            #Obtenemos el total de partos registrados         
+            foreach ($totalAbortos as $key) {
+                $tab = $key->totalabortos;           
+                }
+
+            #consultamos el total de partos no culminados que se hayan  Registrados    
+            $totalPartosNc = DB::table('sghistoricotemprepros')
+                    ->select(DB::raw('sum(sghistoricotemprepros.nropartnc) as totalpartosnc'))
+                    ->join('sgciclos','sgciclos.id_ciclo','=','sghistoricotemprepros.id_ciclo')
+                    ->where('sghistoricotemprepros.id_finca', '=', $finca->id_finca)
+                    ->where('sgciclos.id_temp_reprod', '=', $idTempRepro)
+                    ->get('totalpartosnc');
+            #Obtenemos el total de partos no culminados registrados         
+            foreach ($totalPartosNc as $key) {
+                $tpnc = $key->totalpartosnc;           
+                }              
+
+                /*
+                * Esto va a permitir iniciar las variables a null en caso de que exista 
+                * La temporada pero este vacía
+                */
+                #Aqui guardamos los valores Nro de Servicios en un array.    
+                if (!empty($nservicio)) {
+                    $ns = Arr::collapse($nservicio);
+                    } else {
+                    $ns = null; 
+                }
+                if (!empty($nprenez)) {
+                    $np = Arr::collapse($nprenez);
+                    } else {
+                    $np = null;
+                }
+                if (!empty($nparto)) {
+                    $npa = Arr::collapse($nparto);
+                    } else {
+                    $npa = null;
+                }
+                if (!empty($naborto)) {
+                    $na = Arr::collapse($naborto);
+                    } else {
+                    $na = null;
+                }
+                if (!empty($npartnc)) {
+                    $npanc = Arr::collapse($npartnc);
+                    } else {
+                    $npanc = null;
+                }
+                /*
+                * Colocamos los porcentajes
+                */
+                if ($cantseries>0) {
+                    #Aseguramos que el numero de serie exista para evitar division por cero
+                    $tp_p = round(($tp*100)/$cantseries,2); //Porcentaje de preñez
+                    $tpa_p = round(($tpa*100)/$cantseries,2); //Porcentaje de Parto
+                    $tser_p = round(($ts*100)/$cantseries,2); //Porcentaje de Parto
+                    $tabo_p = round(($tab*100)/$cantseries,2); //Porcentaje de Parto
+                    $tpnc_p = round(($tpnc*100)/$cantseries,2); //Porcentaje de Parto
+
+                } else {
+                    #Aqui evitamos la division por cero, en caso de que cantseries = 0
+                    $tp_p = 0;
+                    $tpa_p = 0;
+                    $tser_p = 0;
+                    $tabo_p = 0; 
+                    $tpnc_p = 0; 
+                }
+                
              
             } else {
+                #En el caso de que no exista una temporada de monta, se inician los valores en 0 y null
                 $cantseries = 0;
                 $nombretemporada="";
+                $meses=null;
+                $nroservicio=0; 
+                $nropre = 0; 
+                $ns=null;
+                $np=null;
+                $npa=null; 
+                $na = null;
+                $npanc =null;
+                $ts= 0; 
+                $tp = 0; 
+                $tpa=0;
+                $tab =0;
+                $tpnc = 0;   
+                $tp_p = 0;
+                $tpa_p= 0; 
+                $tser_p = 0; 
+                $tabo_p = 0;
+                $tpnc_p = 0;  
+                
             }
 
             $cantnodestetado = $seriesnodestetado->count(); //machos y hembras. 
@@ -125,7 +319,7 @@ class HomeController extends Controller
         //return $seriestiponame->all();
                 
         return view('sisga-admin', compact('finca','cantregisactiv','cantregisinactiv'
-            ,'cantnodestetado','canthemrepro','nombretemporada','cantseries','contTemp'));
+            ,'cantnodestetado','canthemrepro','nombretemporada','cantseries','contTemp','ns','np','npa','na','meses','ts','tp','tpa','tab','npanc','tpnc','tp_p','tpa_p','tser_p','tabo_p','tpnc_p'));
     }
 
 /*
@@ -1302,9 +1496,10 @@ class HomeController extends Controller
         return view('varcontrol.editar_causa_muerte', compact('causamuerte', 'finca'));
     }
 
-    public function update_causamuerte(Request $request, $id, $id_finca){
+    public function update_causamuerte(Request $request, $id_finca, $id ){
        
-        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
+       
+       $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
         $request->validate([
@@ -1538,7 +1733,7 @@ class HomeController extends Controller
         return view('varcontrol.editar_colores_campo', compact('colores', 'finca'));
     }
 
-    public function update_colores(Request $request, $id, $id_finca){
+    public function update_colores(Request $request, $id_finca, $id){
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 

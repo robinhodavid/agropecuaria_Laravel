@@ -20,17 +20,20 @@
 	                <table class="table table-hover text-nowrap">
 	                  <thead>
 	                  	<tr>
-	                    <th scope="row">Mes-Año</th>
+	                    <th scope="row">Día-Mes-Año</th>
 	                    @foreach($periodo as $dt)
-	                      <th> {{ $dt->format("m-Y\n")}}</th>
+	                      <th> {{ $dt->format("d-m-y\n")}}</th>
 	                    @endforeach()
 	                    </tr>
+	                   <!--
 	                    <tr>
 	                    <th scope="row">Día</th>
 	                    @foreach($periodo as $dt)
 	                      <th style="text-align: center;"> {{ $dt->format("d\n")}}</th>
 	                    @endforeach()
+
 	                    </tr>
+	                -->
 	                  </thead>
 	                  <tbody>
 	                    <tr>
@@ -81,6 +84,14 @@
 	                      </td>
 	                       	@endforeach()
 	                    </tr>
+	                    <tr>
+	                      <th>Parto No Concluido</th>
+	                      	@foreach($historicoTemporada as $item)
+	                      <td class="celda color-aborto">
+	                      	{!! $item->nropartnc?$item->nropartnc:"" !!}
+	                      </td>
+	                       	@endforeach()
+	                    </tr>
 	                  </tbody>
 	                </table>
 	              </div>
@@ -128,6 +139,7 @@
 				                    <button class="btn dropdown-item" type="submit" name="opcion" value="5">R. Parto</button>
 				                      <div class="dropdown-divider"></div>
 				                    <button class="btn dropdown-item" type="submit" name="opcion" value="6">R. Aborto</button>
+				                    <button class="btn dropdown-item" type="submit" name="opcion" value="7">R. Parto No Culminado</button>
 			                    </div>
 	                		</div>	<!-- /btn-group -->--}}
 	                	</div>
@@ -142,6 +154,7 @@
 	                      <th>Sexo</th>
 	                      <th>Tipología E.</th>
 	                      <th>Tipología S.</th>
+	                      <th>Tipología A.</th>
 	                      <th>Peso</th>
 	                      <th>Acción</th>
 	                    </tr>
@@ -153,7 +166,8 @@
 	                      <td>{{ $item->serie }}</td>
 	                      <td>{!! $item->sexo?"Macho":"Hembra" !!}</td>
 	                      <td>{{ $item->nombre_tipologia }}</td>
-	                       <td>{{ $item->tipologia_salida }}</td>
+	                      <td>{{ $item->tipologia_salida }}</td>
+	                      <td>{{ $item->tipoactual }}</td>
 	                      <td><span class="tag tag-success">{{$item->pesoactual}}</span></td>
 	                      <td>	
 	                      	<form action="{{route('seriemonta.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie]) }}" class="d-inline form-delete" method="POST">
@@ -185,6 +199,7 @@
 					                    <a class="dropdown-item" href="{{route('parto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto</a>
 					                      <div class="dropdown-divider"></div>
 					                    <a class="dropdown-item" href="{{route('aborto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Aborto</a>
+					                    <a class="dropdown-item" href="{{route('partonc',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto No Culminado</a>
 				                    </div>
 		                		</div>	<!-- /btn-group -->
 	                		@endif()  

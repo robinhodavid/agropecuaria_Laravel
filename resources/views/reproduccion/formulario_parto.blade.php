@@ -1014,8 +1014,8 @@
           </tr>
            <tr>
             <th scope="col">Serie</th>
-            <th scope="col">Tipología</th>
             <th scope="col">Tipología A. Parto</th>
+            <th scope="col">Tipología Actual</th>
             <th scope="col">F. Parto Anterior</th>
             <th scope="col">F. Parto</th>
             <th scope="col">Serie</th>
@@ -1041,10 +1041,10 @@
               {{ $item->serie }}
             </td>
             <td>
-              {{ $item->tipo }}
+              {{ $item->tipoap }}
             </td>
             <td>
-              {{ $item->tipoap }}
+              {{ $item->tipo }}
             </td>
             <td>
               {{ $item->fecup}}
@@ -1056,8 +1056,7 @@
               {{ $item->becer}}
             </td>
             <td style="text-align: center; ">
-              
-              {!! $item->sexo?"M":"H" !!}
+                {{$item->sexo}}
             </td>
             <td>
               {{ $item->lotebecerro }}
@@ -1072,8 +1071,8 @@
              <td>
               {{ $item->becer1}}
             </td>
-            <td>
-              {{ $item->sexo1 }}
+            <td> 
+                {{$item->sexo1}} 
             </td>
             <td>
               {{ $item->lotebecerro1 }}
@@ -1091,7 +1090,7 @@
               {!! $item->obsernm==null?$item->obsernm1:$item->obsernm !!}
             </td>
             <td>
-              {{ $item->intestpar }}
+              {{ $item->ientpar }}
             </td>
             <td>
               <form action="{{route('parto.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $series->id, $item->id]) }}" class="d-inline form-delete" method="POST">

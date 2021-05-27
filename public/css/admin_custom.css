@@ -361,3 +361,31 @@ Esilos para el btón action de la tabla de lote de monta.
 {
 	left:-100px;
 }
+
+.text-pre {color:#63b8b8;}
+.text-ser {color:#bd8a8a;}
+.text-par {color:#af9cd6;}
+.text-abo {color:#e36c5f;}
+.tex-pnc {color: #99a3a4;}
+
+.bg-pre
+{
+	background-color: #97d6d6;
+}
+.bg-ser
+{
+	background-color: #d7c3c3;
+}
+.bg-par
+{
+	background-color: #d2cae2;
+}
+
+.bg-abo
+{
+	background-color: #ecada6;
+}
+.bg-pnc
+{
+	background-color: #aab7b8;
+}
