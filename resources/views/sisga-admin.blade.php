@@ -43,11 +43,11 @@
         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
           <li><a class="dropdown-item" href="{{route('ficha', $finca->id_finca)}}">Ficha de Ganado</a></li>
           <li><a class="dropdown-item" href="{{route('lote', $finca->id_finca)}}">Lote</a></li>
-
+          <hr>
           <li><a class="dropdown-item" href="{{route('cambio_tipologia', $finca->id_finca)}}">Cambio de Tipología</a></li>
 
           <li><a class="dropdown-item" href="{{route('transferencia',$finca->id_finca) }} ">Trasferencia</a></li>
-
+          <hr>
           <li><a class="dropdown-item" href="{{route('salida',$finca->id_finca) }}">Salida de Animales</a></li>
 
           <li><a class="dropdown-item" href="{{route('peso_ajustado',$finca->id_finca) }}">Ajuste de Peso</a></li>
@@ -74,24 +74,12 @@
           <li><a class="dropdown-item" href="{{ route('reportes_catalogodeganado', $finca->id_finca) }}">Catálogo de Ganado</a></li>
           <li><a class="dropdown-item" href="{{ route('reportes_pajuela', $finca->id_finca) }}">Catálogo de Pajuela</a></li>
           <li><a class="dropdown-item" href="{{ route('reportes_histsalida', $finca->id_finca) }}">Historial de Salida</a></li>
+          <hr>
           <li><a class="dropdown-item" href="{{ route ('reportes_transferencia', $finca->id_finca) }}"> Transferencias</a></li>
           <li><a class="dropdown-item" href="{{ route('reportes_movimientolote', $finca->id_finca) }}"> Movimiento de Lote</a></li>
           <li><a class="dropdown-item" href="{{ route('reportes_pesoajustado', $finca->id_finca)}}"> Ajuste de Peso</a></li>
-                        <li class="dropdown-submenu">
-                <a tabindex="-1" href="#">Hover me for more options</a>
-                <ul class="dropdown-menu">
-                  <li><a tabindex="-1" href="#">Second level</a></li>
-                  <li class="dropdown-submenu">
-                    <a href="#">Even More..</a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#">3rd level</a></li>
-                      <li><a href="#">3rd level</a></li>
-                    </ul>
-                  </li>
-                  <li><a href="#">Second level</a></li>
-                  <li><a href="#">Second level</a></li>
-                </ul>
-              </li>
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('personreport', $finca->id_finca)}}" id="navbarDropdown" role="button">Personalizados</a></li>         
         </ul>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -124,7 +112,7 @@
 <div class="row">
   <div class="col-12 col-sm-6 col-md-3">
     <div class="info-box">
-      <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cog"></i></span>
+      <span class="info-box-icon bg-info elevation-1"><i class="fas fa-venus-mars"></i></span> 
 
       <div class="info-box-content">
         <span class="info-box-text">Series Activas</span>
@@ -431,6 +419,10 @@
  });
 </script>
 
+<!-- {!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}-->
+{!! Html::script('js/jquery-3.5.1.min.js')!!}
+{!! Html::script('js/dropdown.js')!!}
+
 
 <script>
   $(function () {
@@ -530,13 +522,6 @@
   })
 })
 </script>
-
-
-
-<!--{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!} -->
-{!! Html::script('js/jquery-3.5.1.min.js')!!}
-{!! Html::script('js/dropdown.js')!!}
-
 
 
 @stop

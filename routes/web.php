@@ -37,6 +37,8 @@ Route::delete('/home/fincas/eliminar/{id}', [App\Http\Controllers\HomeController
 /*-->Fin Rutas Finca*/
 
 
+
+
 /*Ruta para la vista administrativa*/
 
 Route::get('/home/sisga-admin/finca/{id}', [App\Http\Controllers\HomeController::class, 'admin'])->name('admin');
@@ -337,7 +339,6 @@ Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/reporte
 	Route::delete('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/eliminar-peso-especifico/{id_peso}', [App\Http\Controllers\RutasController::class, 'eliminar_pesoespecifico'])->name('pesoespecifico.eliminar'); 
 
 	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/ficha-de-ganado/peso-especifico/reportes/{serie}', [App\Http\Controllers\ReportController::class, 'report_pesoespecifico'])->name('pesoespecifico.reporte');
-	
 
 
 /*Ruta para la vista Lote*/
@@ -676,6 +677,50 @@ Route::get('/home/sisga-admin/finca/{id_finca}/comparar/trabajo-de-campo-print',
 /*
 * Fin de reutas de trabajo de campo
 */
+
+/*
+* Block de Notas 
+*/
+
+Route::get('/home/sisga-admin/block-notas', [App\Http\Controllers\HomeController::class, 'blocknotas'])->name('blocknotas');
+
+Route::post('/home/sisga-admin/block-notas', [App\Http\Controllers\HomeController::class, 'crear_blocknotas'])->name('blocknotas.crear'); 
+
+Route::get('/home/sisga-admin/block-notas-detalles/{id}', [App\Http\Controllers\HomeController::class, 'editar_blocknotas'])->name('blocknotas.editar'); 
+
+Route::post('/home/sisga-admin/block-notas-update/{id}', [App\Http\Controllers\HomeController::class, 'update_blocknotas'])->name('blocknotas.update');
+
+Route::delete('/home/sisga-admin/block-notas-eliminar/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_blocknotas'])->name('blocknotas.eliminar'); 
+
+
+Route::post('/home/sisga-admin/block-notas-item', [App\Http\Controllers\HomeController::class, 'crear_blocknotasitem'])->name('blocknotasitem.crear');
+
+Route::post('/home/sisga-admin/editar-block-notas-item', [App\Http\Controllers\HomeController::class, 'editar_blocknotasitem'])->name('blocknotasitem.editar');
+
+Route::delete('/home/sisga-admin/block-notas-item-eliminar/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_blocknotasitem'])->name('blocknotasitem.eliminar');
+ 
+Route::post('/home/sisga-admin/block-notas-detalles-item/{id}', [App\Http\Controllers\HomeController::class, 'guardar_blocknotasitem'])->name('blocknotasitem.guardar'); 
+
+/*-->Fin Rutas Block de Notas*/
+
+Route::get('/home/sisga-admin/roles', [App\Http\Controllers\HomeController::class, 'roles'])->name('roles');
+
+/*
+Route::post('/home/sisga-admin/block-notas', [App\Http\Controllers\HomeController::class, 'crear_blocknotas'])->name('blocknotas.crear'); 
+
+Route::get('/home/sisga-admin/block-notas-detalles/{id}', [App\Http\Controllers\HomeController::class, 'editar_blocknotas'])->name('blocknotas.editar'); 
+
+Route::post('/home/sisga-admin/block-notas-update/{id}', [App\Http\Controllers\HomeController::class, 'update_blocknotas'])->name('blocknotas.update');
+
+Route::delete('/home/sisga-admin/block-notas-eliminar/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_blocknotas'])->name('blocknotas.eliminar'); 
+*/
+
+
+/*
+*->| Ruta para la vista de Reporte personalizado
+*/
+
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-personalizado', [App\Http\Controllers\RutasController::class, 'vistareporte_personalizado'])->name('personreport');
 
 
 Auth::routes();

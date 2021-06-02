@@ -3918,7 +3918,6 @@ for($i=0; $i < $cont; $i++){
 
     }
 
-
     public function eliminar_tc(Request $request, $id_finca, $id_tc)
     {
        
@@ -3939,5 +3938,13 @@ for($i=0; $i < $cont; $i++){
         return back()->with('mensaje', 'error');
     }
 }
+    #Retorna a la vista de transferencia.
+    public function vistareporte_personalizado(Request $request, $id_finca)
+    {
+        
+        return view('info.vista_reportes_personal');
+    }
+
+
 
 }

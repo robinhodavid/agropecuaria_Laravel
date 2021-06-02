@@ -1881,7 +1881,8 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-    public function editar_tanque($id_finca, $id){
+    public function editar_tanque($id_finca, $id)
+    {
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -1890,7 +1891,8 @@ class HomeController extends Controller
         return view('varcontrol.editar_tanque', compact('tanque', 'finca'));
     }
 
-    public function update_tanque(Request $request, $id, $id_finca){
+    public function update_tanque(Request $request, $id, $id_finca)
+    {
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -1922,6 +1924,263 @@ class HomeController extends Controller
             return back()->with('mensaje', 'error');
         }
     }        
+    /*
+    * Block de Notas: 
+    */    
+    //Retorna a la vista del block
+    public function blocknotas()
+    {
+        # Primero Obtenemos el Id del usuario logueado
+        $userId = auth()->user()->id; 
+        #Filtramos la lista o e su defecto las notas creadas por el usuario 
+        #logueado
+        
+
+        $blockList = \App\Models\blocknotas::where('user_id','=',$userId)
+            ->get();
+
+
+        #Si BlockList Existe entonces mostramos     
+        if ($blockList->count()>0) {
+            # Para evitar un volcado de la consulta
+            foreach ($blockList as $key) {
+                
+                $id[] = $key->id;
+            }
+
+            $blockListDetail = DB::table('blocknotasdetails')
+                //->select(DB::raw('updated_at as timeAgo'))
+                //->select(DB::raw('count(*) as nroregistro, contenido,read,id_blocknotas ,updated_at'))
+                ->whereIn('id_blocknotas',$id)
+                ->get();
+
+            #Aqui se cuenta el número de item para cada block de notas que no estan leídas     
+            $countDetail = DB::table('blocknotas')
+                ->join('blocknotasdetails','blocknotasdetails.id_blocknotas','=','blocknotas.id')
+                ->select(DB::raw('count(*) as cant, blocknotas.titulo, blocknotas.id'))
+                ->where('read','=',0)
+                ->whereIn('blocknotasdetails.id_blocknotas',$id)
+                ->groupBy('blocknotasdetails.id_blocknotas')
+                ->get();
+        
+        } else {
+            # Si no existe la consultas la iniciamos en null
+           
+            $blockListDetail = null; 
+            $countDetail = null; 
+        }
+                
+        return view('block.blocknotas',compact('blockList','blockListDetail','countDetail'));
+    }
+
+    #Aquí creamos los titulos o notas como tal
+    public function crear_blocknotas(Request $request)
+    {
+     
+        $request->validate([
+            'titulo'=> [
+                'required',    
+            ],
+            
+        ]);
+
+        $userId = auth()->user()->id; 
+
+        $tituloNotaNueva = new \App\Models\blocknotas;
+
+        $tituloNotaNueva->titulo = $request->titulo;
+        $tituloNotaNueva->user_id = $userId;
+
+        $tituloNotaNueva-> save(); 
+
+        return back()->with('msj', 'Nota Creada exitosamente');
+    }
+
+    public function editar_blocknotas(Request $request, $id)
+    {
+        
+        $blockList = \App\Models\blocknotas::findOrFail($id);
+            
+        $blockListDetail = DB::table('blocknotasdetails')
+            //->select(DB::raw('date_format(updated_at,%Y) as timeago'))
+            ->where('id_blocknotas','=',$id)
+        //  ->where('read','=',0) # Me dará todos los items no leidos
+            ->get();
+        
+        $blockListDetailUnRead = DB::table('blocknotasdetails')
+            ->where('id_blocknotas','=',$id)
+            ->where('read','=',0) # Me dará todos los items no leidos
+            ->get();   
+        
+        $cant = $blockListDetailUnRead->count(); 
+
+
+        //return $blockListDetail;     
+
+        return view('block.blocknotasdetails',compact('blockList','blockListDetail','cant'));
+    }
+
+    public function update_blocknotas(Request $request, $id)
+    {
+        #validamos si los items estan vacios
+        if ($request->item==null) {
+           //return "Nulo";
+           $read = 0; 
+           $blocknotasdetails = DB::table('blocknotasdetails')
+                ->where('id_blocknotas','=',$id)
+                ->update(['read'=>$read]); 
+        } else {
+             
+            $read = 0; 
+            
+            $blocknotasdetails = DB::table('blocknotasdetails')
+                ->where('id_blocknotas','=',$id)
+                ->update(['read'=>$read]);   
+            
+            #Se cuenta la cantidad de registros
+            $cont = count($request->item);
+            
+            #Se recorre el Array con los ids. 
+            for($i=0; $i < $cont; $i++){
+
+                $read = 1; 
+                $blocknotasdetails = DB::table('blocknotasdetails')
+                    ->where('id','=',$request->item[$i])
+                    ->update(['read'=>$read]);
+            }    
+
+        }
+        
+        return back()->with('msj', 'Item Guardado exitosamente');
+    }
+
+    public function eliminar_blocknotas(Request $request, $id)
+    {
+        
+        $blockNotasEliminar = \App\Models\blocknotas::findOrFail($id);
+ 
+        $blockListDetail = DB::table('blocknotasdetails')
+            ->where('id_blocknotas','=',$id)
+            ->get();
+
+        if ($blockListDetail->count()>0) {
+            # Si existe entonces borramos las dos tablas
+            try {
+                
+                $blockListDetail = DB::table('blocknotasdetails')
+                    ->where('id_blocknotas','=',$id)
+                    ->delete();
+                $blockNotasEliminar->delete();
+
+                return back()->with('mensaje', 'ok');     
+
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }        
+
+        } else {
+            #Si no hay contenido solo se borra la tabla del titulo con id
+            try {
+            $blockNotasEliminar->delete();
+            return back()->with('mensaje', 'ok');     
+
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }
+        
+        }
+    }
+    
+    #Creamos los item de cada nota.    
+    public function crear_blocknotasitem(Request $request)
+    {
+        //return $request; 
+
+        $valor = false; 
+        //$userId = auth()->user()->id; 
+
+        $conteNotaNueva = new \App\Models\blocknotasdetail;
+
+        $conteNotaNueva->contenido = $request->contenido;
+        $conteNotaNueva->id_blocknotas = $request->iddelanota;
+        $conteNotaNueva->read = $valor;
+
+        $conteNotaNueva-> save(); 
+
+        return back()->with('msj', 'Item Creado exitosamente');
+    }
+
+    public function editar_blocknotasitem(Request $request)
+    {
+
+        $blockListDetailUpdate = \App\Models\blocknotasdetail::findOrFail($request->iditemnota);
+
+            $blockListDetailUpdate->contenido = $request->itemcontent;
+           
+        $blockListDetailUpdate-> save(); 
+
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');          
+    }
+
+    public function guardar_blocknotasitem(Request $request, $id)
+    {
+
+        //return $request; 
+
+        $blockList = \App\Models\blocknotas::findOrFail($id);
+
+        if ($request->item==null) {
+            #Si no hay item seleccionados y guardamos entonces todos pasaran a no leidos
+            $read = 0;    
+            $blockListDetail = DB::table('blocknotasdetails')
+                ->where('id_blocknotas','=', $blockList->id)
+                ->update(['read'=>$read]);
+        } else {
+            #Lo pasamos todos a no leidos y guardamos solo los marcados
+            $read = 0;    
+            $blockListDetail = DB::table('blocknotasdetails')
+                ->where('id_blocknotas','=', $blockList->id)
+                ->update(['read'=>$read]);
+
+            $read = 1; 
+            $cont = count($request->item);
+
+            for($i=0; $i < $cont; $i++){
+
+            $blockListDetail = DB::table('blocknotasdetails')
+                //->where('id_blocknotas','=', $blockList->id)
+                ->where('id','=',$request->item[$i])
+                ->update(['read'=>$read]);
+            }
+        }
+        
+        return back()->with('msj', 'Registro actualizado satisfactoriamente');
+          
+    }
+
+    public function eliminar_blocknotasitem(Request $request, $id)
+    {
+        $blockListDetail = \App\Models\blocknotasdetail::findOrFail($id);
+    
+        try {
+                $blockListDetail->delete();
+
+                return back()->with('mensaje', 'ok');     
+
+            }catch (\Illuminate\Database\QueryException $e){
+                return back()->with('mensaje', 'error');
+            }        
+    }
+
+    #Roles de usuarios
+    public function roles()
+    {
+    
+        $rol = null; 
+
+     return view('auth.roles.roles',compact('rol'));   
+    }
+
     
 
 }

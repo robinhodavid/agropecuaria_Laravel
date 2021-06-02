@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'Sistema de Gestión Agropecuaría',
+    'title' => 'SISGA',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -65,7 +65,7 @@ return [
     */
 
     'usermenu_enabled' => true,
-    'usermenu_header' => false,
+    'usermenu_header' => true,
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
     'usermenu_desc' => false,
@@ -166,11 +166,11 @@ return [
     |
     */
 
-    'right_sidebar' => false,
+    'right_sidebar' => true,
     'right_sidebar_icon' => 'fas fa-cogs',
     'right_sidebar_theme' => 'dark',
     'right_sidebar_slide' => true,
-    'right_sidebar_push' => true,
+    'right_sidebar_push' => false,
     'right_sidebar_scrollbar_theme' => 'os-theme-light',
     'right_sidebar_scrollbar_auto_hide' => 'l',
 
@@ -232,7 +232,7 @@ return [
 
     'menu' => [
        [
-            'text' => 'search',
+            'text' => 'Buscar',
             'search' => false,
             'topnav' => false,
         ],
@@ -241,7 +241,7 @@ return [
             'url'  => 'admin/blog',
             'can'  => 'manage-blog',
         ],
-    /*Aquí se colocarán las fincas a conectar*/
+    /*Aquí se colocarán las fincas a conectar
         [
             'text'        => 'pages',
             'url'         => 'admin/pages',
@@ -249,21 +249,32 @@ return [
             'label'       => 4,
             'label_color' => 'success',
         ], 
+    */    
         ['header' => 'Configuración de Perfil'],
         [
             'text' => 'Usuario',
             'url'  => 'admin/settings',
             'icon' => 'fas fa-fw fa-user',
+            //'can'  => 'manage-blog',
         ],
         [
-            'text' => 'Contraseña',
-            'url'  => 'admin/settings',
+            'text' => 'Roles',
+            'route'  => 'roles',
             'icon' => 'fas fa-fw fa-lock',
+            //'can'  => 'manage-blog',
         ],
+        [
+            'text' => 'Permisos',
+            'route'  => 'home',
+            'icon' => 'fas fa-fw fa-unlock',
+            //'can'  => 'manage-blog',
+        ],
+        
         [
             'text' => 'Variables de Control',
             'url'  => 'admin/settings',
             'icon' => 'fas fa-fw fa-lock',
+              //'can'  => 'manage-blog',
         ],
         
         [
@@ -279,11 +290,12 @@ return [
             'submenu' => [
             ],
         ],
-        ['header' => 'Recursos/ Utilidades'],
+        ['header' => 'Recursos - Utilidades'],
         [
             'text'       => 'Block de Notas',
-            'icon_color' => 'red',
-            'url'        => '#',
+            'icon_color' => 'white',
+            'icon'    => 'fas fa-fw fa fa-clipboard', //<i class="far fa-clipboard"></i>
+            'route'        => 'blocknotas',
         ],
     ],
 
