@@ -110,17 +110,15 @@
               <th style="width: 8%;text-align: center;"></th>
               <th style="width: 12%;text-align: center;"></th>
               <th style="width: 8%;text-align: center;"></th>
-              <th colspan="2" style="width: 8%;text-align: center;">ORIGEN</th>
-              <th colspan="2" style="width: 8%;text-align: center;">DESTINO</th>
+              <th colspan="1" style="width: 8%;text-align: center;">ORIGEN</th>
+              <th colspan="1" style="width: 8%;text-align: center;">DESTINO</th>
             </tr>
             <tr>
               <th scope="col" style="width: 8%;text-align: center;">Serie</th>
               <th scope="col" style="width: 12%;text-align: center;">Tipología</th>
               <th scope="col" style="width: 8%;text-align: center;">Fecha</th>
               <th scope="col" style="width: 8%;text-align: center;">Lote</th>
-              <th scope="col" style="width: 8%;text-align: center;">sublote</th>
               <th scope="col" style="width: 8%;text-align: center;">Lote</th>
-              <th scope="col" style="width: 8%;text-align: center;">Sublote</th>
             </tr>
          </thead>
           <tbody>
@@ -138,15 +136,11 @@
               <td style="width: 8%;text-align: center;">
                 {{ $item->loteinicial }}
               </td>
-              <td style="width: 8%;text-align: center;">
-                 {{ $item->sub_lote_ini }}
-              </td>
+              
               <td style="width: 18%;text-align: center;">
                 {{ $item->lotefinal }}
               </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->sub_lote_fin }}
-              </td>
+              
             </tr>
           </tbody>
           @endforeach()

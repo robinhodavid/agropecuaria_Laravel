@@ -10,7 +10,7 @@
 <div class="container">
     <ul class="nav nav-tabs">
       <li class="nav-item">
-        <a class="nav-link active title-table" aria-current="page" href="#">Retiros Realizados
+        <a class="nav-link active title-table" aria-current="page" href="#">Transferencias Realizadas
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="green" class="bi bi-check-all" viewBox="0 0 16 16">
         <path d="M8.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L2.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093L8.95 4.992a.252.252 0 0 1 .02-.022zm-.92 5.14l.92.92a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 1 0-1.091-1.028L9.477 9.417l-.485-.486-.943 1.179z"/>
         </svg>
@@ -41,16 +41,6 @@
                 </option>
               @endforeach()
           </select> 
-      </div>
-      <div class="col">
-        <label class="col-form-label title-filed">Motivo de Transferencia</label>
-          <select class="form-select width-field" name="motivo" aria-label="select example">
-            <option value="" selected>Motivo</option>
-              @foreach($motivo as $item)
-                <option value="{{$item->id}}"> {{$item->nombremotivo}}
-                </option>
-              @endforeach()
-          </select>    
       </div>
       <div class="col">
         <label class="title-filed">Desde</label>
@@ -97,45 +87,38 @@
   </div> <!--/.columm-space-->
      
 </div>
-</form>
-<div class="row mr-4 ml-4">
 
-    <div class="table">
-        <table class="table">
-          <thead class="title-table">
-            <tr>
-              <th scope="col" style="width: 8%;text-align: center;">Serie</th>
-              <th scope="col" style="width: 8%;text-align: center;">F. Salida</th>
-              <th scope="col" style="text-align: center;">Motivo</th>
-              <th scope="col" style="text-align: center;">Destino</th>
-              <th scope="col" style="text-align: center;">Observación</th>
-            </tr>
-         </thead>
-          <tbody>
-         @foreach($salidarealizada as $item)
-            <tr class="text-body-table">
-              <td style="width: 8%;text-align: center;">
-                {{ $item->serie }}
-              </td>
-               <td style="width: 12%;text-align: center;">
-                {{ $item->fechs }}
-              </td>
-              <td style="text-align: center;">
-                {{ $item->motivo}}
-              </td>
-              <td style="text-align: center;">
-                {{ $item->destino}}
-              </td>
-              <td style="text-align: center;">
-                {{ $item->obser}}
-              </td>
-            </tr>
-          </tbody>
-          @endforeach()
-        </table>
-        <div class="footer-table">
-          {{ $salidarealizada->links() }}
-        </div>             
+
+<div class="card-footer clearfix my-4">
+    <div class="row">
+      <div class="col">
+        <input 
+        type="radio" 
+        aria-label="Radio button for following text input"
+        name="orderby"
+        id="campo1" value="serie" checked>
+        <label class="checkbox-inline title-label"  for="campo1">Serie</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo4" value="fecs">
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Transferencia</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo5" value="id_tipologia">
+          <label class="checkbox-inline title-label"  for="campo5">Tipología</label>
+      </div>
+    </form> <!-- Fin de Form para busqueda  -->  
+      <div class="col">
+          <a href="{{ route('admin',$finca->id_finca) }}" class="btn btn-warning aling-boton"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+        </svg> volver</a>
+      </div>
     </div>
 </div>
 

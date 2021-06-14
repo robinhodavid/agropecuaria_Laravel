@@ -102,7 +102,7 @@
                       <th></th>
                       <th colspan="2">ASCENDENCIA</th>
                       <th colspan="2">ÚLTIMO PESO</th>
-                      <th colspan="2">LOTE ESTRATÉGICO</th>
+                      <th colspan="1">LOTE ESTRATÉGICO</th>
                     </tr>
                      <tr class="title-header-table">
                       <th>Serie</th>
@@ -115,7 +115,7 @@
                       <th>Fecha</th>
                       <th>Kg</th>
                       <th>Lote</th>
-                      <th>Sublote</th>
+                      <th>F. Registo</th>
                     </tr>
                   </thead>
                           <tbody>
@@ -149,7 +149,7 @@
                            {{ $item->nombrelote }}
                         </td>
                         <td>
-                           {{ $item->sub_lote }}
+                           {{ $item->fecr }}
                         </td>
                         
                     </tr>

@@ -430,7 +430,7 @@ Route::post('/home/sisga-admin/finca/{id_finca}/ganaderia/salida-de-series', [Ap
 
 	//lleva a la vista de reporte de Transferencia 
 
-	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-reportes-salida-de-series', [App\Http\Controllers\RutasController::class, 'vista_reportes_salida'])->name('reportes_transferencia'); 
+	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/vista-reportes-transferencia-de-series', [App\Http\Controllers\RutasController::class, 'vista_reportes_transf'])->name('reportes_transferencia'); 
 
 	Route::get('/home/sisga-admin/finca/{id_finca}/ganaderia/reportes-salida-de-series', [App\Http\Controllers\ReportController::class, 'report_salida'])->name('salida.reporte');
 /*End Transferencia*/
@@ -721,6 +721,10 @@ Route::delete('/home/sisga-admin/block-notas-eliminar/{id}', [App\Http\Controlle
 */
 
 Route::get('/home/sisga-admin/finca/{id_finca}/reporte-personalizado', [App\Http\Controllers\RutasController::class, 'vistareporte_personalizado'])->name('personreport');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/print-reporte-personalizado-ganaderia', [App\Http\Controllers\ReportController::class, 'report_personal_ganaderia'])->name('print_report');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/print-reporte-personalizado-reproduccion', [App\Http\Controllers\ReportController::class, 'report_personal_reproduccion'])->name('print_report_reproducion');
 
 
 Auth::routes();

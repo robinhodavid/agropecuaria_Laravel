@@ -287,7 +287,99 @@ class HomeController extends Controller
                     $tpnc_p = 0; 
                 }
                 
-             
+               // $usuarios = \App\Models\User::all();
+
+                $usuarios = DB::table('users')->get();
+
+
+                foreach ($usuarios as $key ) {
+                        $nombreuser [] = $key->name; #Nombre de todos los usuarios
+                }
+
+                #Aqui Obtenemos los nombres que intervienen unicamente en el proceso reproductivo
+                $usuariosEnPalpacion = DB::table('sgpalps')
+                    ->select('sgpalps.resp')
+                    ->join('users','users.name','=','sgpalps.resp')
+                    ->whereIn('sgpalps.resp',$nombreuser)
+                    ->distinct()
+                    ->get(); 
+
+                #Aqui Sacamos los nombres que intervienen en la palpacion    
+                foreach ($usuariosEnPalpacion as $key ) {
+                        $userPalp = $key->resp;
+                        $arrayUserPalp [] = $key->resp; 
+
+                $palpacionUsuario [] = DB::table('sgpalps')
+                        ->select(DB::raw ('count(resp) as cantpal')) 
+                        ->where('id_finca','=',$id_finca)
+                        ->where('resp','=',$userPalp)
+                        ->distinct()
+                        ->get(); 
+
+                $prenezUsuario [] = DB::table('sgprenhezs')
+                    ->select(DB::raw ('count(nomi) as cant_pre_user')) 
+                    ->where('id_finca','=',$id_finca)
+                    ->where('nomi','=',$userPalp)
+                    ->distinct()
+                    ->get();
+
+                $partos [] = DB::table('sgpartos')
+                    ->select(DB::raw ('count(*) as cant_partos'))
+                    ->join('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie') 
+                    ->where('sgpartos.id_finca','=',$id_finca)
+                    ->where('sgprenhezs.nomi','=',$userPalp)
+                    ->distinct()
+                    ->get();
+                        
+                }
+
+                $palpacionUsuario = Arr::collapse($palpacionUsuario);
+
+                foreach ($palpacionUsuario as $key) {
+                        $palpacionesUsers [] = (int)$key->cantpal;
+                }
+
+                
+                $prenezUsuario = Arr::collapse($prenezUsuario);                                
+                
+                foreach ($prenezUsuario as $key) {
+                        $prenezUsers [] = (int)$key->cant_pre_user;
+                }
+
+
+
+                $partos = Arr::collapse($partos);                                
+                
+                foreach ($partos as $key) {
+                        $partosUsers [] = (int)$key->cant_partos;
+                }
+
+                $cont = count($palpacionUsuario);
+                
+                $cantseries = (int) $cantseries;
+
+                for($i=0; $i < $cont; $i++){
+
+                 $nropalpaciones = (int)(($palpacionesUsers[$i]*100)/$cantseries);
+                 $nroprenez = (int)(($prenezUsers[$i]*100)/$palpacionesUsers[$i]);
+                 $nropartos = (int)(($partosUsers[$i]*100)/$prenezUsers[$i]);
+
+                 $prom= (($nroprenez + $nropartos)/2);
+
+        
+                 $efectividadUser [] = DB::table('users')
+                    ->select('name', DB::raw('round('.$nropalpaciones.') as ppalpaciones'),
+                                         DB::raw('round('.$nroprenez.') as epprenez'),
+                                         DB::raw('round('.$nropartos.') as epparto'),
+                                         DB::raw('('.$prom.') as efprom'))
+                        ->where('name','=',$arrayUserPalp[$i])
+                        ->get();         
+                }
+
+                $efectividadUser = Arr::collapse($efectividadUser);    
+                
+                //return $efectividadUser;           
+                
             } else {
                 #En el caso de que no exista una temporada de monta, se inician los valores en 0 y null
                 $cantseries = 0;
@@ -310,7 +402,7 @@ class HomeController extends Controller
                 $tser_p = 0; 
                 $tabo_p = 0;
                 $tpnc_p = 0;  
-                
+                $efectividadUser = null; 
             }
 
             $cantnodestetado = $seriesnodestetado->count(); //machos y hembras. 
@@ -319,7 +411,7 @@ class HomeController extends Controller
         //return $seriestiponame->all();
                 
         return view('sisga-admin', compact('finca','cantregisactiv','cantregisinactiv'
-            ,'cantnodestetado','canthemrepro','nombretemporada','cantseries','contTemp','ns','np','npa','na','meses','ts','tp','tpa','tab','npanc','tpnc','tp_p','tpa_p','tser_p','tabo_p','tpnc_p'));
+            ,'cantnodestetado','canthemrepro','nombretemporada','cantseries','contTemp','ns','np','npa','na','meses','ts','tp','tpa','tab','npanc','tpnc','tp_p','tpa_p','tser_p','tabo_p','tpnc_p','efectividadUser'));
     }
 
 /*

@@ -98,14 +98,13 @@
                      <tr class="title-header-table">
                       <th scope="col" style="width: 8%;text-align: center;">Serie</th>
                       <th scope="col" style="width: 12%;text-align: center;">Tipología</th>
-                      <th scope="col" style="width: 8%;text-align: center;">F. Sal</th>
+                      <th scope="col" style="width: 8%;text-align: center;">F. Transf</th>
                       <th scope="col" style="width: 8%;text-align: center;">C. Mad</th>
                       <th scope="col" style="width: 8%;text-align: center;">Procede</th>
                       <th scope="col" style="width: 18%;text-align: center;">Obser</th>
                       <th scope="col" style="width: 8%;text-align: center;">P. act</th>
                       <th scope="col" style="width: 8%;text-align: center;">F. Últ. Peso</th>
                       <th scope="col">Lote</th>
-                      <th scope="col">Sub Lote</th>
                       <th scope="col">Destino</th>
                     </tr>
                   </thead>
@@ -137,10 +136,7 @@
                 {{ $item->fulpes }}  
               </td>
               <td style="width: 8%;text-align: center;">
-                {{ $item->nombrelote }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-               {{ $item->sub_lote }}
+                {{ $item->lote }}
               </td>
               <td style="width: 8%;text-align: center;">
                {{ $item->destino }}

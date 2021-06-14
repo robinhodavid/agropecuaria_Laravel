@@ -69,7 +69,7 @@
                 background-color: #eaeaea;
                 border:1px solid #aeaeae;
                 border-radius: 3px; 
-                width: 17%;
+                width: 27%;
             }
             .content-resumen-data 
             {

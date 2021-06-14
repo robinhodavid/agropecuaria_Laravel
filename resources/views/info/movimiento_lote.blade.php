@@ -77,64 +77,39 @@
   </div> <!--/.columm-space-->
      
 </div>
-</form>
-<div class="row mr-4 ml-4">
+  <div class="card-footer clearfix my-4">
+    <div class="row">
+      <div class="col">
+        <input 
+        type="radio" 
+        aria-label="Radio button for following text input"
+        name="orderby"
+        id="campo1" value="serie" checked>
+        <label class="checkbox-inline title-label"  for="campo1">Serie</label>
 
-    <div class="table">
-        <table class="table">
-          <thead class="title-table">
-             <tr>
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo4" value="fecha">
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Registro</label>
 
-              <th style="width: 8%;text-align: center;"></th>
-              <th style="width: 12%;text-align: center;"></th>
-              <th style="width: 8%;text-align: center;"></th>
-              <th colspan="2" style="width: 8%;text-align: center;">ORIGEN</th>
-              <th colspan="2" style="width: 8%;text-align: center;">DESTINO</th>
-            </tr>
-            <tr>
-              <th scope="col" style="width: 8%;text-align: center;">Serie</th>
-              <th scope="col" style="width: 12%;text-align: center;">Tipología</th>
-              <th scope="col" style="width: 8%;text-align: center;">Fecha</th>
-              <th scope="col" style="width: 8%;text-align: center;">Lote</th>
-              <th scope="col" style="width: 8%;text-align: center;">sublote</th>
-              <th scope="col" style="width: 8%;text-align: center;">Lote</th>
-              <th scope="col" style="width: 8%;text-align: center;">Sublote</th>
-            </tr>
-         </thead>
-          <tbody>
-         @foreach($movimientolote as $item)
-            <tr class="text-body-table">
-              <td style="width: 8%;text-align: center;">
-                {{ $item->serie }}
-              </td>
-               <td style="width: 12%;text-align: center;">
-                {{ $item->tipologiaactual }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->fecharegistro }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->loteinicial }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                 {{ $item->sub_lote_ini }}
-              </td>
-              <td style="width: 18%;text-align: center;">
-                {{ $item->lotefinal }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->sub_lote_fin }}
-              </td>
-            </tr>
-          </tbody>
-          @endforeach()
-        </table>
-        <div class="footer-table">
-          {{ $movimientolote->links() }}
-        </div>             
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo5" value="tipologiaactual">
+          <label class="checkbox-inline title-label"  for="campo5">Tipología</label>
+      </div>
+    </form> <!-- Fin de Form para busqueda  -->  
+      <div class="col">
+          <a href="{{ route('admin',$finca->id_finca) }}" class="btn btn-warning aling-boton"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+        </svg> </a>
+      </div>
     </div>
-</div>
-
+  </div>
+   
 </div>
 
 @stop

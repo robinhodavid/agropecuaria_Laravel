@@ -98,55 +98,39 @@
   </div> <!--/.columm-space-->
      
 </div>
-</form>
-<div class="row mr-4 ml-4">
 
-    <div class="table">
-        <table class="table">
-          <thead class="title-table">
-            <tr>
-              <th scope="col" style="width: 8%;text-align: center;">Serie</th>
-              <th scope="col" style="width: 12%;text-align: center;">Motivo</th>
-              <th scope="col" style="width: 8%;text-align: center;">F. Sal</th>
-              <th scope="col" style="width: 8%;text-align: center;">Procede</th>
-              <th scope="col" style="width: 8%;text-align: center;">Destino</th>
-              <th scope="col" style="width: 8%;text-align: center;">P. act</th>
-              <th scope="col" style="width: 18%;text-align: center;">Obser</th>
-            </tr>
-         </thead>
-          <tbody>
-         @foreach($historialsalida as $item)
-            <tr class="text-body-table">
-              <td style="width: 8%;text-align: center;">
-                {{ $item->serie }}
-              </td>
-               <td style="width: 12%;text-align: center;">
-                {{ $item->motivo }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->fechs }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->procede}}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->destino}}
-              </td>
-              <td style="width: 18%;text-align: center;">
-                {{ $item->peso }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-               {{ $item->obser}}
-              </td>
-            </tr>
-          </tbody>
-          @endforeach()
-        </table>
-        <div class="footer-table">
-          {{ $historialsalida->links() }}
-        </div>             
+<div class="card-footer clearfix my-4">
+    <div class="row">
+      <div class="col">
+        <input 
+        type="radio" 
+        aria-label="Radio button for following text input"
+        name="orderby"
+        id="campo1" value="sghsals.serie" checked>
+        <label class="checkbox-inline title-label"  for="campo1">Serie</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo4" value="sghsals.fecs">
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Transferencia</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo5" value="sgtipologias.id_tipologia">
+          <label class="checkbox-inline title-label"  for="campo5">Tipología</label>
+      </div>
+    </form> <!-- Fin de Form para busqueda  -->  
+      <div class="col">
+          <a href="{{ route('admin',$finca->id_finca) }}" class="btn btn-warning aling-boton"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+        </svg> </a>
+      </div>
     </div>
-</div>
+  </div>
 
 </div>
 

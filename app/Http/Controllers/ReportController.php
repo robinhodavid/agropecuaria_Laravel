@@ -27,11 +27,9 @@ class ReportController extends Controller
     *Aquí se introducen los controladores de los reportes
     */
 
-    
-
-    // Reporte de Registro de peso especifico
-    public function report_pesoespecifico (Request $request,  $id_finca, $ser)
-        {
+   // Reporte de Registro de peso especifico
+   public function report_pesoespecifico (Request $request,  $id_finca, $ser)
+   {
          	
          	//dd($id_finca, $ser);
             $fechadereporte = Carbon::now();
@@ -61,10 +59,10 @@ class ReportController extends Controller
            return $pdf->stream('Peso_Específico.pdf');
                 
             //return view('reports.pesoreport');
-        }
+   }
 
-         public function report_catalogoganado (Request $request,  $id_finca)
-        {
+   public function report_catalogoganado (Request $request,  $id_finca)
+   {
             
             $fechadereporte = Carbon::now();
             
@@ -95,40 +93,30 @@ class ReportController extends Controller
            return view('reports.catalogodeganado',compact('finca','series','fechadereporte','cantregistro'));
         }
 
-        public function report_catalogoganadoinactivo (Request $request,  $id_finca)
-        {
+   public function report_catalogoganadoinactivo (Request $request,  $id_finca)
+   {
             
-            $fechadereporte = Carbon::now();
+      $fechadereporte = Carbon::now();
             
-            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+      $finca = \App\Models\sgfinca::findOrFail($id_finca);
             
-            $status = 0; //Series inactivas
+      $status = 0; //Series inactivas
            // $series = \App\Models\sganim::view();
             
  
-            $series = DB::table('sganims')
+      $series = DB::table('sganims')
                 ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
                 ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
                 ->where('sganims.id_finca','=',$finca->id_finca)
                 ->where('sganims.status','=',$status)->get();
  
-            $cantregistro=$series->count(); 
-            
-           // return $series->all();            
-           // set_time_limit(300);
-            
-            //$pdf = PDF::loadView('reports.catalogodeganadoinactivo',compact('finca','series','fechadereporte','cantregistro'));  
+      $cantregistro=$series->count(); 
+                 
+      return view('reports.catalogodeganadoinactivo',compact('finca','series','fechadereporte','cantregistro'));
+   }
 
-            //set_time_limit(300);
-
-            //return $pdf->download('Cátalogo_de_Ganado_Inactivo.pdf');
-              
-            //return Excel::download(new SeriesActivas, 'Series_Activas.xlsx');  
-            return view('reports.catalogodeganadoinactivo',compact('finca','series','fechadereporte','cantregistro'));
-        }
-
-        public function report_catalogoganadopordestete (Request $request,  $id_finca)
-        {
+   public function report_catalogoganadopordestete (Request $request,  $id_finca)
+   {
             
             $fechadereporte = Carbon::now();
             
@@ -166,10 +154,10 @@ class ReportController extends Controller
            // dd($series);
 
            return view('reports.ganadopordestete',compact('finca','series','fechadereporte','cantregistro'));
-        }
+   }
 
-        public function report_catalogohemrepro (Request $request,  $id_finca)
-        {
+   public function report_catalogohemrepro (Request $request,  $id_finca)
+   {
             
             $fechadereporte = Carbon::now();
             
@@ -200,1456 +188,150 @@ class ReportController extends Controller
               
             //return Excel::download(new SeriesActivas, 'Series_Activas.xlsx');  
             return view('reports.hembras_reprod',compact('finca','series','fechadereporte','cantregistro'));
+   }
+
+   public function report_transferencia (Request $request,  $id_finca)
+   {
+      
+      $query = DB::table('sgtransferencias')
+                  ->where('id_finca','=',$id_finca)
+                  ->orderBy($request->orderby,'ASC');
+               ($request->desde==null) ? "":$query->whereDate('fecs','>=',$request->desde);
+               ($request->hasta==null) ? "":$query->whereDate('fecs','<=',$request->hasta);
+      
+               ($request->destino==null) ? "":$query->where('destino','=',$request->destino);
+
+               ($request->tipo==null) ? "":$query->where('id_tipologia','=',$request->tipo);
+
+         $transfrealizada = $query->get(); 
+
+         $fechadereporte = Carbon::now();
+        
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+         $destino = \App\Models\sgfinca::all();
+        
+         $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+            ->get();
+
+         $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
+        
+         $cantregistro = $transfrealizada->count();
+
+         return view('reports.seriestransferidas',compact('finca','transfrealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
         }
 
-         public function report_transferencia (Request $request,  $id_finca)
-        {
+   #Vista para el reporte de Salida de Animales
+   public function report_salida (Request $request,  $id_finca)
+   {
+            
+      $query = DB::table('sgtransferencias')
+            ->where('id_finca','=',$id_finca)
+            ->orderBy($request->orderby,'ASC');
+
+            ($request->desde==null) ? "":$query->whereDate('fecs','>=',$request->desde);
+            ($request->hasta==null) ? "":$query->whereDate('fecs','<=',$request->hasta);
+            ($request->destino==null) ? "":$query->where('destino','=',$request->destino);
+            ($request->tipo==null) ? "":$query->where('id_tipologia','=',$request->tipo);
+
+         $salidarealizada = $query->get(); 
+            
+
+      $fechadereporte = Carbon::now();
+     
+      $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+      $destino = \App\Models\sgfinca::all();
+      
+      $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+         ->get();
+
+      $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
+     
+      $cantregistro = $salidarealizada->count();
+
+      return view('reports.seriesretiradas',compact('finca','salidarealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
+   }
+
+   public function report_catalogoseries (Request $request,  $id_finca)
+   {
     
-            
-            if (($request->tipo == null) && ($request->destino == null) && ($request->motivo == null) && ($request->desde == null) && ($request->hasta == null)) {
+
+      $status = 1; //Porque se muestran los animales activos en la finca.
+
+      $fechadereporte = Carbon::now();
         
-            $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->get(); 
-        } 
-
-        if (! ($request->tipo == null) && ($request->destino == null) && ($request->motivo == null)&& ($request->desde == null) && ($request->hasta == null)) {
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&($request->motivo == null) && ($request->desde == null) && ($request->hasta == null) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-        if ( ($request->tipo == null) && ($request->destino == null) && (!($request->motivo == null)) && ($request->desde == null) && ($request->hasta == null) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aquí comiena por rango
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])->get(); 
-        }  
-
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)->get(); 
-        }
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)->get(); 
-        }               
-
-
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        if (!($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        
-        if (!($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-         if (!($request->tipo == null) && (!($request->destino == null)) &&(! ($request->motivo == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo motivo  con rango de fecha.
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo destino  con rango de fecha.
-        if ( ($request->tipo == null) && ((!$request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-         //Aqui validamos El campo tipo con rango de fecha.
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( (!$request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-
-         //Aqui validamos El campo tipo y destino  con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( (!$request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        //Aqui validamos El campo destino y motivo  con rango de fecha.
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo Tipologia y motivo  con rango de fecha.
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if (! ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-         //Aqui validamos todos los campos con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if (! ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        $fechadereporte = Carbon::now();
-        
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
-
-        $destino = \App\Models\sgfinca::all();
-        
-        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
+      $finca = \App\Models\sgfinca::findOrFail($id_finca);
+  
+      $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
             ->get();
-
-        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
         
-        $cantregistro = $transfrealizada->count();
-
-            return view('reports.seriestransferidas',compact('finca','transfrealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
-        }
-
-        #Vista para el reporte de Salida de Animales
-        public function report_salida (Request $request,  $id_finca)
-        {
-            
-        if (($request->tipo == null) && ($request->destino == null) && ($request->motivo == null) && ($request->desde == null) && ($request->hasta == null)) {
-        
-            $salidarealizada = \App\Models\sghsal::where('id_finca','=',$id_finca)
-                ->get(); 
-        } 
-
-        if (! ($request->tipo == null) && ($request->destino == null) && ($request->motivo == null)&& ($request->desde == null) && ($request->hasta == null)) {
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&($request->motivo == null) && ($request->desde == null) && ($request->hasta == null) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-        if ( ($request->tipo == null) && ($request->destino == null) && (!($request->motivo == null)) && ($request->desde == null) && ($request->hasta == null) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aquí comiena por rango
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])->get(); 
-        }  
-
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)->get(); 
-        }
-        if ( ($request->tipo == null) && ($request->destino == null) && (($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)->get(); 
-        }               
-
-
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        if (!($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        
-        if (!($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-         if (!($request->tipo == null) && (!($request->destino == null)) &&(! ($request->motivo == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo motivo  con rango de fecha.
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo destino  con rango de fecha.
-        if ( ($request->tipo == null) && ((!$request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)->get(); 
-        }
-
-         //Aqui validamos El campo tipo con rango de fecha.
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( (!$request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-
-         //Aqui validamos El campo tipo y destino  con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( (!$request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        //Aqui validamos El campo destino y motivo  con rango de fecha.
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo Tipologia y motivo  con rango de fecha.
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( !($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if (! ($request->tipo == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-         //Aqui validamos todos los campos con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->whereBetween('fecs',[$request->desde,$request->hasta])
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if ( !($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','>=',$request->desde)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-        if (! ($request->tipo == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $salidarealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
-            ->where('fecs','<=',$request->hasta)
-            ->where('destino','=',$request->destino)
-            ->where('id_tipologia','=',$request->tipo)
-            ->where('id_motivo_salida','=',$request->motivo)->get(); 
-        }
-
-        $fechadereporte = Carbon::now();
-        
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
-
-        $destino = \App\Models\sgfinca::all();
-        
-        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
-            ->get();
-
-        $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
-        
-        $cantregistro = $salidarealizada->count();
-
-            return view('reports.seriesretiradas',compact('finca','salidarealizada','tipologia','destino','motivo','fechadereporte','cantregistro'));
-        }
-
-
-
-
-
-
-         public function report_catalogoseries (Request $request,  $id_finca)
-        {
-    
-        $status = 1; //Porque se muestran los animales activos en la finca.
-
-        if (($request->tipo == null) && ($request->lote == null) && ($request->sublote == null) && ($request->desde == null) && ($request->hasta == null)) {
-        
-            
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->get();         
-               //return $series->all();  
-
-        } 
-
-        if (! ($request->tipo == null) && ($request->lote == null) && ($request->sublote == null)&& ($request->desde == null) && ($request->hasta == null)) {
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->get(); 
-        }
-
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&($request->sublote == null) && ($request->desde == null) && ($request->hasta == null) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                    ->where('sganims.status','=',$status)
-                    ->where('sganims.nombrelote','=',$request->lote)
-                    ->get(); 
-        }
-
-        if ( ($request->tipo == null) && ($request->lote == null) && (!($request->sublote == null)) && ($request->desde == null) && ($request->hasta == null) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                    ->where('sganims.status','=',$status)
-                    ->where('sganims.sub_lote','=',$request->sublote)
-                    ->get(); 
-        }
-
-        //Aquí comienza por rango
-        if ( ($request->tipo == null) && ($request->lote == null) && (($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                    ->where('sganims.status','=',$status)
-                    ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                    ->get(); 
-        }  
-
-        if ( ($request->tipo == null) && ($request->lote == null) && (($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-          
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                    ->where('sganims.status','=',$status)
-                    ->where('sganims.fecs','>=',$request->desde)
-                    ->get(); 
-        }
-
-
-        if ( ($request->tipo == null) && ($request->lote == null) && (($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-            
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                    ->where('sganims.status','=',$status)
-                    ->where('sganims.fecs','<=',$request->hasta)
-                    ->get();
-        }               
-
-
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) ){
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        if (!($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) ){
-
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sgamims.status','=',$status)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-        
-        if (!($request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.lote','=',$request->lote)->get(); 
-        }
-
-         if (!($request->tipo == null) && (!($request->lote == null)) &&(! ($request->sublote == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        //Aqui validamos El campo motivo  con rango de fecha.
-        if ( ($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        if ( ($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.sub_lote','=',$request->sublote)->get();  
-        }
-        if ( ($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.sub_lote','=',$request->sublote)->get();  
-        }
-
-        //Aqui validamos El campo destino  con rango de fecha.
-        if ( ($request->tipo == null) && ((!$request->lote == null)) &&(($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.nombrelote','=',$request->lote)->get();  
-        }
-
-
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.nombrelote','=',$request->lote)->get(); 
-
-        }
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','<=',$request->hasta)
-                ->where('sganims.nombrelote','=',$request->lote)->get(); 
-        }
-
-         //Aqui validamos El campo tipo con rango de fecha.
-        if ( !($request->tipo == null) && (($request->lote == null)) &&(($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-        if ( (!$request->tipo == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        if ( !($request->tipo == null) && (($request->lote == null)) &&(($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-            
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','<=',$request->hasta)
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-
-         //Aqui validamos El campo tipo y lote  con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        if ( (!$request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganms.fecs','>=',$request->desde)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        if ( !($request->tipo == null) && (!($request->lote == null)) &&(($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','<=',$request->hasta)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.id_tipologia','=',$request->tipo)->get(); 
-        }
-
-        //Aqui validamos El campo Lote y sublote  con rango de fecha.
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.sub_lotelote','=',$request->sublote)->get(); 
-        }
-
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        if ( ($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','<=',$request->hasta)
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        //Aqui validamos El campo Tipologia y motivo  con rango de fecha.
-        if ( !($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-        if ( !($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->where('sganims.fecs','>=',$request->desde)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-        if (! ($request->tipo == null) && (($request->lote == null)) &&(!($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganms.status','=',$status)
-                ->where('sganims.fecs','<=',$request->hasta)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-         //Aqui validamos todos los campos con rango de fecha.
-        if ( !($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-            $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-                ->where('sganims.status','=',$status)
-                ->whereBetween('sganims.fecs',[$request->desde,$request->hasta])
-                ->where('sganims.nombrelote','=',$request->lote)
-                ->where('sganims.id_tipologia','=',$request->tipo)
-                ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        if ( !($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-            ->where('sganims.status','=',$status)
-            ->where('sganims.fecs','>=',$request->desde)
-            ->where('sganims.nombrelote','=',$request->lote)
-            ->where('sganims.id_tipologia','=',$request->tipo)
-            ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-        if (! ($request->tipo == null) && (!($request->lote == null)) &&(!($request->sublote == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $series =DB::table('sganims')
-                ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
-                ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
-                ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
-                ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
-                ->where('sganims.id_finca','=',$id_finca)
-            ->where('sganims.status','=',$status)
-            ->where('sganims.fecs','<=',$request->hasta)
-            ->where('sganims.nombre_lote','=',$request->lote)
-            ->where('sganims.id_tipologia','=',$request->tipo)
-            ->where('sganims.sub_lote','=',$request->sublote)->get(); 
-        }
-
-        $fechadereporte = Carbon::now();
-        
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
-
-      //  $destino = \App\Models\sgfinca::all();
-        
-        $tipologia = \App\Models\sgtipologia::where('id_finca','=',$id_finca)
-            ->get();
-
-      //  $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get(); 
-        
+      $query = DB::table('sganims')
+                   ->select('sganims.serie', 'sgrazas.nombreraza','sgcondicioncorporals.nombre_condicion', 'sganims.codmadre', 'sganims.edad','sgtipologias.nomenclatura', 'sganims.fnac','sganims.fecr', 'sganims.pesoi','sganims.nombrelote','sganims.sub_lote','sganims.codpadre', 'sganims.fulpes','sganims.pesoactual' )
+                   ->join('sgrazas', 'sgrazas.idraza', '=', 'sganims.idraza')
+                   ->join('sgtipologias', 'sgtipologias.id_tipologia', '=', 'sganims.id_tipologia')
+                   ->join('sgcondicioncorporals', 'sgcondicioncorporals.id_condicion', '=', 'sganims.id_condicion')
+                   ->where('sganims.id_finca','=',$id_finca)
+                   ->where('sganims.status','=',$status)
+                   ->orderBy($request->orderby,'ASC');
+                   
+                  ($request->tipo==null) ? "":$query->where('sganims.id_tipologia','=',$request->tipo);
+                  ($request->desde==null) ? "":$query->whereDate('sganims.fecr','>=',$request->desde);
+                  ($request->hasta==null) ? "":$query->whereDate('sganims.fecr','<=',$request->hasta);
+                  ($request->nombrelote==null) ? "":$query->where('sganims.nombrelote','=',$request->lote);
+         
+                  $series = $query->get(); 
+  
         $cantregistro = $series->count();
 
             return view('reports.catalogodeganado',compact('finca','series','tipologia','fechadereporte','cantregistro'));
         }
 
-         public function report_pajuela (Request $request,  $id_finca)
-        {
-    
-        if (($request->serie == null) && ($request->ubica == null) && ($request->desde == null) && ($request->hasta == null)) {
+   public function report_pajuela (Request $request,  $id_finca)
+   {
+
+      // return $request; 
+
+      $query = DB::table('sgpajus')
+                  ->where('id_finca','=',$id_finca)
+                  ->orderBy($request->orderby,'ASC');
+
+                     ($request->desde==null) ? "":$query->whereDate('fecr','>=',$request->desde);
+                     ($request->hasta==null) ? "":$query->whereDate('fecr','<=',$request->hasta);
+
+                     ($request->ubica==null) ? "":$query->where('ubica','LIKE',"%".$request->ubica);
+
+                     ($request->serie==null) ? "":$query->where('serie','LIKE',"%".$request->serie);
+
+                  $pajuela = $query->get(); 
+   
+         $fechadereporte = Carbon::now();
         
-            $pajuela = \App\Models\sgpaju::where('id_finca','=',$id_finca)
-            ->get();                
-               //return $series->all();  
-        } 
-
-        if (! ($request->serie == null) && ($request->ubica == null) && ($request->desde == null) && ($request->hasta == null)) {
-           
-           $pajuela = \App\Models\sgpaju::where('id_finca','=',$id_finca)
-                ->where('serie','=',$request->serie)
-                ->get(); 
-        }
-
-        if ( ($request->serie == null) && (!($request->ubica == null)) && ($request->desde == null) && ($request->hasta == null) ){
-           
-            $pajuela = \App\Models\sgpaju::where('id_finca','=',$id_finca)
-                ->where('ubica','=',$request->ubica)
-                ->get(); 
-        }
-
-        //Aquí comienza por rango
-        if ( ($request->serie == null) && ($request->ubica == null) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-            $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->whereBetween('fecr',[$request->desde,$request->hasta])
-                ->get(); 
-        }  
-
-        if ( ($request->serie == null) && ($request->ubica == null) && (!($request->desde == null)) && (($request->hasta == null)) ){
-          
-             $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                    ->where('fecr','>=',$request->desde)
-                    ->get(); 
-        }
-
-        if ( ($request->serie == null) && ($request->ubica == null) && (($request->desde == null)) && (!($request->hasta == null)) ){
-            
-              $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                    ->where('fecr','<=',$request->hasta)
-                    ->get();
-        }               
-
-        if ( ! ($request->serie == null) && (!($request->ubica == null)) ) {
-           
-           $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->where('serie','=',$request->serie)
-                ->where('ubica','=',$request->ubica)
-                ->get(); 
-        }
-       
-        if ( ! ($request->serie == null) && (($request->ubica == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->where('serie','=',$request->serie)
-                ->whereBetween('fecr',[$request->desde,$request->hasta])
-                ->get(); 
-        }
-
-        if ( ($request->serie == null) && ((!$request->ubica == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->where('ubica','=',$request->ubica)
-                ->whereBetween('fecr',[$request->desde,$request->hasta])
-                ->get();  
-        }
-
-        if (! ($request->serie == null) && (($request->ubica == null)) && (!($request->desde == null)) && ( ($request->hasta == null)) ){
-           
-              $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->where('serie','=',$request->serie)
-                ->where('fecr','=',$request->desde)
-                ->get();  
-        }
-        
-        if ( ($request->serie == null) && ( !($request->ubica == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-              $pajuela = \App\Models\sgpaju::where('id_finca','=', $id_finca)
-                ->where('ubica','=',$request->ubica)
-                ->where('fecr','=',$request->hasta)
-                ->get();  
-        }
-
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
     
-        $fechadereporte = Carbon::now();
-        
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
-    
-        $cantregistro = $pajuela->count();
+         $cantregistro = $pajuela->count();
 
-            return view('reports.catalogo_pajuela',compact('finca','pajuela','fechadereporte','cantregistro'));
-        }
+         return view('reports.catalogo_pajuela',compact('finca','pajuela','fechadereporte','cantregistro'));
+   }
 
+   public function report_historialsalida (Request $request,  $id_finca)
+   {   
+      
+      $query = DB::table('sghsals')
+                  ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp','sganims.tipo','sgtipologias.nomenclatura',
+                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
+                  ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
+                  ->join('sgtipologias','sgtipologias.id_tipologia','=','sganims.id_tipologia')
+                  ->where('sghsals.id_finca','=',$id_finca)
+                  ->orderBy($request->orderby,'ASC');
 
+                  ($request->serie==null) ? "":$query->where('sghsals.serie','=',$request->serie);
+                  ($request->motivo==null) ? "":$query->where('sghsals.id_motsal','=',$request->motivo);
+                  ($request->destino==null) ? "":$query->where('sghsals.destino','=',$request->destino);
+                  ($request->desde==null) ? "":$query->whereDate('sghsals.fechs','>=',$request->desde);
+                  ($request->hasta==null) ? "":$query->whereDate('sghsals.fechs','<=',$request->hasta);
 
-          public function report_historialsalida (Request $request,  $id_finca)
-        {
-    
-           
-        if (($request->serie == null) && ($request->destino == null) && ($request->motivo == null) && ($request->desde == null) && ($request->hasta == null)) {
-  
-    
-            $histsalida =  DB::table('sghsals')
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp','sganims.tipo',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->get();  
-        } 
-
-        if (! ($request->serie == null) && ($request->destino == null) && ($request->motivo == null)&& ($request->desde == null) && ($request->hasta == null)) {
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-
-        if ( ($request->serie == null) && (!($request->destino == null)) &&($request->motivo == null) && ($request->desde == null) && ($request->hasta == null) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.destino','=',$request->destino)->get(); 
-        }
-
-        if ( ($request->serie == null) && ($request->destino == null) && (!($request->motivo == null)) && ($request->desde == null) && ($request->hasta == null) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-        //Aquí comiena por rango
-        if ( ($request->serie == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-            $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])->get(); 
-        }  
-
-        if ( ($request->serie == null) && ($request->destino == null) && (($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)->get(); 
-        }
-        if ( ($request->serie == null) && ($request->destino == null) && (($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-            $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)->get(); 
-        }               
-
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-        if (!($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) ){
-           
-            $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        
-        if (!($request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.destino','=',$request->destino)->get(); 
-        }
-
-         if (!($request->serie == null) && (!($request->destino == null)) &&(! ($request->motivo == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo motivo  con rango de fecha.
-        if ( ($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( ($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( ($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo destino  con rango de fecha.
-        if ( ($request->serie == null) && ((!$request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.destino','=',$request->destino)->get(); 
-        }
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.destino','=',$request->destino)->get(); 
-        }
-
-         //Aqui validamos El campo tipo con rango de fecha.
-        if ( !($request->serie == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fecs',[$request->desde,$request->hasta])
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-        if ( (!$request->serie == null) && (($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-        if ( !($request->serie == null) && (($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.id_tipologia','=',$request->serie)->get(); 
-        }
-
-
-         //Aqui validamos El campo tipo y destino  con rango de fecha.
-        if ( !($request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-
-        if ( (!$request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-        if ( !($request->serie == null) && (!($request->destino == null)) &&(($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)->get(); 
-        }
-
-        //Aqui validamos El campo destino y motivo  con rango de fecha.
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-                ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-           $$histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( ($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-        //Aqui validamos El campo Tipologia y motivo  con rango de fecha.
-        if ( !($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('sghsals.fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( !($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-              ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','>=',$request->desde)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if (! ($request->serie == null) && (($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-          $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-              ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-
-         //Aqui validamos todos los campos con rango de fecha.
-        if ( !($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->whereBetween('fechs',[$request->desde,$request->hasta])
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if ( !($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-         $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-               ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('fechs','>=',$request->desde)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
-        if (! ($request->serie == null) && (!($request->destino == null)) &&(!($request->motivo == null)) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-         $histsalida =  DB::table('sghsals')
-               // ->select(DB::raw('count(*) as user_count, status'), ) 
-                ->select('sghsals.serie','sghsals.feche', 'sganims.pesoi','sghsals.procede','sghsals.fechs','sghsals.peso','sghsals.motivo', 'sghsals.destino','sganims.ultgdp',
-                    DB::raw('DATEDIFF(sghsals.fechs, sghsals.feche) as difdia'))
-              ->join('sganims', 'sganims.id', '=', 'sghsals.id_serie')
-                ->where('sghsals.id_finca','=',$id_finca)
-                ->where('sghsals.fechs','<=',$request->hasta)
-                ->where('sghsals.destino','=',$request->destino)
-                ->where('sghsals.serie','=',$request->serie)
-                ->where('sghsals.id_motsal','=',$request->motivo)->get(); 
-        }
+                  $histsalida = $query->get(); 
 
         $fechadereporte = Carbon::now();
 
@@ -1668,169 +350,405 @@ class ReportController extends Controller
         $cantregistro = $histsalida->count();
 
             return view('reports.hist_salida',compact('finca','histsalida','fechadereporte','cantregistro','motivo','destino','rangofechadesde','rangofechahasta'));
-        }
+   }
 
+   public function report_movimientolote (Request $request,  $id_finca)
+   {
+      
+      //return $request; 
+      $query = DB::table('sghistlotes')
+               ->where('id_finca','=',$id_finca)
+               ->orderBy($request->orderby,'ASC');
+               ($request->desde==null) ? "":$query->whereDate('fecharegistro','>=',$request->desde);
+               ($request->hasta==null) ? "":$query->whereDate('fecharegistro','<=',$request->hasta);
+               ($request->serie==null) ? "":$query->where('serie','=',$request->serie);
 
+               $movimientolote = $query->get(); 
 
-         public function report_movimientolote (Request $request,  $id_finca)
-        {
-    
-           
-        if (($request->serie == null) && ($request->desde == null) && ($request->hasta == null)) {
-            $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->get();
-        } 
+      $fechadereporte = Carbon::now();
 
-        if (! ($request->serie == null) && ($request->desde == null) && ($request->hasta == null)) {
-           
-            $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->where('serie','=',$request->serie)->get(); 
-        }
+      $rangofechadesde = $request->desde;
+      $rangofechahasta = $request->hasta;
+     
 
-        //Aquí comiena por rango
-        if ( ($request->serie == null) && (!($request->desde == null)) && (!($request->hasta == null)) ){
-           
-           $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->whereBetween('fecharegistro',[$request->desde,$request->hasta])->get(); 
-        }  
+      $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-        if ( ($request->serie == null) && (!($request->desde == null)) && ( ($request->hasta == null)) ){
-           
-            $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->where('fecharegistro','>=',$request->desde)->get(); 
-        }
+      $cantregistro = $movimientolote->count();
 
-        if ( !($request->serie == null) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->where('fecharegistro','<=',$request->hasta)->get(); 
-        } 
-        if ( ($request->serie == null) && (($request->desde == null)) && (!($request->hasta == null)) ){
-           
-             $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->where('serie','=',$request->serie)
-                ->where('fecharegistro','<=',$request->hasta)->get(); 
-        }
-        if (! ($request->serie == null) && (!($request->desde == null)) && (($request->hasta == null)) ){
-           
-             $movimientolote = \App\Models\sghistlote::where('id_finca','=',$id_finca)
-                ->where('serie','=',$request->serie)
-                ->where('fecharegistro','>=',$request->desde)->get(); 
-        }                    
+      return view('reports.movimiento_lote',compact('finca','movimientolote','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
 
-        
-        $fechadereporte = Carbon::now();
+   public function report_pa (Request $request,  $id_finca)
+   {
+         
+         //return $request; 
+         //dd($id_finca, $ser);
+         $fechadereporte = Carbon::now()->subDay(1);
 
-        $rangofechadesde = $request->desde;
-        $rangofechahasta = $request->hasta;
-        
+         $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+         $query = DB::table('sgajusts')
+               ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
+               ->join('sganims','sganims.id','=','sgajusts.id_serie')
+               ->where('sgajusts.id_finca','=',$id_finca)
+               ->orderBy($request->orderby,'ASC');
+
+         ($request->desde==null) ? "":$query->whereDate('sgajusts.fecha','>=',$request->desde);
+         ($request->hasta==null) ? "":$query->whereDate('sgajusts.fecha','<=',$request->hasta);
+
+         $ajust = $query->get(); 
+
+  
+         $cantregistro=$ajust->count(); 
+         
+         $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);
+         $promPa1 = round(collect($ajust)->avg('pa1'),2);
+         $promPa2 = round(collect($ajust)->avg('pa2'),2);
+         $promPa3 = round(collect($ajust)->avg('pa3'),2);
+         $promPa4 = round(collect($ajust)->avg('pa4'),2);
+         
+         $pdf = PDF::loadView('reports.pesoajustado',compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));  
+            
+        return $pdf->stream('Peso_Ajustado.pdf');
+             
+        //return view('reports.pesoajustado', compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));
+   }
+
+   public function report_personal_ganaderia (Request $request,  $id_finca)
+   {
+
+      
+        $fechadereporte = Carbon::now(); 
 
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-        $cantregistro = $movimientolote->count();
+        #Comprobamos que el request no venga en null
+        #Guardamos las opciones de los campos en un array
+        $option = collect($request->campo);
 
-            return view('reports.movimiento_lote',compact('finca','movimientolote','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
-        }
+        $cont = $option->count();   
 
-        /*
-        public function report_pesoajustado (Request $request,  $id_finca)
+         #Validamos que se han seleccionado campos para mostrar
+         if ($request->campo==null) {
+         #Sino hay campos
+            $indicador = 0; #false
+            $cantregistro = 0;
+            #Esto es para que la variable no pase en vacio
+            $reportGanaderia = DB::table('sganims')
+               ->select('sganims.serie','sgrazas.nombreraza','sganims.edad', 'sgtipologias.nomenclatura','sgtipologias.id_tipologia','sganims.codmadre','sganims.codpadre', 'sganims.fecr','sganims.sexo','sganims.pesoi','sganims.fnac','sganims.fulpes','sganims.pesodestete','sganims.fecdes','sganims.nombrelote','sganims.pesoactual')
+                   ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                   ->join('sgtipologias','sgtipologias.id_tipologia','=','sganims.id_tipologia')
+                   ->join('sgcondicioncorporals','sgcondicioncorporals.id_condicion','=','sganims.id_condicion')
+                   ->where('sganims.id_finca','=',$id_finca)
+                   ->orderBy($request->orderby,'ASC')
+                   ->get(); 
+            } else {
+
+            $indicador = 1; #false
+
+            $query = DB::table('sganims')
+                  ->select('sganims.serie','sgrazas.nombreraza','sganims.edad', 'sgtipologias.nomenclatura','sgtipologias.id_tipologia','sganims.codmadre','sganims.codpadre', 'sganims.fecr','sganims.sexo','sganims.pesoi','sganims.fnac','sganims.fulpes','sganims.pesodestete','sganims.fecdes','sganims.nombrelote','sganims.pesoactual')
+                      ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                      ->join('sgtipologias','sgtipologias.id_tipologia','=','sganims.id_tipologia')
+                      ->join('sgcondicioncorporals','sgcondicioncorporals.id_condicion','=','sganims.id_condicion')
+                      ->where('sganims.id_finca','=',$id_finca)
+                      ->orderBy($request->orderby,'ASC');
+                     ($request->tipo==null) ? "":$query->where('sganims.id_tipologia','=',$request->tipo);
+                     ($request->frdesde==null) ? "":$query->whereDate('sganims.fecr','>=',$request->frdesde);
+                     ($request->frhasta==null) ? "":$query->whereDate('sganims.fecr','<=',$request->frhasta);
+                     ($request->pdesde==null) ? "":$query->where('sganims.pesoactual','>=',$request->pdesde);
+                     ($request->phasta==null) ? "":$query->where('sganims.pesoactual','<=',$request->phasta);
+                     ($request->fddesde==null) ? "":$query->whereDate('sganims.fecdes','>=',$request->fddesde);
+                     ($request->fdhasta==null) ? "":$query->whereDate('sganims.fecdes','<=',$request->fdhasta);
+            
+                     $reportGanaderia = $query->get(); 
+            }
+
+
+        $cantregistro = $reportGanaderia->count(); 
+                        
+        return view('reports.person_ganaderia', compact('finca','reportGanaderia','fechadereporte','cantregistro', 'option','indicador'));
+   }    
+
+    #Aqui Va el otro controlador de reporudccion.
+   public function report_personal_reproduccion (Request $request,  $id_finca)
+   {
+
+        //return $request;
+
+        $fechadereporte = Carbon::now(); 
+
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        #Comprobamos que el request no venga en null
+        #Guardamos las opciones de los campos en un array
+        $option = collect($request->campo);
+
+        $cont = $option->count();   
+        #Celos
+        if ($request->tipo=="t1") 
         {
-            
-            //dd($id_finca, $ser);
-            $fechadereporte = Carbon::now();
+            #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgcelos')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderby,'ASC')
+                      ->get(); 
+               } else {
 
-           // dd($fechadereporte); 
-            
-            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+               $indicador = 1; #false
 
-            $fecharegistro = Carbon::now();
+               $query = DB::table('sgcelos')
+                         ->where('id_finca','=',$id_finca)
+                         ->orderBy($request->orderby,'ASC');
+                        ($request->resp==null) ? "":$query->where('resp','=',$request->resp);
 
-            $ajust = DB::table('sgajusts')
-                ->join('sganims','sganims.id','=','sgajusts.id_serie')
-                ->where('sgajusts.id_finca','=',$id_finca)
-                ->whereDate('sgajusts.fecha','=',$fecharegistro)
-                ->get();  
+                        ($request->frdesde==null) ? "":$query->whereDate('fechr','>=',$request->frdesde);
+                        ($request->frhasta==null) ? "":$query->whereDate('fechr','<=',$request->frhasta);
+                        ($request->fpcdesde==null) ? "":$query->whereDate('fecestprocel','>=',$request->fpcdesde);
+                        ($request->fpchasta==null) ? "":$query->whereDate('fecestprocel','<=',$request->fpchasta);
+               
+                        $reporteReproducion = $query->get(); 
+               }
 
-            $cantregistro=$ajust->count(); 
-            
-            $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);
-            $promPa1 = round(collect($ajust)->avg('pa1'),2);
-            $promPa2 = round(collect($ajust)->avg('pa2'),2);
-            $promPa3 = round(collect($ajust)->avg('pa3'),2);
-            $promPa4 = round(collect($ajust)->avg('pa4'),2);
-            
-            
-            $pdf = PDF::loadView('reports.pesoajustado',compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));  
-              
-           return $pdf->stream('Peso_Ajustado.pdf');
-                  
-           //return view('reports.pesoajustado', compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_celos', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
         }
-        */
-
-        public function report_pa (Request $request,  $id_finca)
+        #Servicios
+        if ($request->tipo=="t2") 
         {
-            
-           // return $request; 
-            //dd($id_finca, $ser);
-            $fechadereporte = Carbon::now()->subDay(1);
- 
-            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+           #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgservs')
+                  ->select('sgservs.serie','sgservs.fecha','sgservs.toro','sgservs.paju','sgservs.snro','sgservs.peso','sgservs.nomi','sgservs.iers','sgservs.id_tipologia','sgtipologias.nomenclatura')
+                      ->join('sgtipologias','sgtipologias.id_tipologia','=','sgservs.id_tipologia')
+                      ->where('sgservs.id_finca','=',$id_finca)
+                      ->orderBy($request->orderbys,'ASC')
+                      ->get(); 
+               } else {
 
-            #0. En caso Desde inactivo y Hasta Ianctivo
-            if ( ($request->desde == null) and ($request->hasta==null) ) {
+               $indicador = 1; #false
+
+               $query = DB::table('sgservs')
+                     ->select('sgservs.serie','sgservs.fecha','sgservs.toro','sgservs.paju','sgservs.snro','sgservs.peso','sgservs.nomi','sgservs.iers','sgservs.id_tipologia','sgservs.edad','sgtipologias.nomenclatura')
+                     ->join('sgtipologias','sgtipologias.id_tipologia','=','sgservs.id_tipologia')
+                     ->where('sgservs.id_finca','=',$id_finca)
+                     ->orderBy($request->orderbys,'ASC');
+
+                        ($request->resp==null) ? "":$query->where('sgservs.nomi','=',$request->resp);
+                        ($request->frdesde==null) ? "":$query->whereDate('sgservs.fecha','>=',$request->frdesde);
+                        ($request->frhasta==null) ? "":$query->whereDate('sgservs.fecha','<=',$request->frhasta);
+                        ($request->pdesde==null) ? "":$query->where('sgservs.peso','>=',$request->pdesde);
+                        ($request->phasta==null) ? "":$query->where('sgservs.peso','<=',$request->phasta);
                
-               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
-                   ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
-                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
-                   ->get();
-            }
+                        $reporteReproducion = $query->get(); 
+               }
 
-            #1.- Caso Desde activo Hasta Inactivo
-            if ( !($request->desde == null) and ($request->hasta==null) ) {
-               
-               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
-                   ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
-                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
-                   ->whereDate('fecha','>=',$request->desde)
-                   ->get();
-            }
-
-            #2.- Caso Desde inactivo Hasta Activo
-
-            if ( ($request->desde == null) and !($request->hasta==null) ) {
-               
-               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
-                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
-                   ->whereDate('fecha','<=',$request->hasta)
-                   ->get();
-            }
-
-            #3.- Caso Desde Activo y Hasta Activo
-
-            if ( !($request->desde == null) and !($request->hasta==null) ) {
-               
-               $ajust = \App\Models\sgajust::where('sgajusts.id_finca','=',$id_finca)
-                    ->select('sgajusts.id','sgajusts.fecha','sgajusts.id_serie','sgajusts.serie','sgajusts.sexo','sgajusts.pesdes', 'sgajusts.peso', 'sgajusts.difdia', 'sgajusts.difpeso', 'sgajusts.pesoi','sgajusts.pa1','sgajusts.c1','sgajusts.gdp','sgajusts.idraza','sgajusts.fnac','sgajusts.lote','sgajusts.id_finca','sganims.codmadre','sganims.fecdes','sganims.tipo','sganims.edad')
-                   ->join('sganims','sganims.id','=','sgajusts.id_serie')
-                   ->whereDate('fecha','>=',$request->desde)
-                   ->whereDate('fecha','<=',$request->hasta)
-                   ->get();
-            }
-     
-            $cantregistro=$ajust->count(); 
-            
-            $promPesoDestete = round(collect($ajust)->avg('pesdes'),2);
-            $promPa1 = round(collect($ajust)->avg('pa1'),2);
-            $promPa2 = round(collect($ajust)->avg('pa2'),2);
-            $promPa3 = round(collect($ajust)->avg('pa3'),2);
-            $promPa4 = round(collect($ajust)->avg('pa4'),2);
-            
-            $pdf = PDF::loadView('reports.pesoajustado',compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));  
-               
-           return $pdf->stream('Peso_Ajustado.pdf');
-                
-           //return view('reports.pesoajustado', compact('finca','ajust','promPesoDestete','fechadereporte','cantregistro','promPa1','promPa2','promPa3','promPa4'));
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_servicios', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
         }
+
+        if ($request->tipo=="t3") 
+        {
+           #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgpalps')
+                  ->select('sgpalps.serie','sgpalps.fechr','sgpalps.resp','sgpalps.eval','sgpalps.prcita','sgdiagnosticpalpaciones.id_diagnostico','sgdiagnosticpalpaciones.nombre','sgpalps.patologia')
+                  ->join('sgdiagnosticpalpaciones','sgdiagnosticpalpaciones.id_diagnostico','=','sgpalps.id_diagnostico')
+                      ->where('sgpalps.id_finca','=',$id_finca)
+                      ->orderBy($request->orderbyp,'ASC')
+                      ->get(); 
+               } else {
+
+               $indicador = 1; #false
+
+               $query = DB::table('sgpalps')
+                  ->select('sgpalps.serie','sgpalps.fechr','sgpalps.resp','sgpalps.eval','sgpalps.prcita','sgdiagnosticpalpaciones.id_diagnostico','sgdiagnosticpalpaciones.nombre','sgpalps.patologia')
+                  ->join('sgdiagnosticpalpaciones','sgdiagnosticpalpaciones.id_diagnostico','=','sgpalps.id_diagnostico')
+                      ->where('sgpalps.id_finca','=',$id_finca)
+                      ->orderBy($request->orderbyp,'ASC');
+                     ($request->frdesde==null) ? "":$query->whereDate('sgpalps.fechr','>=',$request->frdesde);
+                     ($request->frhasta==null) ? "":$query->whereDate('sgpalps.fechr','<=',$request->frhasta);
+                     ($request->diag==null) ? "":$query->where('sgpalps.id_diagnostico','=',$request->diag);
+                     ($request->patol==null) ? "":$query->where('sgpalps.patologia','<=',$request->patol);
+                     ($request->citadesde==null) ? "":$query->whereDate('sgpalps.prcita','>=',$request->citadesde);
+                     ($request->citahasta==null) ? "":$query->whereDate('sgpalps.prcita','<=',$request->citahasta);
+            
+                     $reporteReproducion = $query->get(); 
+               }
+
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_palpaciones', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
+        }
+
+        if ($request->tipo=="t4") 
+        {
+           #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgprenhezs')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypre,'ASC')
+                      ->get(); 
+               } else {
+
+               $indicador = 1; #false
+
+               $mesdesde = $request->dpredesde/30;
+               $meshasta = $request->dprehasta/30; 
+
+               $query = DB::table('sgprenhezs')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypre,'ASC');
+                     ($request->frdesde==null) ? "":$query->whereDate('fregp','>=',$request->frdesde);
+                     ($request->frhasta==null) ? "":$query->whereDate('fregp','<=',$request->frhasta);
+
+                     ($request->fepartdesde==null) ? "":$query->whereDate('fecap','>=',$request->fepartdesde);
+                     ($request->feparthasta==null) ? "":$query->whereDate('fecap','<=',$request->feparthasta);
+
+                     ($request->dpredesde==null) ? "":$query->where('dias_prenez','>=',$request->dpredesde);
+                     ($request->dprehasta==null) ? "":$query->where('dias_prenez','<=',$request->dprehasta);
+
+                     ($request->dpredesde==null) ? "":$query->orWhere('mesespre','>=',$mesdesde);
+                     ($request->dprehasta==null) ? "":$query->orWhere('mesespre','<=',$meshasta);
+                     
+                     ($request->fepredesde==null) ? "":$query->whereDate('fepre','>=',$request->fepredesde);
+                     ($request->feprehasta==null) ? "":$query->whereDate('fepre','<=',$request->feprehasta);
+            
+                     $reporteReproducion = $query->get(); 
+               }
+
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_prenez', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
+        }
+
+        if ($request->tipo=="t5") 
+        {
+           #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgpartos')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypa,'ASC')
+                      ->get(); 
+               } else {
+
+               $indicador = 1; #false
+
+   
+               $query = DB::table('sgpartos')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypre,'ASC');
+                     
+                     ($request->fpartdesde==null) ? "":$query->whereDate('fecpar','>=',$request->fpartdesde);
+                     ($request->fparthasta==null) ? "":$query->whereDate('fecpar','<=',$request->fparthasta);
+
+                     ($request->condi==null) ? "":$query->where('marcabec1','=',$request->condi);
+                     ($request->condi==null) ? "":$query->orWhere('marcabec2','=',$request->condi);
+
+                     ($request->causa==null) ? "":$query->where('causanm','=',$request->causa);
+                    // ($request->causa==null) ? "":$query->orWhere('causanm1','=',$request->causa);
+            
+                     $reporteReproducion = $query->get(); 
+               }
+
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_parto', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
+        }
+
+        if ($request->tipo=="t6") 
+        {
+         #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgabors')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbya,'ASC')
+                      ->get(); 
+               } else {
+
+               $indicador = 1; #false
+
+   
+               $query = DB::table('sgabors')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbya,'ASC');
+                     
+                     ($request->fabordesde==null) ? "":$query->whereDate('fecr','>=',$request->fabordesde);
+                     ($request->faborhasta==null) ? "":$query->whereDate('fecr','<=',$request->faborhasta);
+
+                     ($request->causaabor==null) ? "":$query->where('causa','=',$request->causaabor);
+                   
+                     $reporteReproducion = $query->get(); 
+               }
+
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_aborto', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
+        }
+
+        if ($request->tipo=="t7") 
+        {
+           #Validamos que se han seleccionado campos para mostrar
+            if ($request->campo==null) {
+            #Sino hay campos
+               $indicador = 0; #false
+               $cantregistro = 0;
+               #Esto es para que la variable no pase en vacio
+               $reporteReproducion = DB::table('sgpartosncs')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypnc,'ASC')
+                      ->get(); 
+               } else {
+
+               $indicador = 1; #false
+
+   
+               $query = DB::table('sgpartosncs')
+                      ->where('id_finca','=',$id_finca)
+                      ->orderBy($request->orderbypnc,'ASC');
+                     
+                     ($request->fpncdesde==null) ? "":$query->whereDate('fecregistro','>=',$request->fpncdesde);
+                     ($request->fpnchasta==null) ? "":$query->whereDate('fecregistro','<=',$request->fpnchasta);
+                     
+                     ($request->causapnc==null) ? "":$query->where('causa','=',$request->causapnc);
+                   
+                     $reporteReproducion = $query->get(); 
+               }
+
+            $cantregistro = $reporteReproducion->count(); 
+                        
+            return view('reports.person_repro_pn', compact('finca','reporteReproducion','fechadereporte','cantregistro', 'option','indicador'));
+        }     
+   }     
+
+
+
 
 }

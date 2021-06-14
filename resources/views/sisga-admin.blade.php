@@ -129,7 +129,7 @@
   <!-- /.col -->
   <div class="col-12 col-sm-6 col-md-3">
     <div class="info-box mb-3">
-      <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-up"></i></span>
+      <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-venus-mars"></i></span>
 
       <div class="info-box-content">
         <span class="info-box-text">Series Inactivas</span>
@@ -145,7 +145,9 @@
 
   <div class="col-12 col-sm-6 col-md-3">
     <div class="info-box mb-3">
-      <span class="info-box-icon bg-success elevation-1"><i class="fas fa-shopping-cart"></i></span>
+      <span class="info-box-icon bg-success elevation-1">
+        <i class="fas fa-shopping-cart"></i>
+      </span>
 
       <div class="info-box-content">
         <span class="info-box-text">Series por Destetar</span>
@@ -160,7 +162,7 @@
   <!-- /.col -->
   <div class="col-12 col-sm-6 col-md-3">
     <div class="info-box mb-3">
-      <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-users"></i></span>
+      <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-venus"></i></span>
 
       <div class="info-box-content">
         <span class="info-box-text">Hembras Reprod.</span>
@@ -265,7 +267,7 @@
           <div class="description-block border-right">
             <span class="description-percentage text-pre"><i class="fas fa-caret-up"></i> {{$tp_p}}%</span>
             <h5 class="description-header">{{$tp}}</h5>
-            <span class="description-text">TOTAL PREÑECES</span>
+            <span class="description-text" title="Total Preñeces">TOTAL PREÑECES</span>
           </div>
           <!-- /.description-block -->
         </div>
@@ -274,7 +276,7 @@
           <div class="description-block border-right">
             <span class="description-percentage text-par"><i class="fas fa-caret-left"></i> {{$tpa_p}}%</span>
             <h5 class="description-header">{{$tpa}}</h5>
-            <span class="description-text">TOTAL PARTOS</span>
+            <span class="description-text" title="Total Partos">TOTAL PARTOS</span>
           </div>
           <!-- /.description-block -->
         </div>
@@ -283,27 +285,29 @@
           <div class="description-block border-right">
             <span class="description-percentage text-ser"><i class="fas fa-caret-up"></i> {{$tser_p}}%</span>
             <h5 class="description-header">{{$ts}}</h5>
-            <span class="description-text">TOTAL SERVICIOS</span>
+            <span class="description-text" title="Total Servicios Realizados">TOTAL SERVICIOS</span>
           </div>
           <!-- /.description-block -->
         </div>
         <!-- /.col -->
         <div class="col-sm col-6">
-          <div class="description-block">
+          <div class="description-block border-right">
             <span class="description-percentage text-abo"><i class="fas fa-caret-down"></i> {{$tabo_p}}%</span>
             <h5 class="description-header">{{$tab}}</h5>
-            <span class="description-text">TOTAL ABORTOS</span>
+            <span class="description-text" title="Total Abortos">TOTAL ABORTOS</span>
           </div>
           <!-- /.description-block -->
         </div>
          <div class="col-sm col-6">
-          <div class="description-block">
+          <div class="description-block border-right">
             <span class="description-percentage tex-pnc"><i class="fas fa-caret-down"></i> {{$tpnc_p}}%</span>
             <h5 class="description-header">{{$tpnc}}</h5>
             <span class="description-text" title="Total Partos No Concluidos">TOTAL PARTOS N.C.</span>
           </div>
           <!-- /.description-block -->
         </div>
+      </div>
+
       </div>
       <!-- /.row -->
     </div>
@@ -313,83 +317,68 @@
  </div>
 </div> <!-- /.row -->
 <div class="row"> <!--Efectividad del Veterinario --> 
-  <div class="col">
+  <div class="col-md-12">
     <div class="card">
-              <div class="card-header border-0">
-                <h3 class="card-title">Efectividad Veterinaria en Temporada de Reproducción</h3>
-                <div class="card-tools">
-                   <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="card-body table-responsive p-0">
-                <table class="table table-striped table-valign-middle">
-                  <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th title="Efectividad Relativa">Efectiviad. Relativa</th>
-                    <th title="Efectividad Real">Efectividad. Real</th>
-                    
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr>
-                    <td>
-                      <img src="/imagenes/userprofile.png" class="img-circle img-size-32 mr-2">
-                      Pedro Pérez
-                    </td>
-                    <td>95%</td>
-                    <td>
-                      <small class="text-success mr-1">
-                        <i class="fas fa-arrow-up"></i>
-                        97%
-                      </small>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="/imagenes/userprofile.png" class="img-circle img-size-32 mr-2">
-                      Jhon Doue
-                    </td>
-                    <td>94%</td>
-                    <td>
-                      <small class="text-warning mr-1">
-                        <i class="fas fa-arrow-down"></i>
-                        93%
-                      </small>  
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="/imagenes/userprofile.png" class="img-circle img-size-32 mr-2">
-                      Juan Pérez
-                    </td>
-                    <td>96%</td>
-                    <td>
-                      <small class="text-danger mr-1">
-                        <i class="fas fa-arrow-down"></i>
-                        96%
-                      </small>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <img src="/imagenes/userprofile.png" class="img-circle img-size-32 mr-2">
-                      Peter Hernández
-                    </td>
-                    <td>80%</td>
-                    <td>
-                      <small class="text-success mr-1">
-                        <i class="fas fa-arrow-up"></i>
-                        75%
-                      </small>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      <div class="card-header border-0">
+        <h3 class="card-title">Efectividad Veterinaria en Temporada de Reproducción</h3>
+        <div class="card-tools">
+           <button type="button" class="btn btn-tool" data-card-widget="collapse">
+            <i class="fas fa-minus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="card-body table-responsive p-0">
+        <div class="row">
+          <div class="col">
+            <table class="table table-striped table-valign-middle">
+            <thead>
+            <tr>
+              <th>Nombre</th>
+              <th title="Porcentaje de Palpaciones">Palpaciones (%)</th>
+              <th title="Efectividad Parcial de Preñez">Efect. Parcial Preñez (%)</th>
+              <th title="Efectividad Parcial de Parto">Efect. Parcial Parto (%)</th>
+              <th title="Efectividad Promdio">Efectividad Promedio (%)</th>
+            </tr>
+            </thead>
+            @foreach($efectividadUser as $item)
+              <tbody>
+              <tr>
+                <td>
+                  <img src="/imagenes/userprofile.png" class="img-circle img-size-32 mr-2">
+                  {{$item->name}}
+                </td>
+                <td style="text-align: center;">
+                  <small class="{!!$item->ppalpaciones>75?"text-success":"text-danger"!!}  mr-1">
+                    <i class="{!!$item->ppalpaciones>75?"fas fa-arrow-up" :"fas fa-arrow-down" !!}"></i>
+                    {{$item->ppalpaciones}} %
+                  </small>
+                </td>
+                <td style="text-align: center;">
+                  <small class="{!!$item->epprenez>75?"text-success":"text-danger"!!}  mr-1">
+                    <i class="{!!$item->epprenez>75?"fas fa-arrow-up" :"fas fa-arrow-down" !!}"></i>
+                    {{$item->epprenez}} %
+                  </small>
+                </td>
+                <td style="text-align: center;">
+                 <small class="{!!$item->epparto>75?"text-success":"text-danger"!!}  mr-1">
+                    <i class="{!!$item->epparto>75?"fas fa-arrow-up" :"fas fa-arrow-down" !!}"></i>
+                    {{$item->epparto}} %
+                  </small>
+                </td>
+                <td style="text-align: center;">
+                  <small class="{!!$item->efprom>75?"text-success":"text-danger"!!}  mr-1">
+                    <i class="{!!$item->efprom>75?"fas fa-arrow-up" :"fas fa-arrow-down" !!}"></i>
+                     {{$item->efprom}} %
+                  </small>
+                </td>
+              </tr>
+              </tbody>
+              @endforeach()
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 @endif  
@@ -419,7 +408,7 @@
  });
 </script>
 
-<!-- {!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}-->
+<!--{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}-->
 {!! Html::script('js/jquery-3.5.1.min.js')!!}
 {!! Html::script('js/dropdown.js')!!}
 

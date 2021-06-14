@@ -88,7 +88,7 @@
                     <label>SISGA</label>
             </div>
             <div>
-                <label class="title-report-name">Reporte: Animales Retirados</label>
+                <label class="title-report-name">Reporte: Animales Transferidos</label>
                 <label>{{ $fechadereporte }}</label>        
             </div>
             <div>
@@ -98,7 +98,6 @@
                      <tr class="title-header-table">
                       <th scope="col" style="width: 8%;text-align: center;">Serie</th>
                       <th scope="col" style="width: 8%;text-align: center;">F. Salida</th>
-                      <th scope="col" style="text-align: center;">Motivo</th>
                       <th scope="col" style="text-align: center;">Destino</th>
                       <th scope="col" style="text-align: center;">Observación</th>
                     </tr>
@@ -111,9 +110,6 @@
               </td>
               <td style="width: 8%;text-align: center;">
                 {{ $item->fecs }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->motivo}}
               </td>
               <td style="width: 18%;text-align: center;">
                {{ $item->destino}}

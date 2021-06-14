@@ -1836,9 +1836,10 @@ public function asignar_serielote(Request $request, $id_finca)
 
 
     //Retorna a la vista de transferencia.
-     public function vista_reportes_salida(Request $request, $id_finca)
+     public function vista_reportes_transf(Request $request, $id_finca)
      {
-         
+        
+
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
         
         $destino = \App\Models\sgdestinosalida::all();
@@ -1848,11 +1849,11 @@ public function asignar_serielote(Request $request, $id_finca)
 
         $motivo = \App\Models\sgmotivoentradasalida::where('tipo','=','Salida')->get();  
         
-        $salidarealizada = \App\Models\sghsal::where('id_finca','=',$id_finca)
+        $transfrealizada = \App\Models\sgtransferencia::where('id_finca','=',$id_finca)
         ->paginate(10); 
 
-        
-        return view('info.salidas_realizadas',compact('finca','salidarealizada','tipologia','destino','motivo'));
+        //transferencias_realizadas salidas_realizadas 
+        return view('info.transferencias_realizadas',compact('finca','transfrealizada','tipologia','destino','motivo'));
     }
 
     /*
@@ -3941,8 +3942,28 @@ for($i=0; $i < $cont; $i++){
     #Retorna a la vista de transferencia.
     public function vistareporte_personalizado(Request $request, $id_finca)
     {
+        $finca = \App\Models\sgfinca::findOrFail($id_finca); 
         
-        return view('info.vista_reportes_personal');
+        $usuarios = \App\Models\User::all();
+
+        $diagnostico = DB::table('sgdiagnosticpalpaciones')
+            ->where('id_finca','=',$id_finca)
+            ->get();
+ 
+        $patologia = DB::table('sgpatologias')
+            ->where('id_finca','=',$id_finca) 
+            ->get(); 
+
+        $causamuerte = DB::table('sgcausamuertes')
+            ->where('id_finca','=',$id_finca) 
+            ->get();     
+
+        #Traemos las tipologias para que se haga el filtrado
+        $tipologia = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->get();
+
+        return view('info.vista_reportes_personal', compact('finca','tipologia','usuarios','diagnostico','patologia','causamuerte'));
     }
 
 

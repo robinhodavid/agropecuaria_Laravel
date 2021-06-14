@@ -104,10 +104,10 @@
 
                      <tr class="title-header-table">
                       <th scope="col" style="width: 8%;text-align: center;">Serie</th>
+                      <th scope="col" style="width: 8%;text-align: center;">Tipología</th>
                       <th scope="col" style="width: 12%;text-align: center;">Fecha</th>
                       <th scope="col" style="width: 8%;text-align: center;">Peso</th>
                       <th scope="col" style="width: 8%;text-align: center;">Procede</th>
-
                       <th scope="col" style="width: 8%;text-align: center;">Fecha</th>
                       <th scope="col" style="width: 8%;text-align: center;">Peso</th>
                       <th scope="col" style="width: 18%;text-align: center;">Motivo</th>
@@ -121,6 +121,9 @@
             <tr class="text-body-table">
               <td style="width: 8%;text-align: center;">
                 {{ $item->serie }}
+              </td>
+                <td style="width: 8%;text-align: center;">
+                {{ $item->nomenclatura }}
               </td>
                <td style="width: 12%;text-align: center;">
                 {{ $item->feche}}
@@ -157,7 +160,7 @@
             </div> 
             <div class="row">
                 <div class="resumen-data">
-                    <label class="content-resumen-data">Cant. Animales Transferidos {{$cantregistro}} </label>
+                    <label class="content-resumen-data">Cant. Animales Retirados: {{$cantregistro}} </label>
                     <br>
                    
                 </div>

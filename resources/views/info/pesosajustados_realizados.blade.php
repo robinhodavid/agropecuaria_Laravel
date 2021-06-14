@@ -27,17 +27,14 @@
         <label class="title-filed">Desde</label>
         <div class="input-group mb-3">
           <input 
-                type="date"
-                id="desde" 
-                name="desde"
-                class="form-control" 
-                min="1980-01-01" 
-                max="2031-12-31"
-                aria-label="desde" aria-describedby="basic-addon2">
-              <span class="input-group-text" id="basic-addon2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
-              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
-              <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-              </svg></span>  
+              type="date"
+              id="desde" 
+              name="desde"
+              class="form-control" 
+              min="1980-01-01" 
+              max="2031-12-31"
+              aria-label="desde" aria-describedby="basic-addon2">
+              <span class="input-group-text" id="basic-addon2"><i class="far fa-calendar-alt"></i></span>  
         </div>    
       </div>
       <div class="col">
@@ -51,10 +48,7 @@
               min="1980-01-01" 
               max="2031-12-31"
               aria-label="hasta" aria-describedby="basic-addon2">
-              <span class="input-group-text" id="basic-addon2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar2-week" viewBox="0 0 16 16">
-              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
-              <path d="M2.5 4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V4zM11 7.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
-              </svg></span> 
+              <span class="input-group-text" id="basic-addon2"><i class="far fa-calendar-alt"></i></span> 
         </div>   
       </div>
       <div class="col">
@@ -62,94 +56,59 @@
             <button type="submit" class="btn alert-success float-left btn-ver">
             <i class="fas fa-print"></i></button>
         </div>
-      </div>
-    </form> <!-- Fin de Form para busqueda  -->      
+      </div>   
   </div>
   </div> <!--/.columm-space-->
      
 </div>
-  <div class="row mr-4 ml-4">
-    @if(session('msj'))
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <strong>¡Felicidades!</strong> {{ session('msj') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-    @endif
-      <div class="table">
-          <table class="table">
-            <thead class="title-table">
-              <tr>
-                <th scope="col" style="text-align: center;">Serie</th>
-                <th scope="col" style="text-align: center;">Sexo</th>
-                <th scope="col" style="text-align: center;">(A-M)</th>
-                <th scope="col" style="text-align: center;">Tipo</th>
-                <th scope="col" style="text-align: center;">C M</th>
-                <th scope="col" style="text-align: center;">F. Destete</th>
-                <th scope="col" style="text-align: center;">D. al Destete</th>
-                <th scope="col" style="text-align: center;">P. Destete</th>
-                <th scope="col" style="text-align: center;">Paj205</th>
-                <th scope="col" style="text-align: center;">i (%)</th>
-                <th scope="col" style="text-align: center;">Fecha de Ajuste</th>
-              </tr>
-           </thead>
-            <tbody>
-            @foreach($pesAjusReal as $item)
-              <tr class="text-body-table">
-                <td style="text-align: center;">
-                  {{$item->serie}}
-                </td>
-                 <td style="text-align: center;">
-                  {!! $item->sexo?"M":"H" !!}
-                </td>
-                 <td style="text-align: center;">
-                  {{ $item->edad }}
-                </td>
-                <td style="text-align: center;">
-                  {{$item->tipo}}
-                </td>
-                <td style="text-align: center;">
-                   {{$item->codmadre}}
-                </td>
-                <td style="text-align: center;">
-                  {{$item->fecdes}}
-                </td>
-                 <td style="text-align: center;">
-                  {{$item->difdia}}
-                </td>
-                 <td style="text-align: center;">
-                    {{$item->pesdes}}
-                </td>
-                <td style="text-align: center;">
-                    {{$item->pa1}}
-                </td>
-                <td style="text-align: center;">
-                    {{$item->c1}}
-                </td>
-                <td style="text-align: center;">
-                    {{$item->fecha}}
-                </td>
-              </tr>
-           @endforeach()
-            </tbody>
-          </table>
-          <div class="footer-table">
-            {{ $pesAjusReal->links() }}
-          </div>             
-      </div>
-  </div>
+
 
   <div class="card-footer clearfix my-4">
     <div class="row">
       <div class="col">
+        <input 
+        type="radio" 
+        aria-label="Radio button for following text input"
+        name="orderby"
+        id="campo1" value="sgajusts.serie" checked>
+        <label class="checkbox-inline title-label"  for="campo1">Serie</label>
+          <!--
+            <input 
+            type="radio" 
+            aria-label="Radio button for following text input"
+            name="orderby"
+            id="campo2" value="sganims.id_tipologia">
+            <label class="checkbox-inline title-label"  for="campo2">Tipología</label>
+
+            <input 
+            type="radio" 
+            aria-label="Radio button for following text input"
+            name="orderby"
+            id="campo3" value="sganims.codmadre">
+            <label class="checkbox-inline title-label"  for="campo3">Código Madre</label>
+          -->
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo4" value="sgajusts.fecha">
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Registro</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo5" value="sgajusts.sexo">
+          <label class="checkbox-inline title-label"  for="campo5">sexo</label>
+      </div>
+  </form> <!-- Fin de Form para busqueda  -->       
+      <div class="col">
           <a href="{{ route('admin',$finca->id_finca) }}" class="btn btn-warning aling-boton"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
           <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
-        </svg> volver</a>
+        </svg> </a>
       </div>
     </div>
   </div>
-</form>
 </div>
 
 @stop

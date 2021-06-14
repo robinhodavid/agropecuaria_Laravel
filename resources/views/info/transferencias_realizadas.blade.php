@@ -43,16 +43,6 @@
           </select> 
       </div>
       <div class="col">
-        <label class="col-form-label title-filed">Motivo de Transferencia</label>
-          <select class="form-select width-field" name="motivo" aria-label="select example">
-            <option value="" selected>Motivo</option>
-              @foreach($motivo as $item)
-                <option value="{{$item->id}}"> {{$item->nombremotivo}}
-                </option>
-              @endforeach()
-          </select>    
-      </div>
-      <div class="col">
         <label class="title-filed">Desde</label>
         <div class="input-group mb-3">
           <input 
@@ -91,79 +81,43 @@
             <button type="submit" class="btn alert-success float-left btn-ver">
             <i class="fas fa-print"></i></button>
         </div>
-
       </div>
   </div>
-  </div> <!--/.columm-space-->
-     
+  </div> <!--/.columm-space-->     
 </div>
-</form>
-<div class="row mr-4 ml-4">
 
-    <div class="table">
-        <table class="table">
-          <thead class="title-table">
-            <tr>
-              <th scope="col" style="width: 8%;text-align: center;">Serie</th>
-              <th scope="col" style="width: 12%;text-align: center;">Tipología</th>
-              <th scope="col" style="width: 8%;text-align: center;">F. Sal</th>
-              <th scope="col" style="width: 8%;text-align: center;">C. Mad</th>
-              <th scope="col" style="width: 8%;text-align: center;">Procede</th>
-              <th scope="col" style="width: 18%;text-align: center;">Obser</th>
-              <th scope="col" style="width: 8%;text-align: center;">P. act</th>
-              <th scope="col" style="width: 8%;text-align: center;">F. Últ. Peso</th>
-              <th scope="col">Lote</th>
-              <th scope="col">Sub Lote</th>
-              <th scope="col">Destino</th>
-            </tr>
-         </thead>
-          <tbody>
-         @foreach($transfrealizada as $item)
-            <tr class="text-body-table">
-              <td style="width: 8%;text-align: center;">
-                {{ $item->serie }}
-              </td>
-               <td style="width: 12%;text-align: center;">
-                {{ $item->tipo }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->fecs }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->codm}}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->procede}}
-              </td>
-              <td style="width: 18%;text-align: center;">
-               {{ $item->obser}}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->pesoactual }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->fulpes }}  
-              </td>
-              <td style="width: 8%;text-align: center;">
-                {{ $item->nombrelote }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-               {{ $item->sub_lote }}
-              </td>
-              <td style="width: 8%;text-align: center;">
-               {{ $item->destino }}
-              </td>
+<div class="card-footer clearfix my-4">
+    <div class="row">
+      <div class="col">
+        <input 
+        type="radio" 
+        aria-label="Radio button for following text input"
+        name="orderby"
+        id="campo1" value="serie" checked>
+        <label class="checkbox-inline title-label"  for="campo1">Serie</label>
 
-            </tr>
-          </tbody>
-          @endforeach()
-        </table>
-        <div class="footer-table">
-          {{ $transfrealizada->links() }}
-        </div>             
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo4" value="fecs">
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Transferencia</label>
+
+          <input 
+          type="radio" 
+          aria-label="Radio button for following text input"
+          name="orderby"
+          id="campo5" value="id_tipologia">
+          <label class="checkbox-inline title-label"  for="campo5">Tipología</label>
+      </div>
+    </form> <!-- Fin de Form para busqueda  -->  
+      <div class="col">
+          <a href="{{ route('admin',$finca->id_finca) }}" class="btn btn-warning aling-boton"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-square" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5z"/>
+        </svg> </a>
+      </div>
     </div>
 </div>
-
 </div>
 
 @stop
