@@ -38,4 +38,37 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function roles(){
+
+        return $this->belongsToMany('App\Models\Role')->withTimesTamps();
+    }
+
+    public function sgfincas(){
+
+        return $this->belongsToMany('App\Models\sgfinca','sgfinca_user','user_id','id_finca')->withTimesTamps();
+    }
+
+    #Aqui verificamos que si el usuario tiene un permisos 
+    public function havePermission($permission){
+
+        //dd($this->roles); 
+        foreach ($this->roles as $role) {
+            if ($role['full-access']=='yes') {
+                return true;
+            } 
+            //dd($permission);
+            foreach ($role->permissions as $key) { 
+               if ($key->slug == $permission) {
+                  return true;   
+                } 
+            }    
+        }
+        return false; 
+    }
+
+    public function adminlte_image(){
+        return 'https://picsum.photos/300/300';
+    }
+
 }

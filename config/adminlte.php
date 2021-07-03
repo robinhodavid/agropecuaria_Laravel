@@ -9,8 +9,8 @@ return [
     |
     | Here you can change the default title of your admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#61-title
+    | For detailed instructions you can look the title section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
     */
 
@@ -25,8 +25,8 @@ return [
     |
     | Here you can activate the favicon.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#62-favicon
+    | For detailed instructions you can look the favicon section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
     */
 
@@ -40,8 +40,8 @@ return [
     |
     | Here you can change the logo of your admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#63-logo
+    | For detailed instructions you can look the logo section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
     */
 
@@ -59,8 +59,8 @@ return [
     |
     | Here you can activate and change the user menu.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#64-user-menu
+    | For detailed instructions you can look the user menu section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
     */
 
@@ -78,16 +78,17 @@ return [
     |
     | Here we change the layout of your admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#71-layout
+    | For detailed instructions you can look the layout section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
     |
     */
 
     'layout_topnav' => null,
     'layout_boxed' => null,
     'layout_fixed_sidebar' => null,
-    'layout_fixed_navbar' => null,
+    'layout_fixed_navbar' => true,
     'layout_fixed_footer' => null,
+    'layout_dark_mode' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -96,8 +97,8 @@ return [
     |
     | Here you can change the look and behavior of the authentication views.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#721-authentication-views-classes
+    | For detailed instructions you can look the auth classes section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
     |
     */
 
@@ -115,8 +116,8 @@ return [
     |
     | Here you can change the look and behavior of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#722-admin-panel-classes
+    | For detailed instructions you can look the admin panel classes here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
     |
     */
 
@@ -139,12 +140,12 @@ return [
     |
     | Here we can modify the sidebar of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#73-sidebar
+    | For detailed instructions you can look the sidebar section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
     |
     */
 
-    'sidebar_mini' => true,
+    'sidebar_mini' => 'lg',
     'sidebar_collapse' => false,
     'sidebar_collapse_auto_size' => false,
     'sidebar_collapse_remember' => false,
@@ -161,16 +162,16 @@ return [
     |
     | Here we can modify the right sidebar aka control sidebar of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#74-control-sidebar-right-sidebar
+    | For detailed instructions you can look the right sidebar section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
     |
     */
 
-    'right_sidebar' => true,
+    'right_sidebar' => false,
     'right_sidebar_icon' => 'fas fa-cogs',
     'right_sidebar_theme' => 'dark',
     'right_sidebar_slide' => true,
-    'right_sidebar_push' => false,
+    'right_sidebar_push' => true,
     'right_sidebar_scrollbar_theme' => 'os-theme-light',
     'right_sidebar_scrollbar_auto_hide' => 'l',
 
@@ -181,25 +182,18 @@ return [
     |
     | Here we can modify the url settings of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#65-urls
+    | For detailed instructions you can look the urls section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
     |
     */
 
     'use_route_url' => false,
-
     'dashboard_url' => 'home',
-
     'logout_url' => 'logout',
-
     'login_url' => 'login',
-
     'register_url' => 'register',
-
     'password_reset_url' => 'password/reset',
-
     'password_email_url' => 'password/email',
-
     'profile_url' => false,
 
     /*
@@ -209,8 +203,8 @@ return [
     |
     | Here we can enable the Laravel Mix option for the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#92-laravel-mix
+    | For detailed instructions you can look the laravel mix section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Other-Configuration
     |
     */
 
@@ -225,78 +219,356 @@ return [
     |
     | Here we can modify the sidebar/top navigation of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#8-menu-configuration
+    | For detailed instructions you can look here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
     |
     */
 
     'menu' => [
-       [
-            'text' => 'Buscar',
-            'search' => false,
-            'topnav' => false,
+        // Navbar items:
+        [
+            'type'         => 'navbar-search',
+            'text'         => 'search',
+            'topnav_right' => false,
         ],
+        [
+            'type'         => 'fullscreen-widget',
+            'topnav_right' => false,
+        ],
+
+        // Sidebar items:
+        /*
+        [
+            'type' => 'sidebar-menu-search',
+            'text' => 'search',
+        ],
+        */    
         [
             'text' => 'blog',
             'url'  => 'admin/blog',
             'can'  => 'manage-blog',
         ],
-    /*Aquí se colocarán las fincas a conectar
         [
-            'text'        => 'pages',
-            'url'         => 'admin/pages',
-            'icon'        => 'far fa-fw fa-file',
+            'text'        => 'Fincas',
+            'route'         => 'home',
+            'icon'        => 'fas fa-fw fa-home',
             'label'       => 4,
             'label_color' => 'success',
-        ], 
-    */    
-        ['header' => 'Configuración de Perfil'],
-        [
-            'text' => 'Usuario',
-            'url'  => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-            //'can'  => 'manage-blog',
         ],
+        ['header' => 'account_settings'],
         [
             'text' => 'Roles',
-            'route'  => 'roles',
+            'url'  => '/home/sisga-admin/roles',
             'icon' => 'fas fa-fw fa-lock',
-            //'can'  => 'manage-blog',
         ],
         [
-            'text' => 'Permisos',
-            'route'  => 'home',
-            'icon' => 'fas fa-fw fa-unlock',
-            //'can'  => 'manage-blog',
+            'text' => 'Usuarios',
+            'url'  => '/home/sisga-admin/usuario',
+            'icon' => 'fas fa-fw fa-user',
+
         ],
-        
+        ['header' => 'main_navigation'],
         [
-            'text' => 'Variables de Control',
-            'url'  => 'admin/settings',
-            'icon' => 'fas fa-fw fa-lock',
-              //'can'  => 'manage-blog',
-        ],
-        
-        [
-            'text'    => 'Menu 1',
-            'icon'    => 'fas fa-fw fa fa-bullseye',
-            'submenu' => [               
+            'text'    => 'Variables de Control',
+            'icon'    => 'fas fa-fw fa-cog', 
+            'submenu' => [
+                [
+                    'text' => 'Especie',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Raza',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Tipolgía',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Condiciones corporales',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Colores campo',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Diagnóstico Palpaciones',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Parámetros G/R',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Patología',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Tipo de Montas',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Causa de Muerte',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Destino de Salida',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Procedencia',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Sala de Ordeño',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                    'can' => ['salaordeno','salaordeno.crear'],
+                ],
+                [
+                    'text' => 'Tanque de Enfriamiento',
+                    'icon_color' => 'info',
+                    'url'  => '#',
+                    'can' => ['tanque','tanque.crear'],
+                ],
+
+
+
+                [
+                    'text'    => 'level_one',
+                    'url'     => '#',
+                    'submenu' => [
+                        [
+                            'text' => 'level_two',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text'    => 'level_two',
+                            'url'     => '#',
+                            'submenu' => [
+                                [
+                                    'text' => 'level_three',
+                                    'url'  => '#',
+                                ],
+                                [
+                                    'text' => 'level_three',
+                                    'url'  => '#',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'text' => 'level_one',
+                    'url'  => '#',
+                ],
             ],
         ],
 
         [
-            'text'    => 'Menu 2',
-            'icon'    => 'fas fa-fw fa fa-id-card',
+            'text'    => 'Ganadería',
+            'icon'    => 'fas fa-fw fa-paw', 
             'submenu' => [
+                [
+                    'text' => 'Crear Ficha de Ganado',
+                    'icon_color' => 'warning',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Lote',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Transferencia de Animal',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Cambio de Tipología',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Salida de Animal',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Crear Ajuste de Pesos',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+                [
+                    'text' => 'Crear Ficha de Pajuela',
+                    'icon' => 'fas fa-fw fa-arrow-right',
+                    'icon_color' => 'warning',
+                    'url'  => '#',
+                ],
+             
+
+                [
+                    'text'    => 'level_one',
+                    'url'     => '#',
+                    'submenu' => [
+                        [
+                            'text' => 'level_two',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text'    => 'level_two',
+                            'url'     => '#',
+                            'submenu' => [
+                                [
+                                    'text' => 'level_three',
+                                    'url'  => '#',
+                                ],
+                                [
+                                    'text' => 'level_three',
+                                    'url'  => '#',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'text' => 'level_one',
+                    'url'  => '#',
+                ],
             ],
         ],
-        ['header' => 'Recursos - Utilidades'],
+
+        [
+            'text'    => 'Reroducción',
+            'icon'    => 'fas fa-fw fa-clone', 
+            'submenu' => [
+                [
+                    'text' => 'Temporada Reprod.',
+                    'icon_color' => 'orange',
+                    'icon' => 'fas fa-fw fa-calendar',
+                    'url'  => '#',
+                ],  
+            ],
+        ],
+
+        [
+            'text'    => 'Inventario',
+            'icon'    => 'fas fa-fw fa-box', 
+            'submenu' => [
+                [
+                    'text' => 'Trabajo de Campo.',
+                    'icon_color' => 'lime',
+                    'icon' => 'fas fa-fw fa-arrow-down',
+                    'url'  => '#',
+                ],  
+            ],
+        ],
+
+         [
+            'text'    => 'Reportes',
+            //'url'     => '#',
+            'icon'    => 'fas fa-fw fa-print', 
+            'submenu' => [
+                [
+                    'text'    => 'Ganadería',
+                    'icon_color'=>'olive',
+                    //'url'     => '#',
+                    'submenu' => [
+                        [
+                            'text' => 'Catálogo de Ganado',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Catálogo de Pajuela',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Salida de Animal (es)',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Transferencias',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Ajuste de Pesos',
+                            'url'  => '#',
+                        ],
+                    ],
+                ],
+                [
+                    'text'    => 'Reproducción',
+                    'icon_color'=>'purple',
+                    //'url'     => '#',
+                    'submenu' => [
+                        [
+                            'text' => 'Manejo de Vientres',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Registros de Celos',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Servicios Registrados',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Partos Registrados',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Abortos Registrados',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Partos No Concluidos',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Series Próximas Palpar',
+                            'url'  => '#',
+                        ],
+                        [
+                            'text' => 'Series Próximas a Parir',
+                            'url'  => '#',
+                        ],
+                    ],
+                ],
+                
+            ],
+        ],
+
+
+        ['header' => 'labels'],
         [
             'text'       => 'Block de Notas',
             'icon_color' => 'white',
-            'icon'    => 'fas fa-fw fa fa-clipboard', //<i class="far fa-clipboard"></i>
-            'route'        => 'blocknotas',
+            'icon'       => 'fas fa-fw fa-clipboard',
+            'route'      => 'blocknotas',
         ],
+
+        
+        
     ],
 
     /*
@@ -306,8 +578,8 @@ return [
     |
     | Here we can modify the menu filters of the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#83-custom-menu-filters
+    | For detailed instructions you can look the menu filters section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
     |
     */
 
@@ -328,8 +600,8 @@ return [
     |
     | Here we can modify the plugins used inside the admin panel.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#91-plugins
+    | For detailed instructions you can look the plugins section here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Plugins-Configuration
     |
     */
 
@@ -413,8 +685,8 @@ return [
     |
     | Here we can enable the Livewire support.
     |
-    | For more detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/#93-livewire
+    | For detailed instructions you can look the livewire here:
+    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Other-Configuration
     */
 
     'livewire' => false,

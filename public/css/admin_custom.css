@@ -394,3 +394,10 @@ Esilos para el btón action de la tabla de lote de monta.
 {
 	font-size: 14px; 
 }
+
+.navbar-nav  .user-menu .dropdown-menu {
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	padding: 0;
+	width: 214px !important;
+}

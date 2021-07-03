@@ -411,7 +411,7 @@
    <!-- <script src="http://momentjs.com/downloads/moment.min.js"></script>
 	-->
 
-	{!! Html::script('js/jquery-3.5.1.min.js')!!}
+		{!! Html::script('js/jquery-3.5.1.min.js')!!}
     {!! Html::script('js/dropdown.js')!!} 
     
     {!! Html::script('js/sweetalert2.js')!!}	

@@ -24,6 +24,11 @@ class sganim extends Model
   //    	'fulpes',
       	'fecdes',
       	'fecua',
-      ]; 
+      ];
+
+    public function sgmv1s()
+    {
+      return $this->hasMany('App\Models\sgmv1','id_serie','id');
+    } 
   
 }

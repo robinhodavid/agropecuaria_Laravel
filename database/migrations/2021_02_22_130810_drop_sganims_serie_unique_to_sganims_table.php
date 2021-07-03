@@ -26,7 +26,7 @@ class DropSganimsSerieUniqueToSganimsTable extends Migration
     public function down()
     {
         Schema::table('sganims', function (Blueprint $table) {
-           $table->string('serie',50)->unique();
+          // $table->string('serie',50)->unique();
         });
     }
 }

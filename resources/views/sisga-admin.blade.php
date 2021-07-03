@@ -79,7 +79,18 @@
           <li><a class="dropdown-item" href="{{ route('reportes_movimientolote', $finca->id_finca) }}"> Movimiento de Lote</a></li>
           <li><a class="dropdown-item" href="{{ route('reportes_pesoajustado', $finca->id_finca)}}"> Ajuste de Peso</a></li>
           <hr>
-          <li><a class="dropdown-item" href="{{ route('personreport', $finca->id_finca)}}" id="navbarDropdown" role="button">Personalizados</a></li>         
+          <li><a class="dropdown-item" href="{{ route('personreport', $finca->id_finca)}}" id="navbarDropdown" role="button">Personalizados</a></li> 
+          <li><a class="dropdown-item" href="{{ route('vistamanejovientre', $finca->id_finca)}}" id="navbarDropdown" role="button">Manejo de Vientres</a></li>
+
+          <li><a class="dropdown-item" href="{{ route('vista_reportecelo', $finca->id_finca)}}" id="navbarDropdown" role="button">Registro de Celos</a></li>  
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('vista_reporteservicios', $finca->id_finca)}}" id="navbarDropdown" role="button">Servicios Registrados</a></li>
+          <li><a class="dropdown-item" href="{{ route('vista_reportepartos', $finca->id_finca)}}" id="navbarDropdown" role="button">Partos Registrados</a></li>
+          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Abortos Registrados</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Partos No Concluidos</a></li>
+          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Series Próximas a Palpar</a></li>
+          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Series Próximas a Parir</a></li>
         </ul>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -146,7 +157,7 @@
   <div class="col-12 col-sm-6 col-md-3">
     <div class="info-box mb-3">
       <span class="info-box-icon bg-success elevation-1">
-        <i class="fas fa-shopping-cart"></i>
+       <i class="far fa-object-ungroup"></i>
       </span>
 
       <div class="info-box-content">
@@ -408,7 +419,7 @@
  });
 </script>
 
-<!--{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}-->
+{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}
 {!! Html::script('js/jquery-3.5.1.min.js')!!}
 {!! Html::script('js/dropdown.js')!!}
 

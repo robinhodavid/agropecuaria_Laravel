@@ -14,7 +14,8 @@
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
-        "jeroennoten/laravel-adminlte": "^3.5",
+        "halivert/laravel-js-routes": "^4.2",
+        "jeroennoten/laravel-adminlte": "^3.6",
         "laravel/framework": "^8.0",
         "laravel/installer": "^4.1",
         "laravel/tinker": "^2.0",
@@ -24,6 +25,7 @@
         "nesbot/carbon": "^2.43",
         "phpoffice/phpspreadsheet": "^1.9",
         "spatie/laravel-permission": "^4.1",
+        "tightenco/ziggy": "^1.2",
         "uxweb/sweet-alert": "^2.0"
     },
     "require-dev": {

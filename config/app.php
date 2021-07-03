@@ -164,6 +164,7 @@ return [
         Barryvdh\DomPDF\ServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         UxWeb\SweetAlert\SweetAlertServiceProvider::class,
+        
   
 
         /*

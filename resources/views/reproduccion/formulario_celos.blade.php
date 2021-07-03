@@ -216,7 +216,6 @@
 										</svg></span></div>
 	              			</div>
 		              	</div>
-		              	<hr>
 	              </div>
 	             
 	              <!-- /.card-body -->
@@ -344,6 +343,16 @@
         text:'Está siendo usado por otro recurso',
         icon: 'error',
         title:'¡No Eliminado!'
+      })
+      </script>
+   @endif
+
+   @if (session('celos')=='prenada')
+      <script>
+        Swal.fire({
+        text:'No puede registrarse un Celo para una Serie Preñada',
+        icon: 'info',
+        title:'¡Registro de Celos!'
       })
       </script>
    @endif

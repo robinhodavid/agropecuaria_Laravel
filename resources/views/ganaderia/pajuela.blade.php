@@ -255,6 +255,7 @@
           	<table class="table table-tipologia">
           	<thead class="bck-ground">
 	            <tr>
+                <th scope="col">Id</th>
 	              <th scope="col">Serie</th>
 	              <th scope="col">Raza</th>
 	              <th scope="col">F. de Reg</th>
@@ -272,9 +273,10 @@
             @foreach($pajuela as $item)
               <tr>
                 <td>
-                  <a href=" " class="">
+                  {{ $item->id }}
+                </td>
+                <td>
                   {{ $item->serie }}
-                  </a>
                 </td>
                 <td>
               {{ $item->nombreraza }}         

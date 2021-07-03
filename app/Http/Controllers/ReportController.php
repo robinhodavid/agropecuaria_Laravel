@@ -15,11 +15,15 @@ use App\Models\sganim;
 use Maatwebsite\Excel\Facades\Excel;
 Use App\Http\Controllers\Controllers;
 use Illuminate\Contracs\View\View;
+use Illuminate\Support\Arr;
 //use Maatwebsite\Excel\Concerns\FromCollection;
 use App\Exports\SeriesActivas;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\Exportable;
-
+use Illuminate\Support\Facades\Gate;
+use App\Models\sgfinca;
+use App\Models\sgmv1;
+use App\Models\sgcelo;
 
 class ReportController extends Controller
 {
@@ -31,34 +35,33 @@ class ReportController extends Controller
    public function report_pesoespecifico (Request $request,  $id_finca, $ser)
    {
          	
-         	//dd($id_finca, $ser);
-            $fechadereporte = Carbon::now();
+     	//dd($id_finca, $ser);
+        $fechadereporte = Carbon::now();
 
-           // dd($fechadereporte); 
+        // dd($fechadereporte); 
         	
-            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-            //A través del código serie se obtiene el id y lo pasamos al modelo
-            $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
-            //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
-            foreach ($codserie as $serieid) {
-                $id= (int) $serieid->id;
-            }
+        //A través del código serie se obtiene el id y lo pasamos al modelo
+        $codserie = DB::table('sganims')->select('id')->where('serie', '=', $ser)->get();
+        //recorremos el modelo y obtenemos el id este id lo pasamos al modelo de $serie.
+        foreach ($codserie as $serieid) {
+            $id= (int) $serieid->id;
+        }
 
-            $serie = \App\Models\sganim::findOrFail($id);
+        $serie = \App\Models\sganim::findOrFail($id);
 
-            $pesoreport = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
-                ->where('id_finca', '=', $finca->id_finca)
-                ->get();
+        $pesoreport = \App\Models\sgpeso::where('id_serie', '=', $serie->id)
+            ->where('id_finca', '=', $finca->id_finca)
+            ->get();
 
-            $cantregistro=$pesoreport->count(); 
-            $prompeso = collect($pesoreport)->avg('peso'); 
+        $cantregistro=$pesoreport->count(); 
+        $prompeso = collect($pesoreport)->avg('peso'); 
 
-            $pdf = PDF::loadView('reports.pesoreport',compact('finca','serie','pesoreport','fechadereporte','cantregistro','prompeso'));  
+        $pdf = PDF::loadView('reports.pesoreport',compact('finca','serie','pesoreport','fechadereporte','cantregistro','prompeso'));  
 
-           return $pdf->stream('Peso_Específico.pdf');
+        return $pdf->stream('Peso_Específico.pdf');
                 
-            //return view('reports.pesoreport');
    }
 
    public function report_catalogoganado (Request $request,  $id_finca)
@@ -750,5 +753,230 @@ class ReportController extends Controller
 
 
 
+   public function report_manejo_vientre (Request $request, $id_finca)
+   {
 
+        #return $request; 
+      
+        $finca = sgfinca::findOrFail($id_finca);   
+
+        #Calculamos la
+        $y = 'TIMESTAMPDIFF(YEAR, fnac, CURDATE())';
+        $dt = $y.'*12';
+        $months = 'TIMESTAMPDIFF(MONTH, fnac, CURDATE()) -'.$dt;
+
+        $mpre = 'TIMESTAMPDIFF(MONTH, fecupre, CURDATE())';
+
+        $ida = 'DATEDIFF(CURDATE(),fecup)';
+
+        $fecaproxparto = 'DATE_ADD(fecupre, INTERVAL 9 MONTH)';
+        //return $months; 
+        //return $mpre." ".'='.$request->tiempogesta; 
+
+        $sqlquery = sganim::select(DB::raw($y." ".'as anho'), 
+                         DB::raw($months." ".'as mes'), 
+                         DB::raw($mpre." ".'as mesesprenada'),
+                         DB::raw($ida." ".'as ida'),
+                         DB::raw($fecaproxparto." ".'as fecaproxparto'),
+                         'id','serie','fnac','edad', 'tipo','id_tipologia','nparto', 'npartonc','nabortoreport','nservi','nombrelote', 'observa','fecupre','fecs','fecup', 'fecupartonc')
+                ->withCount(['sgmv1s', 'sgmv1s as sgmv1s_count' => function ($query) {
+                        $query->where('serie_hijo', '<>', null);
+                    }])
+                ->where('id_finca','=',$id_finca)
+                ->where('pesoactual','>=',300)
+                ->where('sexo','=',0) # Todas Hemb
+                ->where('status','=',1) #Nos dará todas las series activas
+                ->orderBy($request->orderby,'ASC');
+                ($request->serie==null) ? "":$sqlquery->where('serie','=',$request->serie);
+                ($request->tipo==null) ? "":$sqlquery->where('id_tipologia','=',$request->tipo);
+                ($request->lote==null) ? "":$sqlquery->where('nombrelote','=',$request->lote);
+                ($request->tgdesde==null) ? "":$sqlquery->whereRaw($mpre." ".'>='.$request->tgdesde);
+                ($request->tghasta==null) ? "":$sqlquery->whereRaw($mpre." ".'<='.$request->tghasta);
+            $mvmadres = $sqlquery->get();
+
+        $fechadereporte = Carbon::now();
+
+        $rangofechadesde = $request->desde;
+        $rangofechahasta = $request->hasta;
+     
+        $cantregistro = $mvmadres->count();
+
+
+        return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
+
+    public function report_celos(Request $request, $id_finca)
+    {
+
+        $finca = sgfinca::findOrFail($id_finca);
+
+        $query = DB::table('sgcelos')
+                ->where('id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+                         
+                ($request->serie==null) ? "":$query->where('serie','=',$request->serie);
+
+                ($request->fcdesde==null) ? "":$query->whereDate('fechr','>=',$request->fcdesde);
+                ($request->fchasta==null) ? "":$query->whereDate('fechr','<=',$request->fchasta);
+                     
+                ($request->fpcdesde==null) ? "":$query->whereDate('fecestprocel','>=',$request->fpcdesde);
+                ($request->fpchasta==null) ? "":$query->whereDate('fecestprocel','<=',$request->fpchasta);
+                        
+        $celos = $query->get(); 
+            
+        //return $celos; 
+            
+        $fechadereporte = Carbon::now(); 
+
+        $rangofechadesde = $request->fcdesde;
+        $rangofechahasta = $request->fchasta;   
+    
+        $cantregistro = $celos->count(); 
+    
+
+        if ($request->formato == "html") {
+          
+          return view('reports.celos',compact('finca','celos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        }
+
+        if ($request->formato == "Pdf") {
+          $pdf = PDF::loadView('reports.celos',compact('finca','celos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+
+            return $pdf->stream('Celos_Registrados.pdf');
+        }
+
+        if ($request->formato == "xls") {
+           // return Excel::download(new sganim, 'Celos_Registrados.xlsx');
+        }   
+    }
+
+   public function report_servicios(Request $request, $id_finca)
+   {
+
+      $finca = sgfinca::findOrFail($id_finca);
+
+        $query = DB::table('sgservs')
+                ->where('id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+                         
+                ($request->serie==null) ? "":$query->where('serie','=',$request->serie);
+
+                ($request->fsdesde==null) ? "":$query->whereDate('fecha','>=',$request->fsdesde);
+                ($request->fshasta==null) ? "":$query->whereDate('fecha','<=',$request->fshasta);
+        $servicios = $query->get(); 
+            
+        //return $celos; 
+            
+        $fechadereporte = Carbon::now(); 
+
+        $rangofechadesde = $request->fcdesde;
+        $rangofechahasta = $request->fchasta;   
+    
+        $cantregistro = $servicios->count(); 
+    
+
+        if ($request->formato == "html") {
+          
+          return view('reports.servicios',compact('finca','servicios','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        }
+
+        if ($request->formato == "Pdf") {
+          $pdf = PDF::loadView('reports.servicios',compact('finca','servicios','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+
+            return $pdf->stream('Servicios_Registrados.pdf');
+        }
+
+        if ($request->formato == "xls") {
+            return Excel::download(new sganim, 'Servicios_Registrados.xlsx');
+        }
+    
+   }
+
+   public function report_partos(Request $request, $id_finca)
+   {
+
+        $finca = sgfinca::findOrFail($id_finca);
+
+        $query = DB::table('sgpartos')
+                ->select('sgpartos.id_serie', 'sgpartos.serie', 'sgpartos.tipo', 
+                         'sgpartos.estado','sgpartos.edad','sgpartos.tipoap','sgpartos.fecup',
+                         'sgpartos.fecpar', 'sgpartos.sexo','sgpartos.sexo1', 'sgpartos.becer',
+                         'sgpartos.color_pelaje', 'sgpartos.becer1', 'sgpartos.color_pelaje1',
+                         'sgpartos.obspar', 'sgpartos.obspar1', 'sgpartos.edobece', 'sgpartos.edobece1',
+                         'sgpartos.razabe', 'sgpartos.pesoib', 'sgpartos.pesoib1', 'sgpartos.ientpar',
+                         'sgpartos.codap', 'sganims.nparto', 'sganims.nservi', 'sgrazas.nombreraza',
+                         'sgprenhezs.toropaj', 'sgprenhezs.torotemp')
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+                         
+                ($request->serie==null) ? "":$query->where('sgpartos.serie','=',$request->serie);
+
+                ($request->fpdesde==null) ? "":$query->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$query->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+        $partos = $query->get(); 
+                  
+            foreach ($partos as $key) {
+                $totalCria1 [] = $key->becer;
+                $totalCria2 [] = $key->becer1;
+            }
+
+        //return $partos;
+        $arregloFinal = Arr::except($totalCria2, null);    
+        return count($arregloFinal); 
+            
+        $fechadereporte = Carbon::now(); 
+
+        $rangofechadesde = $request->fcdesde;
+        $rangofechahasta = $request->fchasta;   
+    
+        #Aqui calculamos los datos promedios para el cuadro resumen.
+
+
+        $cantregistro = $partos->count(); 
+    
+
+        if ($request->formato == "html") {
+          
+          return view('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        }
+
+        if ($request->formato == "Pdf") {
+          $pdf = PDF::loadView('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+
+            return $pdf->stream('Servicios_Registrados.pdf');
+        }
+
+        if ($request->formato == "xls") {
+            return Excel::download(new sganim, 'Servicios_Registrados.xlsx');
+        }
+
+
+   }
+
+   public function report_abortos()
+   {
+
+    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
+
+   public function report_partonc()
+   {
+
+    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
+
+   public function report_proximaspalpar()
+   {
+
+    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
+
+   public function report_proximasparir()
+   {
+
+    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+   }
 }

@@ -3,7 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RutasController;
 use App\Http\Controllers\ReportController;
-
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
+use App\Models\Role;
+use App\Models\Permission;
+use Illuminate\Support\Facades\Gate;
 /*
 Route::get('/', function () {
     return view('welcome');
@@ -187,7 +192,9 @@ Route::get('/home/sisga-admin/finca/{id_finca}/parametros', [App\Http\Controller
 
 Route::post('/home/sisga-admin/finca/{id_finca}/parametros-ganaderia', [App\Http\Controllers\HomeController::class, 'crear_parametros_ganaderia'])->name('parametros_ganaderia.crear');
 
+
 Route::post('/home/sisga-admin/finca/{id_finca}/parametros-reproduccion', [App\Http\Controllers\HomeController::class, 'crear_parametros_reproduccion'])->name('parametros_reproduccion.crear');
+
 
 Route::post('/home/sisga-admin/finca/{id_finca}/parametros-produccion-lechera', [App\Http\Controllers\HomeController::class, 'crear_parametros_produccion_leche'])->name('parametros_produccion_leche.crear');
 
@@ -536,6 +543,7 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reprodu
 */
 	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/detalle-de-monta/{id_ciclo}', [App\Http\Controllers\ReprodController::class, 'detalle_ciclo'])->name('ciclo.detalle'); 
 
+
 	// Creamos la ruta que permitira asignar las series a los lotes de montas. 
 
 	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/lote-de-monta', [App\Http\Controllers\ReprodController::class, 'lotemonta'])->name('lotemonta'); 
@@ -548,8 +556,9 @@ Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reprodu
 
 	Route::delete('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/eliminar-lote-de-monta/{id_lotemonta}', [App\Http\Controllers\ReprodController::class, 'eliminar_lotemonta'])->name('lotemonta.eliminar');
 
-	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/series-en-lote-de-monta', [App\Http\Controllers\ReprodController::class, 'serieslotemonta'])->name('serieslotemonta'); 
 
+
+	Route::get('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/series-en-lote-de-monta', [App\Http\Controllers\ReprodController::class, 'serieslotemonta'])->name('serieslotemonta'); 
 
 	Route::post('/home/sisga-admin/finca/{id_finca}/reproduccion/temporada-reproductiva-detalle/{id}/ciclo/{id_ciclo}/asignando-series-en-lote-de-monta', [App\Http\Controllers\ReprodController::class, 'asignarserieslotemonta'])->name('asignarserieslotemonta'); 
 /*						
@@ -703,18 +712,20 @@ Route::post('/home/sisga-admin/block-notas-detalles-item/{id}', [App\Http\Contro
 
 /*-->Fin Rutas Block de Notas*/
 
-Route::get('/home/sisga-admin/roles', [App\Http\Controllers\HomeController::class, 'roles'])->name('roles');
+Route::resource('/home/sisga-admin/roles',  RoleController::class)->names('roles');
 
-/*
-Route::post('/home/sisga-admin/block-notas', [App\Http\Controllers\HomeController::class, 'crear_blocknotas'])->name('blocknotas.crear'); 
+Route::resource('/home/sisga-admin/usuario',  UserController::class)->names('usuario');
 
-Route::get('/home/sisga-admin/block-notas-detalles/{id}', [App\Http\Controllers\HomeController::class, 'editar_blocknotas'])->name('blocknotas.editar'); 
+#Para la vista de permisos
+Route::get('/home/sisga-admin/permisos', [App\Http\Controllers\PermissionController::class, 'index'])->name('permisos');
 
-Route::post('/home/sisga-admin/block-notas-update/{id}', [App\Http\Controllers\HomeController::class, 'update_blocknotas'])->name('blocknotas.update');
+Route::post('/home/sisga-admin/crear-permisos', [App\Http\Controllers\PermissionController::class, 'create'])->name('permiso.crear'); 
 
-Route::delete('/home/sisga-admin/block-notas-eliminar/{id}', [App\Http\Controllers\HomeController::class, 'eliminar_blocknotas'])->name('blocknotas.eliminar'); 
-*/
+Route::get('/home/sisga-admin/editar-permisos/{id}', [App\Http\Controllers\PermissionController::class, 'edit'])->name('permiso.editar'); 
 
+Route::put('/home/sisga-admin/editar-permisos/{id}', [App\Http\Controllers\PermissionController::class, 'update'])->name('permiso.update');
+
+Route::delete('/home/sisga-admin/eliminar-permisos/{id}', [App\Http\Controllers\PermissionController::class, 'destroy'])->name('permiso.eliminar'); 
 
 /*
 *->| Ruta para la vista de Reporte personalizado
@@ -725,6 +736,32 @@ Route::get('/home/sisga-admin/finca/{id_finca}/reporte-personalizado', [App\Http
 Route::post('/home/sisga-admin/finca/{id_finca}/print-reporte-personalizado-ganaderia', [App\Http\Controllers\ReportController::class, 'report_personal_ganaderia'])->name('print_report');
 
 Route::post('/home/sisga-admin/finca/{id_finca}/print-reporte-personalizado-reproduccion', [App\Http\Controllers\ReportController::class, 'report_personal_reproduccion'])->name('print_report_reproducion');
+
+
+
+#reporte de Vientres Vista e Impresion.
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-manejo-de-vientres', [App\Http\Controllers\RutasController::class, 'vista_reportes_manejo_vientre'])->name('vistamanejovientre'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-manejo-de-vientres', [App\Http\Controllers\ReportController::class, 'report_manejo_vientre'])->name('print_mv');
+
+#reporte de registro de celos Vista e Impresion.
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-celos', [App\Http\Controllers\RutasController::class, 'vista_reportes_celo'])->name('vista_reportecelo'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-celos', [App\Http\Controllers\ReportController::class, 'report_celos'])->name('print_celos');
+
+#Reporte de Servicios Registrados
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-servicios', [App\Http\Controllers\RutasController::class, 'vista_reportes_servicios'])->name('vista_reporteservicios'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-servicios', [App\Http\Controllers\ReportController::class, 'report_servicios'])->name('print_servicios');
+
+
+#Reporte de Servicios Registrados
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-partos', [App\Http\Controllers\RutasController::class, 'vista_reportes_partos'])->name('vista_reportepartos'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-partos', [App\Http\Controllers\ReportController::class, 'report_partos'])->name('print_partos');
+
+
+
 
 
 Auth::routes();

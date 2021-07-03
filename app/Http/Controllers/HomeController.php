@@ -13,6 +13,13 @@ use Illuminate\Pagination\Paginator;
 use Carbon\Carbon; 
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Gate;
+
+
+use App\Models\User;
+use App\Models\Role;
+use App\Models\sgfinca;
+use App\Models\Permission;
 
 class HomeController extends Controller
 {
@@ -33,15 +40,55 @@ class HomeController extends Controller
      */
     public function index()
     {
-       
-        $finca = \App\Models\sgfinca::all();
+        # Comprobamos si el Perfil tiene este permiso
+        //Gate::authorize('haveaccess','home');
+        
+        #Si lo tiene obtenemos el Id del Usuario Logueado
+        $usuarioId = auth()->user()->id; 
+        # Buscamos el Usuario. 
+        $usuario = User::findOrFail($usuarioId);
 
+        //$finca = \App\Models\sgfinca::all();
+
+        #Comprobamos si el perfil tiene o no Accesos completos
+        foreach ($usuario->roles as $role) {
+            #Si tiene accessos completos
+            if ($role['full-access']=='yes') {
+                //return "tiene todos los accesos";
+                #mostramos todas las fincas
+                $finca = \App\Models\sgfinca::all();
+            }else{ 
+                
+               //return "No tiene todos los accesos";
+                #Buscamos las fincas asociadas a ese perfil
+                #comprobamos si tenemos una relación usuario-finca
+                    $cont = count($usuario->sgfincas);
+                    if ($cont>0) {
+                        foreach ($usuario->sgfincas as $key) { 
+                        $sgfinca_id [] = $key->id_finca; 
+                        }
+                    $finca = DB::table('sgfincas')
+                        ->whereIn('id_finca',$sgfinca_id)
+                        ->get();    
+                    }else{
+                        return view('error_401');          
+                    }
+                }
+            }
         return view('home', compact('finca'));
     }
 
     //Retorna a la vista administrativa para cada finca
     public function admin($id_finca)
     {
+
+        #Como pasamos el id en el controlador, almacenamos en una variable,
+        #los datos del modelo. 
+        $finca = sgfinca::findOrFail($id_finca);
+
+        $this->authorize('fincas', $finca);
+        
+        //Gate::authorize('haveaccess','fincas');
         /*
         * Variables y constantes necesarias para el filtrado
         */
@@ -106,11 +153,14 @@ class HomeController extends Controller
                 $idTempRepro = $key->id; 
             } 
 
-             $tempCicloLoteMonta = DB::table('sgciclos')
+            # Aqui se cuenta la cantidad de series hembras que esta en la temporada.
+            $tempCicloLoteMonta = DB::table('sgciclos')
                 ->join('sglotemontas','sglotemontas.id_ciclo','=','sgciclos.id_ciclo')
-                ->join('sgmontas','sgmontas.id_lotemonta','=','sglotemontas.id_lotemonta') 
+                ->join('sgmontas','sgmontas.id_lotemonta','=','sglotemontas.id_lotemonta')
+                ->join('sgtipologias','sgtipologias.id_tipologia','=','sgmontas.idtipoentrante') 
                 ->where('sgciclos.id_finca','=',$id_finca)
                 ->where('sgciclos.id_temp_reprod','=',$idTempRepro)
+                ->where('sgtipologias.sexo','=',0) # Que cuente puras hembras
                 ->get(); 
 
             $cantseries = $tempCicloLoteMonta->count(); 
@@ -522,22 +572,26 @@ class HomeController extends Controller
 
          return view('info.hembras_reprod', compact('finca','serieshembrasrepro'));        
     }
-
-/*
-* /.End
-*/
+# End
 
     //Retorna a la vista administrativa /finca
-        public function fincas()
+    public function fincas()
     {
-        $fincas = \App\Models\sgfinca::all();
+
+        Gate::authorize('haveaccess','fincas');
+
+        #Mostramos la lista de Fincas
+        $fincas = \App\Models\sgfinca::paginate(5);
+
         return view('fincas',compact('fincas'));
     }
 
     //Con esto Agregamos datos en la tabla finca.
-        public function crear(Request $request)
+    public function crear(Request $request)
     {
-         //Validando los datos
+        Gate::authorize('haveaccess','fincas.crear');
+
+        //Validando los datos
         $request->validate([
             'nombre'=> [
                 'required',
@@ -556,13 +610,17 @@ class HomeController extends Controller
     }
 
     public function editar($id_finca){
+
+        Gate::authorize('haveaccess','fincas.editar');
        
         $fincas = \App\Models\sgfinca::findOrFail($id_finca);
         return view('fincaeditar', compact('fincas'));
     }
 
     public function update(Request $request, $id_finca){
+        
         //Validando los datos
+        Gate::authorize('haveaccess','fincas.update');
         $request->validate([
                   'nombre'=>'required'
                   ]);
@@ -576,6 +634,8 @@ class HomeController extends Controller
 
     public function eliminar(Request $request, $id_finca){
         
+        Gate::authorize('haveaccess','fincas.eliminar');
+
         $fincasEliminar = \App\Models\sgfinca::findOrFail($id_finca);
  
         try {
@@ -588,10 +648,12 @@ class HomeController extends Controller
         
     }
 
-
     //Retorna la vista especie
-    public function especie(Request $request, $id_finca)
+    public function especie(Request $request, $id_finca) 
     {
+        
+        Gate::authorize('haveaccess','especie');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();
 
@@ -602,6 +664,7 @@ class HomeController extends Controller
     //Con esto Agregamos datos en la tabla especie.
         public function crear_especie(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','especie.crear');
          //Validando los datos
         $request->validate([
             'nombre'=> [
@@ -625,8 +688,10 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-    public function editar_especie($id_finca, $id){
-       
+    public function editar_especie($id_finca, $id)
+    {
+    
+        Gate::authorize('haveaccess','especie.editar');   
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca); 
         $especie = \App\Models\sgespecie::findOrFail($id);
@@ -634,10 +699,11 @@ class HomeController extends Controller
         return view('varcontrol.editarespecie', compact('finca','especie'));
     }
 
-    public function update_especie(Request $request, $id, $id_finca){
+    public function update_especie(Request $request, $id, $id_finca)
+    {
         
-        //Validando los datos
-         //Validando los datos
+        Gate::authorize('haveaccess','especie.update');   
+        #Validando los datos
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         
         $request->validate([
@@ -658,9 +724,11 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
 
-    public function eliminar_especie($id_finca, $id){
+    public function eliminar_especie($id_finca, $id)
+    {
+
+        Gate::authorize('haveaccess','especie.eliminar');   
         
-        //dd($id);
         $especieEliminar = \App\Models\sgespecie::findOrFail($id);
         
         try {
@@ -678,6 +746,8 @@ class HomeController extends Controller
  
     public function raza(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','raza'); 
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $especie = \App\Models\sgespecie::where('id_finca', '=', $finca->id_finca)->get();   
         //$raza = \App\Models\sgraza::all();
@@ -694,6 +764,7 @@ class HomeController extends Controller
     //Con esto Agregamos datos en la tabla raza.
       public function crear_raza(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','raza.crear'); 
         //return $id_finca; 
         //Validando los datos y que no se permita crear 
         $request->validate([
@@ -724,8 +795,10 @@ class HomeController extends Controller
     }
 
     public function editar_raza($id_finca, $idraza){
+
+        Gate::authorize('haveaccess','raza.editar'); 
        
-         //dd($id_finca, $idraza);
+        //dd($id_finca, $idraza);
         $finca =  \App\Models\sgfinca::findOrFail($id_finca); 
         $raza = \App\Models\sgraza::findOrFail($idraza);
         
@@ -741,8 +814,10 @@ class HomeController extends Controller
         return view('varcontrol.editarraza', compact('raza','finca','especie','tableraza'));
     }
 
-    public function update_raza(Request $request, $idraza, $id_finca){
+    public function update_raza(Request $request, $idraza, $id_finca)
+    {
         
+        Gate::authorize('haveaccess','raza.update');
 
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         
@@ -773,7 +848,8 @@ class HomeController extends Controller
     }
 
     public function eliminar_raza($id_finca, $idraza){
-          
+
+        Gate::authorize('haveaccess','raza.eliminar');   
             
         $razaEliminar = \App\Models\sgraza::findOrFail($idraza);
             
@@ -796,6 +872,8 @@ class HomeController extends Controller
    
     public function tipologia($id_finca)
     {
+         Gate::authorize('haveaccess','tipologia'); 
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);   
         //$tipologia = \App\Models\sgtipologia::all();
         $tipologia = \App\Models\sgtipologia::where('id_finca', '=', $finca->id_finca)->get();
@@ -806,6 +884,9 @@ class HomeController extends Controller
     //Con esto Agregamos datos en la tabla finca.
         public function crear_tipo(Request $request, $id_finca)
     {
+        
+        Gate::authorize('haveaccess','tipologia.crear'); 
+
         //Valida los Checks
         $request->destetado = ($request->destetado=="on")?($request->destetado=true):($request->destetado=false);
 
@@ -870,6 +951,8 @@ class HomeController extends Controller
     }
 
     public function editar_tipo($id_finca, $id_tipologia){
+
+        Gate::authorize('haveaccess','tipologia.editar');
            
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);    
         $tipologia = \App\Models\sgtipologia::findOrFail($id_tipologia);
@@ -878,6 +961,8 @@ class HomeController extends Controller
 
     public function update_tipo(Request $request, $id_tipologia, $id_finca){
         
+        Gate::authorize('haveaccess','tipologia.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         //Valida los Checks
@@ -928,6 +1013,8 @@ class HomeController extends Controller
         }
 
     public function eliminar_tipo($id_finca, $id_tipologia){
+
+        Gate::authorize('haveaccess','tipologia.eliminar');
             
         $tipologiaEliminar = \App\Models\sgtipologia::findOrFail($id_tipologia);
         
@@ -942,7 +1029,7 @@ class HomeController extends Controller
 
 /*
 *******************************************************
-* Retorna a la vista administrativa /tipologia
+# Retorna a la vista administrativa /tipologia
 *******************************************************
 */    
 
@@ -954,6 +1041,8 @@ class HomeController extends Controller
  
     public function condicion_corporal($id_finca)
     {
+        Gate::authorize('haveaccess','condicion_corporal');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);   
         //$condicion_corporal = \App\Models\sgcondicioncorporal::all();
         
@@ -965,7 +1054,8 @@ class HomeController extends Controller
     //Con esto Agregamos datos en la tabla finca.
         public function crear_condicioncorporal(Request $request, $id_finca)
     {
-        
+        Gate::authorize('haveaccess','condicion_corporal.crear');
+
         //Validando los datos
         $request->validate([
             'nombre_condicion'=>'required',
@@ -986,6 +1076,8 @@ class HomeController extends Controller
     }
 
     public function editar_condicion($id_finca, $id_condicion){
+
+        Gate::authorize('haveaccess','condicion_corporal.editar');
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $condicion_corporal = \App\Models\sgcondicioncorporal::findOrFail($id_condicion);
@@ -994,6 +1086,8 @@ class HomeController extends Controller
     }
 
     public function update_condicion(Request $request, $id_condicion, $id_finca){
+
+        Gate::authorize('haveaccess','condicion_corporal.update');
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -1011,7 +1105,9 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro actualizado satisfactoriamente');
     }
     
-   public function eliminar_condicion($id_finca, $id_condicion){
+    public function eliminar_condicion($id_finca, $id_condicion)
+    {
+        Gate::authorize('haveaccess','condicion_corporal.eliminar');
             
         $condicionEliminar = \App\Models\sgcondicioncorporal::findOrFail($id_condicion);
              
@@ -1038,6 +1134,8 @@ class HomeController extends Controller
  
     public function diagnostico_palpaciones($id_finca)
     {
+        Gate::authorize('haveaccess','diagnostico_palpaciones');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);   
         //$diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::all();
         $diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::where('id_finca', '=', $finca->id_finca)->paginate(4);
@@ -1048,6 +1146,7 @@ class HomeController extends Controller
         public function crear_diagnosticopalpaciones(Request $request, $id_finca)
     {
         
+        Gate::authorize('haveaccess','diagnostico_palpaciones.crear');
         //Validando los datos
         $request->validate([
             'nombre'=> [
@@ -1075,6 +1174,8 @@ class HomeController extends Controller
 
     public function editar_diagnostico_palpaciones($id_finca, $id_diagnostico){
        
+        Gate::authorize('haveaccess','diagnostico_palpaciones.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $diagnostico_palpaciones = \App\Models\sgdiagnosticpalpaciones::findOrFail($id_diagnostico);
         
@@ -1084,6 +1185,7 @@ class HomeController extends Controller
     public function update_diagnostico_palpaciones(Request $request, $id_diagnostico,$id_finca)
     {
         
+        Gate::authorize('haveaccess','diagnostico_palpaciones.update');
         //Validando los datos
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $request->validate([
@@ -1102,6 +1204,9 @@ class HomeController extends Controller
 
     public function eliminar_diagnostico_palpaciones($id_finca, $id_diagnostico){
             
+        
+        Gate::authorize('haveaccess','diagnostico_palpaciones.eliminar');
+
         $diagnostico_palpacionesEliminar = \App\Models\sgdiagnosticpalpaciones::findOrFail($id_diagnostico);
              
         try {
@@ -1110,24 +1215,17 @@ class HomeController extends Controller
 
         }catch (\Illuminate\Database\QueryException $e){
             return back()->with('mensaje', 'error');
-        }
-
-         
+        }     
     }
-/*
-*********************************************************
-* Fin de la vista administrativa diagnostico palpaciones
-*********************************************************
-*/  
 
-/*
-************************************************************
-* Retorna a la vista administrativa /motivo-entrada-salida
-************************************************************
-*/    
- 
+    # Fin de la vista administrativa diagnostico palpaciones
+      
+    # Retorna a la vista administrativa /motivo-entrada-salida
+    
     public function motivo_entrada_salida($id_finca)
     {
+     
+        Gate::authorize('haveaccess','motivo_entrada_salida');   
         
         $finca =  \App\Models\sgfinca::findOrFail($id_finca); 
 
@@ -1140,6 +1238,8 @@ class HomeController extends Controller
 //Con esto Agregamos datos en la tabla finca.
         public function crear_motivo_entrada_salida(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','motivo_entrada_salida.crear');
+
         //Validando los datos
         $request->validate([
             'nombremotivo'=> [
@@ -1164,8 +1264,11 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-    public function editar_motivo_entrada_salida($id_finca, $id){
-       
+    public function editar_motivo_entrada_salida($id_finca, $id)
+    {
+   
+        Gate::authorize('haveaccess','motivo_entrada_salida.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $motivo_entrada_salida = \App\Models\sgmotivoentradasalida::findOrFail($id);
         
@@ -1174,6 +1277,9 @@ class HomeController extends Controller
 
     public function update_motivo_entrada_salida(Request $request, $id, $id_finca)
     {
+        
+        Gate::authorize('haveaccess','motivo_entrada_salida.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         //Validando los datos
@@ -1193,7 +1299,9 @@ class HomeController extends Controller
     }
 
     public function eliminar_motivo_entrada_salida($id_finca, $id){
-            
+        
+        Gate::authorize('haveaccess','motivo_entrada_salida.eliminar');
+
         $motivo_entrada_salidaEliminar = \App\Models\sgmotivoentradasalida::findOrFail($id);
             
         try {
@@ -1216,6 +1324,8 @@ class HomeController extends Controller
 */  
      public function patologia($id_finca)
     {
+        Gate::authorize('haveaccess','patologia');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $patologia = \App\Models\sgpatologia::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1225,7 +1335,7 @@ class HomeController extends Controller
 
      public function crear_patologia(Request $request, $id_finca)
     {
-        
+        Gate::authorize('haveaccess','patologia.crear');
         //Validando los datos
         $request->validate([
             'patologia'=>[
@@ -1250,8 +1360,12 @@ class HomeController extends Controller
    
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
+
     public function editar_patologia($id_finca, $id){
+
        
+        Gate::authorize('haveaccess','patologia.editar');
+        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $patologia = \App\Models\sgpatologia::findOrFail($id);
@@ -1261,6 +1375,8 @@ class HomeController extends Controller
 
     public function update_patologia(Request $request, $id, $id_finca){
        
+        Gate::authorize('haveaccess','patologia.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1285,7 +1401,10 @@ class HomeController extends Controller
     }
     
     public function eliminar_patologia($id_finca, $id){
-            
+        
+
+        Gate::authorize('haveaccess','patologia.eliminar');
+
         $patologiaEliminar = \App\Models\sgpatologia::findOrFail($id);
             
         try {
@@ -1303,6 +1422,8 @@ class HomeController extends Controller
 */  
      public function parametros($id_finca)
     {
+        Gate::authorize('haveaccess','parametros');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $parametrosGanaderia = \App\Models\sgparametros_ganaderia::where('id_finca', '=', $finca->id_finca)->get();
@@ -1322,7 +1443,9 @@ class HomeController extends Controller
 
      public function crear_parametros_ganaderia(Request $request, $id_finca)
     {
-        
+    
+        Gate::authorize('haveaccess','parametros_ganaderia.crear');
+
         $pgNuevo = new \App\Models\sgparametros_ganaderia;
 
         $pgNuevo->diasaldestete = $request->diasaldestete;
@@ -1339,6 +1462,8 @@ class HomeController extends Controller
 
      public function editar_parametros_ganaderia(Request $request, $id_finca, $id)
     {
+        Gate::authorize('haveaccess','parametros_ganaderia.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         $parametrosGanaderia = \App\Models\sgparametros_ganaderia::findOrFail($id);
 
@@ -1348,6 +1473,8 @@ class HomeController extends Controller
 
      public function update_parametros_ganaderia(Request $request, $id_finca, $id){
        
+        Gate::authorize('haveaccess','parametros_ganaderia.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        
@@ -1368,7 +1495,7 @@ class HomeController extends Controller
 
      public function crear_parametros_reproduccion(Request $request, $id_finca)
     {
-      
+        Gate::authorize('haveaccess','parametros_reproduccion.crear');
 
         $prNuevo = new \App\Models\sgparametros_reproduccion_animal;
 
@@ -1384,6 +1511,8 @@ class HomeController extends Controller
     public function editar_parametros_reproduccion(Request $request, $id_finca, $id)
     {
         
+        Gate::authorize('haveaccess','parametros_reproduccion.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
        
         $parametrosReproduccion = \App\Models\sgparametros_reproduccion_animal::findOrFail($id);
@@ -1391,8 +1520,11 @@ class HomeController extends Controller
         return view('varcontrol.editar_parametro_reproduccion', compact('parametrosReproduccion','finca'));
     }
 
-     public function update_parametros_reproduccion(Request $request, $id_finca, $id){
+    public function update_parametros_reproduccion(Request $request, $id_finca, $id)
+    {
        
+        Gate::authorize('haveaccess','parametros_reproduccion.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
     
@@ -1409,7 +1541,7 @@ class HomeController extends Controller
     public function crear_parametros_produccion_leche(Request $request, $id_finca)
     {
       
-
+        Gate::authorize('haveaccess','parametros_produccion_leche.crear');
 
         $pPNuevo = new \App\Models\sgparametros_reproduccion_leche;
 
@@ -1427,8 +1559,10 @@ class HomeController extends Controller
         return back()->with('msj', 'Registro agregado satisfactoriamente');
     }
 
-     public function editar_parametros_produccion_leche(Request $request, $id_finca, $id)
-        {
+    public function editar_parametros_produccion_leche(Request $request, $id_finca, $id)
+    {
+            
+            Gate::authorize('haveaccess','parametros_produccion_leche.editar');
             
             $finca =  \App\Models\sgfinca::findOrFail($id_finca);
            
@@ -1439,6 +1573,8 @@ class HomeController extends Controller
 
     public function update_parametros_produccion_leche(Request $request, $id_finca, $id){
            
+            Gate::authorize('haveaccess','parametros_produccion_leche.update');
+
             $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         
@@ -1462,6 +1598,8 @@ class HomeController extends Controller
 
     public function tipomonta(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','tipomonta');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $tipomonta = \App\Models\sgtipomonta::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1471,7 +1609,7 @@ class HomeController extends Controller
 
     public function crear_tipomonta(Request $request, $id_finca)
     {
-        
+       Gate::authorize('haveaccess','tipomonta.crear');     
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1498,6 +1636,8 @@ class HomeController extends Controller
     }
     public function editar_tipomonta($id_finca, $id){
        
+        Gate::authorize('haveaccess','tipomonta.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $tipomonta = \App\Models\sgtipomonta::findOrFail($id);
@@ -1507,6 +1647,8 @@ class HomeController extends Controller
 
     public function update_tipomonta(Request $request, $id, $id_finca){
        
+        Gate::authorize('haveaccess','tipomonta.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1531,7 +1673,9 @@ class HomeController extends Controller
     }
     
     public function eliminar_tipomonta($id_finca, $id){
-            
+
+        Gate::authorize('haveaccess','tipomonta.eliminar');
+
         $tipomontaEliminar = \App\Models\sgtipomonta::findOrFail($id);
             
         try {
@@ -1550,6 +1694,8 @@ class HomeController extends Controller
 */  
      public function causamuerte($id_finca)
     {
+        Gate::authorize('haveaccess','causamuerte');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $causamuerte = \App\Models\sgcausamuerte::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1560,6 +1706,7 @@ class HomeController extends Controller
      public function crear_causamuerte(Request $request, $id_finca)
     {
         
+        Gate::authorize('haveaccess','causamuerte.crear');        
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1581,6 +1728,7 @@ class HomeController extends Controller
 
     public function editar_causamuerte($id_finca, $id){
        
+        Gate::authorize('haveaccess','causamuerte.editar');
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $causamuerte = \App\Models\sgcausamuerte::findOrFail($id);
@@ -1590,7 +1738,8 @@ class HomeController extends Controller
 
     public function update_causamuerte(Request $request, $id_finca, $id ){
        
-       
+       Gate::authorize('haveaccess','causamuerte.update');
+
        $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1611,6 +1760,8 @@ class HomeController extends Controller
     
     public function eliminar_causamuerte($id_finca, $id){
             
+        Gate::authorize('haveaccess','causamuerte.eliminar');
+
         $causamuerteEliminar = \App\Models\sgcausamuerte::findOrFail($id);
             
         try {
@@ -1629,6 +1780,9 @@ class HomeController extends Controller
 */  
      public function destinosalida($id_finca)
     {
+
+        Gate::authorize('haveaccess','destinosalida');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $destinosalida = \App\Models\sgdestinosalida::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1638,7 +1792,7 @@ class HomeController extends Controller
 
      public function crear_destinosalida(Request $request, $id_finca)
     {
-        
+        Gate::authorize('haveaccess','destinosalida.crear');        
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1660,6 +1814,8 @@ class HomeController extends Controller
 
     public function editar_destinosalida($id_finca, $id){
        
+        Gate::authorize('haveaccess','destinosalida.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $destinosalida = \App\Models\sgdestinosalida::findOrFail($id);
@@ -1667,8 +1823,11 @@ class HomeController extends Controller
         return view('varcontrol.editar_destino_salida', compact('destinosalida', 'finca'));
     }
 
-    public function update_destinosalida(Request $request, $id, $id_finca){
+    public function update_destinosalida(Request $request, $id_finca, $id){
+
        
+        Gate::authorize('haveaccess','destinosalida.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1689,6 +1848,8 @@ class HomeController extends Controller
     
     public function eliminar_destinosalida($id_finca, $id){
             
+        Gate::authorize('haveaccess','destinosalida.eliminar');
+
         $destinosalidaEliminar = \App\Models\sgdestinosalida::findOrFail($id);
             
         try {
@@ -1707,6 +1868,8 @@ class HomeController extends Controller
 */  
      public function procedencia($id_finca)
     {
+        Gate::authorize('haveaccess','procedencia');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $procedencia = \App\Models\sgprocedencia::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1717,6 +1880,7 @@ class HomeController extends Controller
      public function crear_procedencia(Request $request, $id_finca)
     {
         
+        Gate::authorize('haveaccess','procedencia.crear');
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1738,6 +1902,8 @@ class HomeController extends Controller
 
     public function editar_procedencia($id_finca, $id){
        
+        Gate::authorize('haveaccess','procedencia.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $procedencia = \App\Models\sgprocedencia::findOrFail($id);
@@ -1747,6 +1913,8 @@ class HomeController extends Controller
 
     public function update_procedencia(Request $request, $id, $id_finca){
        
+        Gate::authorize('haveaccess','procedencia.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1767,6 +1935,8 @@ class HomeController extends Controller
     
     public function eliminar_procedencia($id_finca, $id){
             
+        Gate::authorize('haveaccess','procedencia.eliminar');
+
         $procedenciaEliminar = \App\Models\sgprocedencia::findOrFail($id);
             
         try {
@@ -1787,6 +1957,8 @@ class HomeController extends Controller
 */  
      public function colores($id_finca)
     {
+        Gate::authorize('haveaccess','colores');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $colores = \App\Models\colorescampo::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1796,7 +1968,9 @@ class HomeController extends Controller
 
      public function crear_colores(Request $request, $id_finca)
     {
-        
+
+        Gate::authorize('haveaccess','colores.crear');
+
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1817,6 +1991,8 @@ class HomeController extends Controller
     }
 
     public function editar_colores($id_finca, $id){
+
+        Gate::authorize('haveaccess','colores.editar');
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -1827,6 +2003,8 @@ class HomeController extends Controller
 
     public function update_colores(Request $request, $id_finca, $id){
        
+        Gate::authorize('haveaccess','colores.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1847,6 +2025,8 @@ class HomeController extends Controller
     
     public function eliminar_colores($id_finca, $id){
             
+        Gate::authorize('haveaccess','colores.eliminar');
+
         $colorEliminar = \App\Models\colorescampo::findOrFail($id);
             
         try {
@@ -1866,6 +2046,9 @@ class HomeController extends Controller
 */  
      public function salaordeno($id_finca)
     {
+        
+        Gate::authorize('haveaccess','salaordeno');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $salaordeno = \App\Models\sgsaladeordeno::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1875,7 +2058,7 @@ class HomeController extends Controller
 
      public function crear_salaordeno(Request $request, $id_finca)
     {
-        
+        Gate::authorize('haveaccess','salaordeno.crear');
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1896,6 +2079,8 @@ class HomeController extends Controller
     }
 
     public function editar_salaordeno($id_finca, $id){
+
+        Gate::authorize('haveaccess','salaordeno.editar');
        
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
@@ -1906,6 +2091,8 @@ class HomeController extends Controller
 
     public function update_salaordeno(Request $request, $id, $id_finca){
        
+        Gate::authorize('haveaccess','salaordeno.update');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -1926,6 +2113,8 @@ class HomeController extends Controller
     
     public function eliminar_salaordeno($id_finca, $id){
             
+        Gate::authorize('haveaccess','salaordeno.eliminar');
+
         $salaordenoEliminar = \App\Models\sgsaladeordeno::findOrFail($id);
             
         try {
@@ -1944,6 +2133,8 @@ class HomeController extends Controller
 */  
      public function tanque($id_finca)
     {
+        Gate::authorize('haveaccess','tanque');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
         //$patologia = \App\Models\sgpatologia::all();
         $tanque = \App\Models\sgtanque::where('id_finca', '=', $finca->id_finca)->paginate(5);
@@ -1954,6 +2145,7 @@ class HomeController extends Controller
      public function crear_tanque(Request $request, $id_finca)
     {
         
+        Gate::authorize('haveaccess','tanque.crear');
         //Validando los datos
         $request->validate([
             'nombre'=>[
@@ -1975,7 +2167,8 @@ class HomeController extends Controller
 
     public function editar_tanque($id_finca, $id)
     {
-       
+        Gate::authorize('haveaccess','tanque.editar');
+
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
         $tanque = \App\Models\sgtanque::findOrFail($id);
@@ -1986,6 +2179,7 @@ class HomeController extends Controller
     public function update_tanque(Request $request, $id, $id_finca)
     {
        
+        Gate::authorize('haveaccess','tanque.update');
         $finca =  \App\Models\sgfinca::findOrFail($id_finca);
 
        //Validando los datos
@@ -2005,7 +2199,8 @@ class HomeController extends Controller
     }
     
     public function eliminar_tanque($id_finca, $id){
-            
+        
+        Gate::authorize('haveaccess','tanque.eliminar');    
         $tanqueEliminar = \App\Models\sgtanque::findOrFail($id);
             
         try {
@@ -2264,14 +2459,6 @@ class HomeController extends Controller
             }        
     }
 
-    #Roles de usuarios
-    public function roles()
-    {
-    
-        $rol = null; 
-
-     return view('auth.roles.roles',compact('rol'));   
-    }
 
     
 

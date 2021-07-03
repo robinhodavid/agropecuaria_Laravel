@@ -536,7 +536,6 @@
     }); 
     </script>  
 
-
     <script>
 
     $('.form-trans').submit(function(e){
@@ -553,6 +552,17 @@
         })
       }
     }); 
+    
     </script>  
+
+    @if(session('prenez')=='noregistro')
+      <script>
+        Swal.fire({
+          title: '¡Preñez Sin Servicio Registrado!',
+          text:  'Está intentando registrar una preñez con Inseminación Artificial y la serie no posee Servicio Registrado. ¡Por favor! Realice un nuevo Registro de Servicio antes de continuar',
+          icon:  'info',
+        })
+      </script>
+  @endif
 
 @stop

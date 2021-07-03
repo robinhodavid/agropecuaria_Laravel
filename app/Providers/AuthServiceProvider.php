@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use App\Models\sgfinca;
+use App\Policies\sgfincaPolicy;
+
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -14,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         // 'App\Model' => 'App\Policies\ModelPolicy',
+        sgfinca::class => sgfincaPolicy::class,
     ];
 
     /**
@@ -25,6 +30,10 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('haveaccess', function (User $usuario, $perm){
+           
+            return $usuario->havePermission($perm);
+            //return true; 
+        });
     }
 }

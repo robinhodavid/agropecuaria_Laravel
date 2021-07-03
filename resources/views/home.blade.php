@@ -6,6 +6,19 @@
 
 @stop
 
+@section('right-sidebar')
+	<ul>
+		<li>
+			item 1
+		</li>
+		<li>
+			item 2
+		</li>
+
+	</ul>
+
+@stop
+
 @section('content')
 
 <div class="container">
@@ -78,6 +91,18 @@
 @section('js')
     <script> console.log('Hi!'); </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    
     {!! Html::script('js/jquery-3.5.1.min.js')!!}
   	{!! Html::script('js/dropdown.js')!!}
+  	{!! Html::script('js/sweetalert2.js')!!}	
+    
+  	@if(session('finca')=='nofinca')
+	  	<script>
+	  		Swal.fire({
+				title: '¡Usuario no posee una finca asociada!',
+				text:  'Este Usuario no está asociado a una Finca, consulte con el administrador del sistema',
+				icon:  'info'
+			})
+	  	</script>
+	@endif
 @stop

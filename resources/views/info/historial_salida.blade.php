@@ -114,7 +114,7 @@
           aria-label="Radio button for following text input"
           name="orderby"
           id="campo4" value="sghsals.fecs">
-          <label class="checkbox-inline title-label"  for="campo4">Fecha Transferencia</label>
+          <label class="checkbox-inline title-label"  for="campo4">Fecha Salida</label>
 
           <input 
           type="radio" 

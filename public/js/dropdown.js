@@ -144,8 +144,10 @@ function calculogdp(){
     var gdp = (peso - pesoactual)/dias;
     var pesoganado = gdp * dias;
     
+    console.log(pesoactual,peso);
+
     if (pesoactual > peso) {
-        alert('Info: Se sugiere revisar el valor de Peso, la serie presenta perdida de peso');
+        //alert('Info: Se sugiere revisar el valor de Peso, la serie presenta perdida de peso');
         var gdp = (peso - pesoactual)/dias;    
         $("#gdp").val(gdp);
         $("#pgan").val(pesoganado);

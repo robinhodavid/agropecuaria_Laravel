@@ -21,6 +21,7 @@ use App\Exports\SeriesActivas;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\Exportable;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 class ReprodController extends Controller
 {
@@ -70,6 +71,7 @@ class ReprodController extends Controller
 
     public function crear_temporada(Request $request, $id_finca)
     {
+        Gate::authorize('haveaccess','temporada.crear');
 
         $request->validate([
             'nombre'=> [
@@ -95,7 +97,8 @@ class ReprodController extends Controller
 
     public function editar_temporada($id_finca, $id)
     {
-            //Se buscala finca por su id - Segun modelo
+        Gate::authorize('haveaccess','temporada.editar');
+        //Se buscala finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
         $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
@@ -106,7 +109,8 @@ class ReprodController extends Controller
     public function update_temporada(Request $request, $id, $id_finca)
     {
 
-            //Valida que  las series sean requeridos y que no se repitan.
+        Gate::authorize('haveaccess','temporada.update');
+        //Valida que  las series sean requeridos y que no se repitan.
         $request->validate([
             'nombre'=> [
                 'required',
@@ -128,6 +132,8 @@ class ReprodController extends Controller
     public function eliminar_temporada($id_finca, $id)
     {
 
+        Gate::authorize('haveaccess','temporada.eliminar');
+
         $temporadaEliminar = \App\Models\sgtempreprod::findOrFail($id);
 
         try {
@@ -142,33 +148,129 @@ class ReprodController extends Controller
     public function cierre_temporada(Request $request, $id_finca, $id)
     {
 
+        Gate::authorize('haveaccess','temporada.cerrar');
 
         $temporadaCierre = \App\Models\sgtempreprod::findOrFail($id);
 
         $fechacierre = Carbon::now()->format('Y-m-d');
 
+        #Fecha de Cierre 
         $temporadaCierre->fecdefcierre = $fechacierre;
 
-
-            #Aqui debemos hacer la actualización de temporada activa
-            #para liberar la serie de la temporada.
-
+        #Obtenemos las series de todas las montas
+        $seriesEnMonta = DB::table('sgmontas')
+            ->join('sglotemontas','sglotemontas.id_lotemonta','=','sgmontas.id_lotemonta')
+            ->join('sgciclos','sgciclos.id_ciclo','=','sglotemontas.id_ciclo')
+            ->join('sgtempreprods','sgtempreprods.id','=','sgciclos.id_temp_reprod') 
+            ->where('sgtempreprods.id','=',$id)   
+            ->pluck('id_serie');
 
         try {
-
+            #Guarda la Fecha de cierre
             $temporadaCierre-> save();
+
+            $cont = $seriesEnMonta->count();
             
-            $cierreCiclo = DB::table('sgciclos')
-            ->where('id_temp_reprod',$temporadaCierre->id)
-            ->update(['fecfincierre'=>$fechacierre]); 
+            for($i=0; $i < $cont; $i++){
+
+                $series = \App\Models\sganim::findOrFail($seriesEnMonta[$i]);
+                 
+                $idtipologiaAtual = $series->id_tipologia; 
+
+                # Aqui se crea una consulta para comparar cada serie y comprobar que no esten, 
+                # entre novillas, novillas 1 y novillas 2
+                $tipologia = DB::table('sgtipologias')
+                    ->where('id_finca','=',$id_finca)
+                    ->where('sexo','=',0) # 0= Hembra; 1= Macho
+                    ->where('prenada','=',0) #0 = no esten preñadas, 1= Si están prenada
+                    ->where('parida','=',0)  #0 = No esten paridas, 1 = Si están paridas
+                    ->where('edad','>',210) # la edad genera la condición de mautas sin incluirlas
+                    ->where('id_tipologia','=', $idtipologiaAtual)
+                    ->get();
+                
+                # Comparamos la condicion si existe la tipología actualizamos en la
+                # sganims el numero de monta y los parametros tipologicos
+                # Luego buscamos con dichos parametros, la tipologia nueva
+                # actualizamos los campos id_tipologia, tipo y tipo anterior en sganims     
+
+                if ($tipologia->count()>0) {
+                    
+                    $nroMonta = $series->nro_monta + 1; 
+                    $updateNoviMonta = DB::table('sganims')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id','=',$seriesEnMonta[$i])
+                        ->update(['nro_monta'=>$nroMonta,
+                                  'prenada'=>0, #hardcode
+                                  'parida'=>0, #hardcode
+                                  'tienecria'=>0,
+                                  'criaviva'=>0,
+                                  'ordenho'=>0,
+                                  'detectacelo'=>0]);
+                    
+                    $serieUpdate = \App\Models\sganim::findOrFail($seriesEnMonta[$i]);
+
+                    $tipologiaNuev = DB::table('sgtipologias')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('sexo','=',$serieUpdate->sexo) 
+                        ->where('prenada','=',$serieUpdate->prenada)
+                        ->where('parida','=',$serieUpdate->parida)  
+                        ->where('nro_monta','=', $serieUpdate->nro_monta)
+                        ->get();
+                    #Obtenemos el id y el nombre de la tipologia    
+                    foreach ($tipologiaNuev as $key ) {
+                        $idtipoNueva = $key->id_tipologia;
+                        $nombreTipoNueva = $key->nombre_tipologia;                    
+                    } 
+
+                    $updateSeriesMonta = DB::table('sgmontas')
+                        ->join('sglotemontas','sglotemontas.id_lotemonta','=','sgmontas.id_lotemonta')
+                        ->join('sgciclos','sgciclos.id_ciclo','=','sglotemontas.id_ciclo')
+                        ->join('sgtempreprods','sgtempreprods.id','=','sgciclos.id_temp_reprod') 
+                        ->where('sgtempreprods.id','=',$id)
+                        ->where('sgmontas.id_serie','=',$seriesEnMonta[$i])
+                        ->update(['sgmontas.tipologia_salida'=>$nombreTipoNueva]);       
+                
+                    # Actualizamos la tipologia de cada serie en la tabla sganim
+                    $updateSeriesNovilla = DB::table('sganims')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id','=',$seriesEnMonta[$i])
+                        ->update(['id_tipologia'=>$idtipoNueva,
+                                  'tipo'=>$nombreTipoNueva, 
+                                  'tipoanterior'=>$series->tipo, #hardcode
+                                  'monta_activa'=>0]); #Monta Activa 
+
+                } else {
+                    # Actualizamos para el resto de las series, el nro_monta
+                    $nroMonta = $series->nro_monta + 1; 
+                    
+                    #Actualizamos la tabla sgmontas las tipologia de salida
+                    $updateSeriesMonta = DB::table('sgmontas')
+                        ->join('sglotemontas','sglotemontas.id_lotemonta','=','sgmontas.id_lotemonta')
+                        ->join('sgciclos','sgciclos.id_ciclo','=','sglotemontas.id_ciclo')
+                        ->join('sgtempreprods','sgtempreprods.id','=','sgciclos.id_temp_reprod') 
+                        ->where('sgtempreprods.id','=',$id)
+                        ->where('sgmontas.id_serie','=',$seriesEnMonta[$i])
+                        ->update(['sgmontas.tipologia_salida'=>$series->tipo]);     
+
+                    $updateSeries = DB::table('sganims')
+                        ->where('id_finca','=',$id_finca)
+                        ->where('id','=',$seriesEnMonta[$i])
+                        ->update(['nro_monta'=>$nroMonta,
+                                  'tipoanterior'=>$series->tipo,
+                                  'monta_activa'=>0]); #Monta Activa  Falso.
+                }
+        }
             
-            return back()->with('msje', 'ok');     
+        $cierreCiclo = DB::table('sgciclos')
+                ->where('id_temp_reprod',$temporadaCierre->id)
+                ->update(['fecfincierre'=>$fechacierre]); 
+            
+        return back()->with('msje', 'ok');     
 
         }catch (\Illuminate\Database\QueryException $e){
             return back()->with('msje', 'error');
         }
     }
-
 
 
     public function temporada_detalle(Request $request, $id_finca, $id)
@@ -197,36 +299,39 @@ class ReprodController extends Controller
    } 
 
 
-   public function ciclo(Request $request, $id_finca, $id){
+   public function ciclo(Request $request, $id_finca, $id)
+   {
 
-      $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        Gate::authorize('haveaccess','ciclo');   
+        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-      $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
-    		//Muestra todos los lotes de Temporada
-      $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-      ->where('tipo', '=', "Temporada")->get();
+        		//Muestra todos los lotes de Temporada
+        $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
+          ->where('tipo', '=', "Temporada")->get();
 
-      $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
-      ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
-      ->get();
+        $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
+          ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+          ->get();
 
-      $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-      ->get();	
+        $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
+          ->get();	
 
-      $ciclo = \App\Models\sgciclo::where('sgciclos.id_finca','=',$id_finca)
-      ->join('sgtipomontas','sgtipomontas.id','=','sgciclos.id_tipomonta')
-      ->where('sgciclos.id_temp_reprod','=',$temp_reprod->id)
-      ->paginate(3);	
+        $ciclo = \App\Models\sgciclo::where('sgciclos.id_finca','=',$id_finca)
+          ->join('sgtipomontas','sgtipomontas.id','=','sgciclos.id_tipomonta')
+          ->where('sgciclos.id_temp_reprod','=',$temp_reprod->id)
+          ->paginate(3);	
 
 
 
-      $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
+        $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
 
     		/*
     		*se restan los meses para obtener los meses transcurridos. 
     		*/
-         $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
+        $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
 
 	        $dt = $months * 30; //días Transcurridos
 
@@ -244,6 +349,7 @@ class ReprodController extends Controller
      public function crear_ciclo(Request $request, $id_finca, $id)
      {
 
+        Gate::authorize('haveaccess','ciclo.crear');
 
         $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
@@ -320,32 +426,32 @@ class ReprodController extends Controller
        public function editar_ciclo($id_finca, $id, $id_ciclo)
        {
 
-        	//dd($id_ciclo);
+            Gate::authorize('haveaccess','ciclo.editar');
 
-            //Se busca la finca por su id - Segun modelo
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+                //Se busca la finca por su id - Segun modelo
+            $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+            $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
-        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+            $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-    		//Muestra todos los lotes de Temporada
-        $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-        ->where('tipo', '=', "Temporada")->get();
+        		//Muestra todos los lotes de Temporada
+            $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
+            ->where('tipo', '=', "Temporada")->get();
 
-        $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
-        ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
-        ->get();
+            $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
+            ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+            ->get();
 
-        $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-        ->get();
+            $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
+            ->get();
 
-        $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
+            $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
 
-    		/*
-    		*se restan los meses para obtener los meses transcurridos. 
-    		*/
-         $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
+        		/*
+        		*se restan los meses para obtener los meses transcurridos. 
+        		*/
+             $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
 
 	        $dt = $months * 30; //días Transcurridos
 
@@ -363,6 +469,7 @@ class ReprodController extends Controller
         public function update_ciclo(Request $request, $id, $id_finca, $id_ciclo)
         {
 
+            Gate::authorize('haveaccess','ciclo.update');
             //Valida que  las series sean requeridos y que no se repitan.
             $request->validate([
                 'ciclo'=> [
@@ -392,6 +499,8 @@ class ReprodController extends Controller
         public function eliminar_ciclo($id_finca, $id, $id_ciclo)
         {
 
+            Gate::authorize('haveaccess','ciclo.eliminar');
+
             $cicloEliminar = \App\Models\sgciclo::findOrFail($id_ciclo);
 
             try {
@@ -418,9 +527,9 @@ class ReprodController extends Controller
 	public function detalle_ciclo($id_finca, $id, $id_ciclo)
     {
 
-        	//dd($id_ciclo);
+        //dd($id_ciclo);
 
-            //Se busca la finca por su id - Segun modelo
+        //Se busca la finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
         $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
@@ -440,92 +549,95 @@ class ReprodController extends Controller
 
 
         $lotemonta = DB::table('sglotemontas')
-        ->join('sgciclos', 'sgciclos.id_ciclo', '=', 'sglotemontas.id_ciclo')
-        ->where('sglotemontas.id_ciclo','=',$id_ciclo)
-        ->get();	
-    		//return $lotemonta;	
-  			/*
-  			* Se realiza obtienen la fechas con la finalidad de hacer
-  			* el corrido de las mismas.
-  			*/
-              $comienzo = Carbon::parse($temp_reprod->fecini)->format('Y-m-d');
+            ->join('sgciclos', 'sgciclos.id_ciclo', '=', 'sglotemontas.id_ciclo')
+            ->where('sglotemontas.id_ciclo','=',$id_ciclo)
+            ->get();	
+    		
+		/*
+		* Se realiza obtienen la fechas con la finalidad de hacer
+		* el corrido de las mismas.
+		*/
+        $comienzo = Carbon::parse($temp_reprod->fecini)->format('Y-m-d');
 
-              $final = Carbon::parse($temp_reprod->fecfin)->format('Y-m-d');
+        $final = Carbon::parse($temp_reprod->fecfin)->format('Y-m-d');
 
-              $periodo = CarbonPeriod::create($comienzo,'1 days' ,$final);
+        $periodo = CarbonPeriod::create($comienzo,'1 days' ,$final);
 
-              $tmp = $periodo->toArray();
+        $tmp = $periodo->toArray();
 
-              $historicoTemporada = \App\Models\sghistoricotemprepro::where('id_ciclo', '=', $id_ciclo)
-              ->where('fecharegistro', '>=', $comienzo) 
-              ->where('id_finca', '=', $id_finca)->get(); 
+        $historicoTemporada = \App\Models\sghistoricotemprepro::where('id_ciclo', '=', $id_ciclo)
+            ->where('fecharegistro', '>=', $comienzo) 
+            ->where('id_finca', '=', $id_finca)
+            ->get(); 
+        
+        $seriesparareproduccion = DB::table('sgmontas')
+            ->select('sgmontas.id_serie', 'sgmontas.serie', 'sganims.sexo', 'sgmontas.tipologia_salida', 'sganims.pesoactual', 'sgmontas.id_lotemonta', 'sgtipologias.nombre_tipologia','sganims.tipo as tipoactual')
+            ->join('sglotemontas','sglotemontas.id_lotemonta','=','sgmontas.id_lotemonta')
+            ->join('sganims','sganims.id','=','sgmontas.id_serie')
+            ->join('sgtipologias','sgtipologias.id_tipologia','=','sgmontas.idtipoentrante')
+            ->where('sglotemontas.id_ciclo','=',$id_ciclo)
+            ->where('sganims.destatado','=',1)
+            ->orderBy('sgmontas.serie','ASC')
+            ->get();
+
+        return view('reproduccion.detalle_ciclo', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta', 'periodo','historicoTemporada','seriesparareproduccion','lotemonta'));
+    }
+
+    /*
+    * 	Fin de detalle de ciclo 
+    */
+
+    #Crear el CRUD de Lotes de Montas donde se asocian con el Ciclo 
+
+    public function lotemonta(Request $request, $id_finca, $id, $id_ciclo)
+    {
+
+        Gate::authorize('haveaccess','lotemonta');
+
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
+
+        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+
+        //Muestra todos los lotes de Temporada
+        $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
+            ->where('tipo', '=', "Temporada")->get();
+
+        $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
+            ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+            ->get();
+
+        $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
+            ->get();	
+
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+
+        $lotemonta = \App\Models\sglotemonta::where('sglotemontas.id_ciclo','=',$id_ciclo)
+              ->join('sgciclos','sgciclos.id_ciclo','=','sglotemontas.id_ciclo')
+              ->paginate(7);		
+
+        $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
+
+		/*
+		*se restan los meses para obtener los meses transcurridos. 
+		*/
+        $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
+
+        $dt = $months * 30; //días Transcurridos
+
+        //dd($dt);
+
+        $day = Carbon::parse($temp_reprod->fecini)->diffInDays($fechafin)-$dt;
+
+        $duracion = $months."-".$day;
 
 
-              $seriesparareproduccion = DB::table('sgmontas')
-              ->select('sgmontas.id_serie', 'sgmontas.serie', 'sganims.sexo', 'sgmontas.tipologia_salida', 'sganims.pesoactual', 'sgmontas.id_lotemonta', 'sgtipologias.nombre_tipologia','sganims.tipo as tipoactual')
-              ->join('sglotemontas','sglotemontas.id_lotemonta','=','sgmontas.id_lotemonta')
-              ->join('sganims','sganims.id','=','sgmontas.id_serie')
-              ->join('sgtipologias','sgtipologias.id_tipologia','=','sgmontas.idtipoentrante')
-              ->where('sglotemontas.id_ciclo','=',$id_ciclo)
-              ->where('sganims.destatado','=',1)
-              ->orderBy('sgmontas.serie','ASC')
-              ->get();
-
-              return view('reproduccion.detalle_ciclo', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta', 'periodo','historicoTemporada','seriesparareproduccion','lotemonta'));
-          }
-
-/*
-* 	Fin de detalle de ciclo 
-*/
-
-        #Crear el CRUD de Lotes de Montas donde se asocian con el Ciclo 
-
-public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
-
-  $finca = \App\Models\sgfinca::findOrFail($id_finca);
-
-  $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
-
-    		//Muestra todos los lotes de Temporada
-  $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-  ->where('tipo', '=', "Temporada")->get();
-
-  $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
-  ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
-  ->get();
-
-  $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-  ->get();	
-
-  $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
-
-
-  $lotemonta = \App\Models\sglotemonta::where('sglotemontas.id_ciclo','=',$id_ciclo)
-  ->join('sgciclos','sgciclos.id_ciclo','=','sglotemontas.id_ciclo')
-  ->paginate(7);		
-
-
-  $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
-
-    		/*
-    		*se restan los meses para obtener los meses transcurridos. 
-    		*/
-         $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
-
-	        $dt = $months * 30; //días Transcurridos
-
-	        //dd($dt);
-
-	        $day = Carbon::parse($temp_reprod->fecini)->diffInDays($fechafin)-$dt;
-
-	        $duracion = $months."-".$day;
-
-
-         return view('reproduccion.crear_lote_monta',compact('finca','temp_reprod','ciclo','lote','sublote', 'tipomonta','fechafin','duracion','lotemonta' ));
-     }
+        return view('reproduccion.crear_lote_monta',compact('finca','temp_reprod','ciclo','lote','sublote', 'tipomonta','fechafin','duracion','lotemonta' ));
+    }
 
      public function crear_lotemonta(Request $request, $id_finca, $id, $id_ciclo)
      {
+
+        Gate::authorize('haveaccess','lotemonta.crear'); 
 
         $request->validate([
             'lote'=> [
@@ -565,33 +677,35 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
     public function editar_lotemonta($id_finca, $id, $id_ciclo, $id_lotemonta)
     {
 
-     $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        Gate::authorize('haveaccess','lotemonta.editar');
+        
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-     $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
-    		//Muestra todos los lotes de Temporada
-     $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-     ->where('tipo', '=', "Temporada")->get();
+        		//Muestra todos los lotes de Temporada
+        $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
+           ->where('tipo', '=', "Temporada")->get();
 
-     $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
-     ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
-     ->get();
+        $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
+             ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+             ->get();
 
-     $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-     ->get();	
+        $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
+            ->get();	
 
-     $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
-
-
-     $lotemonta = \App\Models\sglotemonta::findOrFail($id_lotemonta);
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
 
-     $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
+        $lotemonta = \App\Models\sglotemonta::findOrFail($id_lotemonta);
+
+
+        $fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
 
     		/*
     		*se restan los meses para obtener los meses transcurridos. 
     		*/
-         $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
+        $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
 
 	        $dt = $months * 30; //días Transcurridos
 
@@ -603,12 +717,13 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 
 
 
-            return view('reproduccion.editar_lote_monta', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta','fechafin','duracion','lotemonta'));
+    return view('reproduccion.editar_lote_monta', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta','fechafin','duracion','lotemonta'));
         }
 
-        public function update_lotemonta(Request $request, $id, $id_finca, $id_ciclo, $id_lotemonta)
-        {
+    public function update_lotemonta(Request $request, $id, $id_finca, $id_ciclo, $id_lotemonta)
+    {
 
+            Gate::authorize('haveaccess','lotemonta.update');
             //Valida que  las series sean requeridos y que no se repitan.
             $request->validate([
                 'lote'=> [
@@ -629,10 +744,11 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
             return back()->with('msj', 'Registro actualizado satisfactoriamente');
         }
 
-        public function eliminar_lotemonta($id_finca, $id, $id_ciclo, $id_lotemonta)
-        {
-
-            $lotemontaEliminar = \App\Models\sglotemonta::findOrFail($id_lotemonta);
+    public function eliminar_lotemonta($id_finca, $id, $id_ciclo, $id_lotemonta)
+    {
+        Gate::authorize('haveaccess','lotemonta.eliminar');
+        
+        $lotemontaEliminar = \App\Models\sglotemonta::findOrFail($id_lotemonta);
 
             try {
                 $lotemontaEliminar->delete();
@@ -644,27 +760,28 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 
         }
 
-        public function serieslotemonta(Request $request, $id_finca, $id, $id_ciclo){
+    public function serieslotemonta(Request $request, $id_finca, $id, $id_ciclo)
+    {
 
-        	//return $request->all();
+        Gate::authorize('haveaccess','serieslotemonta');        
 
-          $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-          $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
-          $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-          $edadMaxTipologia = DB::table('sgtipologias')
+        $edadMaxTipologia = DB::table('sgtipologias')
           ->select(DB::raw('MAX(edad) as edadmax'))
           ->where('id_finca', '=', $id_finca)
           ->get();
 
-          foreach ($edadMaxTipologia as $key ) {
+        foreach ($edadMaxTipologia as $key ) {
              $edadmax = $key->edadmax; 
          }	
 
 
-         if ($ciclo->id_tipomonta == 1) {
+        if ($ciclo->id_tipomonta == 1) {
 				# Si se  trata de una inseminación artificial, solo se muestra las hembras que seran
 				# fertilizadas.
 				//return ("Es Insiminación");
@@ -691,6 +808,7 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
                       ->where('sganims.destatado','=',1)
 		                ->where('sganims.sexo','=',0) //Sexo = hembra
 		                ->where('sgtipologias.prenada','=',0) //Que sean hembras no preñadas
+                        ->where('sgtipologias.nro_monta','<>',2) //Que no muestre las novillas 2
 		                ->where('sgtipologias.edad','>=',$edadmax) //Mayores a 365
 		                ->whereNull('sganims.monta_activa') 
 		                //->orWhere('sganims.monta_activa', '=', 0) //Mostrara todas las series que no están en TM
@@ -717,6 +835,7 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 		                ->where('sganims.destatado','=',1)
 		                ->where('sgtipologias.prenada','=',0) //Que sean hembras no preñadas
 		               // ->where('sganims.sexo','=',0) //Sexo = hembra
+                        ->where('sgtipologias.nro_monta','<>',2) //Que no muestre las novillas 2
 		                ->where('sganims.id_finca', '=', $finca->id_finca)
 		                ->join('sgtipologias', 'sgtipologias.id_tipologia','=','sganims.id_tipologia')
 		                ->take(10)->paginate(10);
@@ -806,26 +925,27 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 
     public function asignarserieslotemonta(Request $request, $id_finca, $id, $id_ciclo)
     {
+        Gate::authorize('haveaccess','asignarserieslotemonta');        
 
-       $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
                 //Validamos los campos Nombre de lote y las series a través de su id
-       $request->validate([
-         'lote'=>[
-          'required',
-      ],
-      'id'=>[
-          'required',
-      ],
-  ]);
+        $request->validate([
+            'lote'=>[
+                'required',
+            ],
+            'id'=>[
+                'required',
+            ],
+        ]);
 
-    			/*
-    			 * Tiempo o cantidad de Dias que dura la monta.
-    			 * Proviene del Calculo de la Diferenecia entre fecha inicial del ciclo y la 
-    			 *  Fecha final del ciclo.
-    			 */
+		/*
+		 * Tiempo o cantidad de Dias que dura la monta.
+		 * Proviene del Calculo de la Diferenecia entre fecha inicial del ciclo y la 
+		 *  Fecha final del ciclo.
+		 */
 
-             $day = Carbon::parse($request->fechainicialciclo)->diffInDays($request->fechafinalciclo);
+        $day = Carbon::parse($request->fechainicialciclo)->diffInDays($request->fechafinalciclo);
 
              $loteMonta = \App\Models\sglotemonta::findOrFail($request->lote); 
 
@@ -875,8 +995,8 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
                      'nro_monta'=>$nroMonta]);    
                 }   
 
-                return back()->with('msj', 'Serie (s) asignada satisfactoriamente');
-            }  
+        return back()->with('msj', 'Serie (s) asignada satisfactoriamente');
+    }  
 /*
 ***********************************************************************************
 		---|> CONTROLES PARA CADA PORCESO DE MONTA <|---	
@@ -885,160 +1005,183 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 
      public function celos(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
      {
-
-            //Se busca la finca por su id - Segun modelo
+ 
+        //Se busca la finca por su id - Segun modelo
         $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
         $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
         $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-    		//Muestra todos los lotes de Temporada
+
+
+        //Muestra todos los lotes de Temporada
         $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-        ->where('tipo', '=', "Temporada")
-        ->get();
+            ->where('tipo', '=', "Temporada")
+            ->get();
 
         $sublote = DB::table('sgsublotes')
-        ->where('sgsublotes.id_finca','=',$id_finca)
-        ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
-        ->get();
+            ->where('sgsublotes.id_finca','=',$id_finca)
+            ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+            ->get();
 
         $usuario = \App\Models\User::all();
 
         $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-        ->get();
+            ->get();
 
-    		/*
-    		* ->| Se calculan las fechas y la duración del ciclo.
-    		*/	
+    	/*
+    	* ->| Se calculan las fechas y la duración del ciclo.
+    	*/	
 
-    		$fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
+    	$fechafin = Carbon::parse($temp_reprod->fecini)->addDay(90)->format('Y-m-d');
     		
     		//se restan los meses para obtener los meses transcurridos. 
-         $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
+        $months = Carbon::parse($temp_reprod->fecini)->diffInMonths($fechafin) + 1;
 
-	        $dt = $months * 30; //días Transcurridos
+        $dt = $months * 30; //días Transcurridos
 
-	        $day = Carbon::parse($temp_reprod->fecini)->diffInDays($fechafin)-$dt;
+        $day = Carbon::parse($temp_reprod->fecini)->diffInDays($fechafin)-$dt;
 
-	        $duracion = $months."-".$day;
+        $duracion = $months."-".$day;
 
-    		/*
-    		*->| Fin 
-    		*/
-    		
-            $series = \App\Models\sganim::findOrFail($id_serie);
+		/*
+		*->| Fin 
+		*/
+		
+        $series = \App\Models\sganim::findOrFail($id_serie);
 
-            $raza = \App\Models\sgraza::findOrFail($series->idraza);
+        $raza = \App\Models\sgraza::findOrFail($series->idraza);
 
-            $celos = \App\Models\sgcelo::where('id_serie','=',$id_serie)
+        $celos = \App\Models\sgcelo::where('id_serie','=',$id_serie)
             ->where('id_ciclo','=',$id_ciclo)
             ->where('id_finca','=',$id_finca)
             ->paginate(5);
-            
-            $parto = \App\Models\sgparto::where('id_serie','=',$id_serie)
+        
+        $parto = \App\Models\sgparto::where('id_serie','=',$id_serie)
             ->where('id_ciclo','=',$id_ciclo)
             ->where('id_finca','=',$id_finca)->get();
 
-            $prenhez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
+        $prenhez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
             ->where('id_ciclo','=',$id_ciclo)
             ->where('id_finca','=',$id_finca)->get();
 
-            /*
-            * Con esta consulta ubicamos el parametros días entre celo 
-            */
-            $pR = \App\Models\sgparametros_reproduccion_animal::where('id_finca', '=', $finca->id_finca)->get();
-            
-            foreach ($pR as $key) {
-            	//$dec = Días entre Celo
-            	$dec = $key->diasentrecelo; 
-            }
+        /*
+        * Con esta consulta ubicamos el parametros días entre celo 
+        */
+        $pR = \App\Models\sgparametros_reproduccion_animal::where('id_finca', '=', $finca->id_finca)->get();
+        
+        foreach ($pR as $key) {
+        	//$dec = Días entre Celo
+        	$dec = $key->diasentrecelo; 
+        }
 
             return view('reproduccion.formulario_celos', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta','fechafin','duracion','celos','series','usuario', 'raza', 'dec'));
         }
 
 
-        public function crear_celos(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
+    public function crear_celos(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
+    {
 
-        {
 
-        	$ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-            $request->validate([
-                'resp'=> [
-                    'required',
-             //       'unique:sgtempreprods,nombre,NULL,NULL,id_finca,'. $id_finca,
-                ],
-                'fregistro'=> [
-                    'required',
-                ],
-            ]);            
-            /*
-            * Identifica si el registro proviene de una temporada
-            * 0 = Registro no es de temporada / 1 = Registro es de una temporada
-            */
-            $estemporada= 1; 
-			/*
-			* ->| Se registran los nuevos Celos
-			*/
-            $celoNuevo = new \App\Models\sgcelo;
+        #Ubicamos la Serie a través de su Id.
+        $series = \App\Models\sganim::findOrFail($id_serie);
 
-            $celoNuevo->id_serie = $id_serie;
-            $celoNuevo->serie = $request->serie;
-            $celoNuevo->fechr = $request->fregistro;
-            $celoNuevo->dias = $request->ier;
-            $celoNuevo->resp = $request->resp;
-            $celoNuevo->fecestprocel  = $request->fproxcelo;
-            $celoNuevo->intdiaabi = $request->ida;
-            $celoNuevo->estemporada = $estemporada;
-            $celoNuevo->id_ciclo = $id_ciclo;
-            $celoNuevo->id_finca = $id_finca;
+        #Se ubica su tipología, ya que nos indicará si está preñada. 
+        $tipoActualSerie = $series->id_tipologia; 
 
-            $celoNuevo-> save(); 
-            /*
-			* ->| Se registran los nuevos Celos en el historial. 
-			*/
-			$historias = 0;
+        $seriesPrenada = DB::table('sgtipologias')
+            ->where('id_finca','=',$id_finca)
+            ->where('prenada','=',1) #0=False; 1=True;
+            ->where('id_tipologia','=',$tipoActualSerie) 
+            ->get();
 
-            $celoHistorial = new \App\Models\sghistcelo;
+        $cont = $seriesPrenada->count();
+        
+        if ($cont>0) {
+            # Si esta preñada, entonces enviamos un mensaje informativo
+            return back()->with('celos','prenada');
+            
+            } else {
+                # Si no está preñada podremos crear el registro
+                $request->validate([
+                    'resp'=> [
+                        'required',
+                        #'unique:sgtempreprods,nombre,NULL,NULL,id_finca,'. $id_finca,
+                    ],
+                    'fregistro'=> [
+                        'required',
+                    ],
+                ]);            
+                /*
+                * Identifica si el registro proviene de una temporada
+                * 0 = Registro no es de temporada / 1 = Registro es de una temporada
+                */
+                $estemporada= 1; 
+                /*
+                * ->| Se registran los nuevos Celos
+                */
+                $celoNuevo = new \App\Models\sgcelo;
 
-            $celoHistorial->id_serie = $id_serie;
-            $celoHistorial->serie = $request->serie;
-            $celoHistorial->fechr = $request->fregistro;
-            $celoHistorial->dias = $request->ier;
-            $celoHistorial->resp = $request->resp;
-            $celoHistorial->fecestprocel  = $request->fproxcelo;
-            $celoHistorial->intdiaabi = $request->ida;
-            $celoHistorial->estemporada = $estemporada;
-            $celoHistorial->id_ciclo = $id_ciclo;
-            $celoHistorial->nciclo = $ciclo->ciclo;
-            $celoHistorial->historias= $historias;
+                $celoNuevo->id_serie = $id_serie;
+                $celoNuevo->serie = $request->serie;
+                $celoNuevo->fechr = $request->fregistro;
+                $celoNuevo->dias = $request->ier;
+                $celoNuevo->resp = $request->resp;
+                $celoNuevo->fecestprocel  = $request->fproxcelo;
+                $celoNuevo->intdiaabi = $request->ida;
+                $celoNuevo->estemporada = $estemporada;
+                $celoNuevo->id_ciclo = $id_ciclo;
+                $celoNuevo->id_finca = $id_finca;
 
-            $celoHistorial-> save(); 
-            /*
-            * Se cuentan la cantidad de celos por la fecha de registro.
-            */
-            $countcelo =  DB::table('sgcelos')
-            ->where('fechr','=',$request->fregistro)
-            ->where('id_finca','=', $id_finca)
-            ->where('id_ciclo','=', $id_ciclo)
-            ->count(); 
+                $celoNuevo-> save(); 
+                /*
+                * ->| Se registran los nuevos Celos en el historial. 
+                */
+                $historias = 0;
 
-            $nrocelo = DB::table('sghistoricotemprepros')
-            ->where('fecharegistro','=',$request->fregistro)
-            ->where('id_finca','=', $id_finca)
-            ->where('id_ciclo','=', $id_ciclo)
-            ->update(['nrocelo'=>$countcelo]);     
-            /*
-            * Actualiza el campo fecha del último celo. 
-            */
-            $ultimocelo = DB::table('sganims')
-            ->where('id','=',$request->idserie)
-            ->where('id_finca','=', $id_finca)
-            ->update(['fecuc'=>$request->fregistro]); 
+                $celoHistorial = new \App\Models\sghistcelo;
 
-            return back()->with('msj', 'Registro agregado satisfactoriamente');
+                $celoHistorial->id_serie = $id_serie;
+                $celoHistorial->serie = $request->serie;
+                $celoHistorial->fechr = $request->fregistro;
+                $celoHistorial->dias = $request->ier;
+                $celoHistorial->resp = $request->resp;
+                $celoHistorial->fecestprocel  = $request->fproxcelo;
+                $celoHistorial->intdiaabi = $request->ida;
+                $celoHistorial->estemporada = $estemporada;
+                $celoHistorial->id_ciclo = $id_ciclo;
+                $celoHistorial->nciclo = $ciclo->ciclo;
+                $celoHistorial->historias= $historias;
+
+                $celoHistorial-> save(); 
+                /*
+                * Se cuentan la cantidad de celos por la fecha de registro.
+                */
+                $countcelo =  DB::table('sgcelos')
+                    ->where('fechr','=',$request->fregistro)
+                    ->where('id_finca','=', $id_finca)
+                    ->where('id_ciclo','=', $id_ciclo)
+                    ->count(); 
+
+                $nrocelo = DB::table('sghistoricotemprepros')
+                    ->where('fecharegistro','=',$request->fregistro)
+                    ->where('id_finca','=', $id_finca)
+                    ->where('id_ciclo','=', $id_ciclo)
+                    ->update(['nrocelo'=>$countcelo]);     
+                /*
+                * Actualiza el campo fecha del último celo. 
+                */
+                $ultimocelo = DB::table('sganims')
+                    ->where('id','=',$request->idserie)
+                    ->where('id_finca','=', $id_finca)
+                    ->update(['fecuc'=>$request->fregistro]); 
+
+                return back()->with('msj', 'Registro agregado satisfactoriamente');            
         }
+    }
 
         public function editar_celos($id_finca, $id, $id_ciclo, $id_serie, $id_celo)
         {
@@ -1076,14 +1219,14 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
             //Valida que  las series sean requeridos y que no se repitan.
             $request->validate([
 
-             'fregistro'=> [
-                'required',
-            ],
-            'resp'=>[
-             'required',
-         ],
+                'fregistro'=> [
+                    'required',
+                ],
+                'resp'=>[
+                 'required',
+                 ],
 
-     ]);
+            ]);
 
 
  			$estemporada = 1; //Proviene de una Temporada la actualizacion	
@@ -1203,109 +1346,141 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
     }
 
 }
+    /*
+    *--> Registros de Servicios
+    */  
+    public function servicio(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
+    {
 
-     /*
-     *--> Registros de Servicios
-     */  
-     public function servicio(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
-     {
+  		//Se busca la finca por su id - Segun modelo
+        $finca = \App\Models\sgfinca::findOrFail($id_finca);
 
-  			/*
-  			*-> Aquí debe ir un procedimiento que busque un celo registrado menos de un día
-  			para que pueda registrar el servicio. Sino se envía un mensaje informandoq ue se
-  			debe registrar primero un celo y luego hacer el servicio
-  			*/
+        $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
 
-            //Se busca la finca por su id - Segun modelo
-            $finca = \App\Models\sgfinca::findOrFail($id_finca);
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-            $temp_reprod = \App\Models\sgtempreprod::findOrFail($id);
+		//Muestra todos los lotes de Temporada
+        $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
+        ->where('tipo', '=', "Temporada")->get();
 
-            $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+        $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
+        ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+        ->get();
 
-    		//Muestra todos los lotes de Temporada
-            $lote = \App\Models\sglote::where('id_finca', '=', $id_finca)
-            ->where('tipo', '=', "Temporada")->get();
+        $usuario = \App\Models\User::all();
 
-            $sublote = DB::table('sgsublotes')->where('sgsublotes.id_finca','=',$id_finca)
-            ->join('sglotes', 'sglotes.nombre_lote', '=', 'sgsublotes.nombre_lote')
+
+        $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
             ->get();
 
-            $usuario = \App\Models\User::all();
+        $status=1;
 
-
-            $tipomonta = \App\Models\sgtipomonta::where('id_finca','=',$id_finca)
-            ->get();
-
-            $status=1;
-
-            $tipologia = DB::table('sgtipologias')
+        $tipologia = DB::table('sgtipologias')
             ->select(DB::raw('MAX(peso) as pesomax'))
             ->where('id_finca','=',$id_finca)
             ->get(); 
 
-            foreach ($tipologia as $key) {
-               $pesotipo = $key->pesomax; 	
-           }	 
+        foreach ($tipologia as $key) 
+        {
+           $pesotipo = $key->pesomax; 	
+        }	 
 
-           $series = \App\Models\sganim::findOrFail($id_serie);
+        $series = \App\Models\sganim::findOrFail($id_serie);
 
-            //*************************************************
-		        //Se calcula con la herramienta carbon la edad
-           $year = Carbon::parse($series->fnac)->diffInYears(Carbon::now());
-		        //Se multiplica los años obtendios por 12 para saber los meses de la cantidad de años.
-           $dt = $year*12;
-		        //se restan los meses para obtener los meses transcurridos. 
-           $months = Carbon::parse($series->fnac)->diffInMonths(Carbon::now()) - $dt;
-		        // se pasa a la variable edad, para guardar junto a la información que proviene del form.
-           $edad = $year."-".$months;
+        //*************************************************
+	        //Se calcula con la herramienta carbon la edad
+        $year = Carbon::parse($series->fnac)->diffInYears(Carbon::now());
+	        //Se multiplica los años obtendios por 12 para saber los meses de la cantidad de años.
+        $dt = $year*12;
+	        //se restan los meses para obtener los meses transcurridos. 
+        $months = Carbon::parse($series->fnac)->diffInMonths(Carbon::now()) - $dt;
+	        // se pasa a la variable edad, para guardar junto a la información que proviene del form.
+        $edad = $year."-".$months;
 		    //*************************************************
 
-           $condicorpo = \App\Models\sgcondicioncorporal::findOrFail($series->id_condicion);
+        $condicorpo = \App\Models\sgcondicioncorporal::findOrFail($series->id_condicion);
 
-           $raza = \App\Models\sgraza::findOrFail($series->idraza);
+        $raza = \App\Models\sgraza::findOrFail($series->idraza);
 
-           $servicio = \App\Models\sgserv::where('sgservs.id_serie','=',$id_serie)
-           ->select('sgservs.id','sgservs.serie', 'sgservs.fecha', 'sgservs.toro', 'sgservs.paju','sgservs.snro','sgservs.edad','sgservs.peso','sgservs.nomi','sgtipologias.nomenclatura')
-           ->join('sgtipologias','sgtipologias.id_tipologia','=','sgservs.id_tipologia')
-           ->where('sgservs.id_ciclo','=',$id_ciclo)
-           ->where('sgservs.id_finca','=',$id_finca)
-           ->paginate(5);
+        $servicio = \App\Models\sgserv::where('sgservs.id_serie','=',$id_serie)
+                   ->select('sgservs.id','sgservs.serie', 'sgservs.fecha', 'sgservs.toro', 'sgservs.paju','sgservs.snro','sgservs.edad','sgservs.peso','sgservs.nomi','sgtipologias.nomenclatura')
+                   ->join('sgtipologias','sgtipologias.id_tipologia','=','sgservs.id_tipologia')
+                   ->where('sgservs.id_ciclo','=',$id_ciclo)
+                   ->where('sgservs.id_finca','=',$id_finca)
+                   ->paginate(5);
 
-           $parto = \App\Models\sgparto::where('id_serie','=',$id_serie)
-           ->where('id_ciclo','=',$id_ciclo)
-           ->where('id_finca','=',$id_finca)->get();
+        $parto = \App\Models\sgparto::where('id_serie','=',$id_serie)
+                   ->where('id_ciclo','=',$id_ciclo)
+                   ->where('id_finca','=',$id_finca)->get();
 
-           $prenhez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
-           ->where('id_ciclo','=',$id_ciclo)
-           ->where('id_finca','=',$id_finca)->get();
+        $prenhez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
+                   ->where('id_ciclo','=',$id_ciclo)
+                   ->where('id_finca','=',$id_finca)->get();
 
-           $pajuela = \App\Models\sgpaju::where('cant', '>', 0)->get();
+        $pajuela = \App\Models\sgpaju::where('cant', '>', 0)->get();
 
-           $serietoro = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)
-           ->where('pesoactual','>=',$pesotipo)
+        $serietoro = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)
+                ->where('pesoactual','>=',$pesotipo)
 	            ->where('sexo','=',1) //Sexo macho
 	            ->where('destatado','=',1) //Que se encuentre destetado
-	            ->where('status','=',$status)->get();	
+	            ->where('status','=',$status)->get();
 
-                return view('reproduccion.formulario_servicio', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta','servicio','series','usuario', 'raza','condicorpo','pajuela','serietoro','edad'));
+             /*
+            *-> Aquí colocamos un procedimiento que busque un celo registrado menos de un día
+            para que pueda registrar el servicio. Sino se envía un mensaje informando que se
+            debe registrar primero un celo y luego hacer el servicio
+            */
+
+            #0.- Buscamos el último Celo.
+            $fechaUltimoCelo = DB::table('sgcelos')
+                  ->select(DB::raw('MAX(fechr) as fecUltimoCelo'))
+                  ->where('id_finca', '=',$id_finca)
+                  ->where('id_ciclo','=',$id_ciclo)
+                  ->where('id_serie','=',$id_serie)
+                  ->get();  
+
+            foreach ($fechaUltimoCelo as $key) {
+                $fechaUltimoCelo = $key->fecUltimoCelo; 
             }
 
-            public function crear_servicio(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
+            if (!($fechaUltimoCelo==null) ) {
+                #Si existe una ultima fecha de celos 
+                #Calculamos con la fecha y ahora la diferencia
+                $ahora = Carbon::now()->subDay(1);
+                #1.- Aqui obtenemos la comparación de la fecha del ultimo celo. 
+                $diferenciaFecha = Carbon::parse($fechaUltimoCelo)->diffInHours($ahora);
+            } else {
+                #Si no existe la fecha de ultimo celo, entonces la diferencia de horas
+                # es 0.
+                $diferenciaFecha= 0;
+            }
+                 
+            //return $diferenciaFecha; 
+            #2.- Aquí validamos que la fecha obtenida no sea mayor a 24 horas para poder realizar el servicio
+            if ( ($diferenciaFecha>0) and ($diferenciaFecha<=24) ) {
+                #Si existe un servicio registrado se procede a realizar el registro del servicio
+                return view('reproduccion.formulario_servicio', compact('ciclo','finca', 'temp_reprod','lote','sublote','tipomonta','servicio','series','usuario', 'raza','condicorpo','pajuela','serietoro','edad'));
+            } else {
+                #Retornamos el mensaje informativo y lo enviamos a la vista 
+                return back()->with('celos', 'noregistro');
+            }    
+    }
 
-            {
+    public function crear_servicio(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
 
-       	//Valida que el serial provenga de una Serie Toro o Pajuela.
-                $seriepadre = ($request->serie_macho=="1")?($seriepadre=null):($seriepadre=$request->seriepadre);       
-                $codpajuela = ($request->serie_macho=="0")?($codpajuela=null):($codpajuela = $request->paju);
+    {
 
-                $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+	    //Valida que el serial provenga de una Serie Toro o Pajuela.
+        $seriepadre = ($request->serie_macho=="1")?($seriepadre=null):($seriepadre=$request->seriepadre);       
+        $codpajuela = ($request->serie_macho=="0")?($codpajuela=null):($codpajuela = $request->paju);
 
-                $series = \App\Models\sganim::findOrFail($id_serie);
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-                $tipologia = \App\Models\sgtipologia::findOrFail($series->id_tipologia);
+        $series = \App\Models\sganim::findOrFail($id_serie);
 
-                if ($request->serie_macho=="1") {
+        $tipologia = \App\Models\sgtipologia::findOrFail($series->id_tipologia);
+
+        if ($request->serie_macho=="1") {
 
                   $request->validate([
                      'paju'=> [
@@ -1476,12 +1651,12 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
         * Para Crear el registro primero se verifica que la serie no tenga
         * Un Registro en la tabla. 
         */
-        $buscaMvMadre = \App\Models\sgmvmadre::where('codmadre','=',$series->serie)
-        ->where('id_finca','=',$id_finca)
-        ->get();
+        $buscaMvMadre = \App\Models\sgmvmadre::where('id_serie','=',$series->id)
+            ->where('id_finca','=',$id_finca)
+            ->get();
 
         foreach ($buscaMvMadre as $key ) {
-            $codmadre= $key->codmadre; 
+            $idmadre= $key->id_serie; 
         }   
 
         if ($buscaMvMadre->count()>0) {
@@ -1489,22 +1664,22 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
             try{
                 //$prenezNueva-> save();
                 $updateMvMadre = DB::table('sgmvmadres')
-                ->where('codmadre','=',$codmadre)
-                ->update(['fnac'=>$series->fnac,
-                 'tipologia'=>$series->tipo,
-                 'id_tipologia'=>$tipologia->id_tipologia,
-                 'npartos'=>$npartos,
-                 'nabortos'=>$nabortos,
-                 'nservicios'=>$nservicios,
-                 'lote'=>$series->lote,
-                 'observacion'=>$series->observa,
-                 'faproxparto'=>$request->faproparto,
-                 'IDA'=>$request->ida,
-                 'fepre'=>$request->festipre,
-                 'fecs'=>$fecsistema,
-                 'fecup'=>$request->fecharegistro,
-                 'vaquera'=>null,    
-                 'id_finca'=>$id_finca]); 
+                    ->where('id_serie','=',$idmadre)
+                    ->update(['fnac'=>$series->fnac,
+                             'tipologia'=>$series->tipo,
+                             'id_tipologia'=>$tipologia->id_tipologia,
+                             'npartos'=>$npartos,
+                             'nabortos'=>$nabortos,
+                             'nservicios'=>$nservicios,
+                             'lote'=>$series->lote,
+                             'observacion'=>$series->observa,
+                             'faproxparto'=>$request->faproparto,
+                             'IDA'=>$request->ida,
+                             'fepre'=>$request->festipre,
+                             'fecs'=>$fecsistema,
+                             'fecup'=>$request->fecharegistro,
+                             'vaquera'=>null,    
+                             'id_finca'=>$id_finca]); 
             }catch (\Illuminate\Database\QueryException $e){
                 return back()->with('mensaje', 'error');
             }       
@@ -1512,6 +1687,7 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 
             $mvMadreNueva = new \App\Models\sgmvmadre;
 
+            $mvMadreNueva->id_serie = $id_serie;
             $mvMadreNueva->codmadre = $series->serie;
             $mvMadreNueva->fnac = $series->fnac;
             $mvMadreNueva->tipologia = $series->tipo;
@@ -1570,7 +1746,7 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
      $status = 1; 
 
      $serietoro = \App\Models\sganim::where('id_finca', '=', $finca->id_finca)
-     ->where('codpadre','<>',Null)
+                ->where('codpadre','<>',Null)
 	            ->where('id_tipologia','=',18) //hardcod
 	            ->where('status','=',$status)->get();	    
 
@@ -1654,48 +1830,48 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 	        * Se cuentan la cantidad de servicios por la fecha de registro.
 	        */
 	        $countserv =  DB::table('sgservs')
-         ->where('fecha','=',$fecha)
-         ->where('id_finca','=', $id_finca)
-         ->where('id_ciclo','=', $id_ciclo)
-         ->count(); 
+                 ->where('fecha','=',$fecha)
+                 ->where('id_finca','=', $id_finca)
+                 ->where('id_ciclo','=', $id_ciclo)
+                 ->count(); 
 
          $nroservicioantes = DB::table('sghistoricotemprepros')
-         ->where('fecharegistro','=',$fecha)
-         ->where('id_finca','=', $id_finca)
-         ->where('id_ciclo','=', $id_ciclo)
-         ->update(['nroservicio'=>$countserv]);          
+             ->where('fecharegistro','=',$fecha)
+             ->where('id_finca','=', $id_finca)
+             ->where('id_ciclo','=', $id_ciclo)
+             ->update(['nroservicio'=>$countserv]);          
 
          $countservahora =  DB::table('sgservs')
-         ->where('fecha','=',$request->fregistro)
-         ->where('id_finca','=', $id_finca)
-         ->where('id_ciclo','=', $id_ciclo)
-         ->count();                     
+             ->where('fecha','=',$request->fregistro)
+             ->where('id_finca','=', $id_finca)
+             ->where('id_ciclo','=', $id_ciclo)
+             ->count();                     
 
          $nroservicio = DB::table('sghistoricotemprepros')
-         ->where('fecharegistro','=',$request->fregistro)
-         ->where('id_finca','=', $id_finca)
-         ->where('id_ciclo','=', $id_ciclo)
-         ->update(['nroservicio'=>$countservahora]);
+             ->where('fecharegistro','=',$request->fregistro)
+             ->where('id_finca','=', $id_finca)
+             ->where('id_ciclo','=', $id_ciclo)
+             ->update(['nroservicio'=>$countservahora]);
 
             /*
             * Actualiza el campo fecha del último servicio y nro_monta.
             * Ya que un servicio es una monta 
             */
             $ultimoservicio = DB::table('sganims')
-            ->where('id','=',$request->id_serie)
-            ->where('id_finca','=', $id_finca)
-            ->update(['fecus'=>$request->fregistro,
-             'nservi'=>$countservahora]);  
+                ->where('id','=',$request->id_serie)
+                ->where('id_finca','=', $id_finca)
+                ->update(['fecus'=>$request->fregistro,
+                            'nservi'=>$countservahora]);  
 
             if ($request->cantpaju > 0) {
 	            /*
 		    	*-> Calculamos la cantidad disponible de pajuela
 		    	*/
 		    	$cantdispaju = DB::table('sgpajus')
-             ->select('cant')
-             ->where('serie','=',$request->paju)
-             ->where('id_finca','=', $id_finca)
-             ->get();
+                 ->select('cant')
+                 ->where('serie','=',$request->paju)
+                 ->where('id_finca','=', $id_finca)
+                 ->get();
 
              foreach ($cantdispaju as $item) {
               $disponible= (int) $item->cant;
@@ -1707,9 +1883,9 @@ public function lotemonta(Request $request, $id_finca, $id, $id_ciclo){
 		        * Actualiza el campo cant de pajuela con la variable $canttotal
 		        */      
 		        $cantpajuela = DB::table('sgpajus')
-              ->where('serie','=',$request->paju)
-              ->where('id_finca','=', $id_finca)
-              ->update(['cant'=>$canttotal]);                        
+                  ->where('serie','=',$request->paju)
+                  ->where('id_finca','=', $id_finca)
+                  ->update(['cant'=>$canttotal]);                        
           }                        
 
           return back()->with('msj', 'Registro actualizado satisfactoriamente');
@@ -2186,78 +2362,91 @@ public function prenez(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
         }
 
 
-        public function crear_prenez(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
-        {
+    public function crear_prenez(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
+    {
 
-        	
+        $ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
 
-        	$ciclo = \App\Models\sgciclo::findOrFail($id_ciclo);
+        $tipomonta = \App\Models\sgtipomonta::findOrFail($request->metodo_prenez);
 
-        	$tipomonta = \App\Models\sgtipomonta::findOrFail($request->metodo_prenez);
+        $series = \App\Models\sganim::findOrFail($id_serie);
+    	
+    	#Aquí ubicamos el último servicio realizado para la serie
+    	
+        $ultimoservicio = DB::table('sgservs')
+                ->select(DB::raw('MAX(fecha) as ultservicio'))
+                ->where('serie', '=', $series->serie)
+                ->where('id_finca','=',$id_finca)
+                ->get();
 
-        	$series = \App\Models\sganim::findOrFail($id_serie);
-        	/*
-        	* Aquí consultamos el último servicio realizado para la serie
-        	* Consultada.
-        	*/
-        	$ultimoservicio = DB::table('sgservs')
-            ->select(DB::raw('MAX(fecha) as ultservicio'))
-            ->where('serie', '=', $series->serie)
-            ->where('id_finca','=',$id_finca)
-            ->get();
-				/*
-				*->| Comprueba el ultimo servicio 
-				*/
-				foreach ($ultimoservicio as $key) {
-                  $fechaultimoservicio = $key->ultservicio;
-              }	
-				/*
-				* Aquí hacemos la consulta eloquent donde obtendremos el JSON de la tabla basado en el criterio de consulta anterior
-				*/	
-				$servicio = DB::table('sgservs')
-                 ->where('serie', '=', $series->serie)
-                 ->where('fecha', '=', $fechaultimoservicio)
-                 ->where('id_finca','=',$id_finca)
-                 ->get();
-				/*
-				*-|> Fin de Consulta de Servicio
-				*/	
-        	 /*
-            * Con esto obtenermos el parametro tiempo de gestacion
-            */
-             $pR = \App\Models\sgparametros_reproduccion_animal::where('id_finca', '=', $id_finca)->get();
+		#->| Comprueba el ultimo servicio 
+		
+		foreach ($ultimoservicio as $key) {
+            $fechaultimoservicio = $key->ultservicio;
+        }	
+		
+ 		# Aquí hacemos la consulta eloquent donde obtendremos el JSON de la tabla basado en el criterio de consulta anterior
+		$servicio = DB::table('sgservs')
+             ->where('serie', '=', $series->serie)
+             ->where('fecha', '=', $fechaultimoservicio)
+             ->where('id_finca','=',$id_finca)
+             ->get();
 
-             foreach ($pR as $key) {
+        #Aquí hacemos una pequeña validación para asegurarnos que existe la fecha del ultimo servicio     
+        if (!($fechaultimoservicio==null) ) {
+                #Si existe una ultima fecha de servicios
+                #Calculamos con la fecha y dia la diferencia
+                $diaActual = Carbon::now()->subDay(1);
+                #1.- Aqui obtenemos la comparación de la fecha del ultimo servicio. 
+                $tiempoServicio = Carbon::parse($fechaultimoservicio)->diffInDays($diaActual); 
+            } else {
+                #Si no existe la fecha de ultimo servicio, entonces la diferencia de días
+                # es 0.
+                $tiempoServicio= -1; #hardcode para que pase a false y no cumpla con la condicion
+            } 
+		
+        #Con esto obtenermos el parametro tiempo de gestacion        
+        $pR = \App\Models\sgparametros_reproduccion_animal::where('id_finca', '=', $id_finca)->get();
+
+            foreach ($pR as $key) {
             	//$tgesta = Tiempo de Gestación (días)
                $tgesta = $key->tiempogestacion; 
            }
 
-           $metodo = $tipomonta->nombre; 
+        $metodo = $tipomonta->nombre; 
 
-            #Aqui se comprueba el tipo de métdos para asi validar los campos
-           if ($request->metodo_prenez == 1) {
+        #Aqui se comprueba el tipo de métodos para asi validar los campos
+        if ($request->metodo_prenez == 1) {
+            
+            //return $tiempoServicio;
+            #Aquí validamos que la fecha del ultimo servicio no sea mayor 45 días para poder realizar la preñez
+            if ( ($tiempoServicio>=0) and ($tiempoServicio<=45) ) {
                 # Viene del método inseminación artificial/ Monta Controlada 
-            $request->validate([
-                'diaprenez'=> [
-                    'required',
-                 //       'unique:sgtempreprods,nombre,NULL,NULL,id_finca,'. $id_finca,
-                ],
-                'fecharegistro'=> [
-                    'required',
-                ],
-            ]);
-                /*
-                * Se hardcod el métodop porque se presume que no cambian con 
-                * el tiempo
-                */
-                /*
-                * se recorre el JSON para Obtener los valores obtenidos.
-                */  
+                $request->validate([
+                    'diaprenez'=> [
+                        'required',
+                     //       'unique:sgtempreprods,nombre,NULL,NULL,id_finca,'. $id_finca,
+                    ],
+                    'fecharegistro'=> [
+                        'required',
+                    ],
+                ]);
+                
+                # Se hardcod el métodop porque se presume que no cambian con el tiempo
+                
+                #se recorre el JSON para Obtener los valores obtenidos.
+                  
                 foreach ($servicio as $item) {
                     $toropaj = $item->paju;
                     $torotemp = $item->toro;
                     $nomi = $item->nomi; 
-                }  
+                }
+
+            } else {
+                #Retornamos el mensaje informativo y lo enviamos a la vista 
+                return back()->with('prenez', 'noregistro');
+            }    
+            
             } else {
                 # Viene del méodo Monta Libre
                 $request->validate([
@@ -2269,11 +2458,9 @@ public function prenez(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
                         'required',
                     ],
                 ]);
-                /*Se hardcod el métodop porque se presume que no cambian con 
-                * el tiempo
-                */
-                //$metodo = $tipomonta->nombre;
-
+                #Se hardcod el métodop porque se presume que no cambian con el tiempo
+                
+                #$metodo = $tipomonta->nombre;
                 /*
                 * Se pasa los valores a nulo porque se trata de una monta natural 
                 * Se desconoce los valores del Toro Padre o Pajuela. 
@@ -2281,601 +2468,595 @@ public function prenez(Request $request, $id_finca, $id, $id_ciclo, $id_serie)
                 $toropaj = null;
                 $torotemp = null;
                 $nomi = null; 
-                
             }
-			/* 
-        	* Para Crear una preñez, primero se verifica que la serie no tenga
-        	* Un Registro de preñez en curso con tiempo de gestación menor al 
-        	* Parametro Configurado
-        	*/
-        	$buscaPrenez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
-          ->where('id_finca','=',$id_finca)
-          ->get();
+		/* 
+    	* Para Crear una preñez, primero se verifica que la serie no tenga
+    	* Un Registro de preñez en curso con tiempo de gestación menor al 
+    	* Parametro Configurado
+    	*/
+    	$buscaPrenez = \App\Models\sgprenhez::where('id_serie','=',$id_serie)
+            ->where('id_finca','=',$id_finca)
+            ->get();
 
-          foreach ($buscaPrenez as $key ) {
+        foreach ($buscaPrenez as $key ) {
            $fep = $key->fepre;
            $idprenez= (int) $key->id; 
-       }	
+        }	
 
-        	# Si existe la preñez		
-       if ($buscaPrenez->count()>0) {
-        		# Si exite calculamos los días transcurridos de gestción.
-        		$tgc = Carbon::parse($request->fecharegistro)->diffInDays($fep);//Tiempo de Gestación Trasncurridos
+        # Si existe la preñez		
+        if ($buscaPrenez->count()>0) {
+    		# Si exite calculamos los días transcurridos de gestación.
+    		$tgc = Carbon::parse($request->fecharegistro)->diffInDays($fep);//Tiempo de Gestación Trasncurridos
         		
-        		if ($tgc < $tgesta) {
-        				#Se envía el mensaje
-                  return back()->with('info', 'ok');  
-              } else {
+    		if ($tgc < $tgesta) {
+    			#Se envía el mensaje
+              return back()->with('info', 'ok');  
+            } else {
+    			
+	            # Identifica si el registro proviene de una temporada
+	            # 0 = Registro no es de temporada / 1 = Registro es de una temporada
+	            
+                $estemporada= 1; 
+				# ->| Se registran las nuevas preñez (Actualiza el campo)
+                try{
+		         	//$prenezNueva-> save();
+                    $updatePreñez = DB::table('sgprenhezs')
+                          ->where('id','=',$idprenez)
+                          ->update(['fecap'=>$request->faproparto,
+                                    'fecas'=>$request->faprosecado,
+                                    'fecser'=>$request->fecus,
+                                    'toropaj'=>$toropaj,
+                                    'nomi'=>$nomi,
+                                    'torotemp'=>$torotemp,
+                                    'fregp'=>$request->fecharegistro,
+                                    'intdiaabi'=>$request->ida,
+                                    'intestpar'=>$request->ier,
+                                    'pesopre'=>$request->pesoactual,
+                                    'mesespre'=>$request->mesesprenez,
+                                    'dias_prenez'=>$request->diaprenez,
+                                    'metodo'=>$metodo,    
+                                    'fepre'=>$request->festipre]); 
+                    $prenez = 1;  	
+                    
+                    }catch (\Illuminate\Database\QueryException $e){
+                    
+                    $prenez = 0; 
+                    
+                    return back()->with('mensaje', 'error');
+            }
+            
+			# ->| Se registran las nuevas Preñez en el historial. 
+			
+			$historias = 0;
 
-        			/*
-		            * Identifica si el registro proviene de una temporada
-		            * 0 = Registro no es de temporada / 1 = Registro es de una temporada
-		            */
+            $prenezHistorial = new \App\Models\sgprenhez_historico;
 
-                 $estemporada= 1; 
-					/*
-					* ->| Se registran las nuevas preñez (Actualiza el campo)
-					*/
-                  try{
-		         		//$prenezNueva-> save();
-                      $updatePreñez = DB::table('sgprenhezs')
-                      ->where('id','=',$idprenez)
-                      ->update(['fecap'=>$request->faproparto,
-                       'fecas'=>$request->faprosecado,
-                       'fecser'=>$request->fecus,
-                       'toropaj'=>$toropaj,
-                       'nomi'=>$nomi,
-                       'torotemp'=>$torotemp,
-                       'fregp'=>$request->fecharegistro,
-                       'intdiaabi'=>$request->ida,
-                       'intestpar'=>$request->ier,
-                       'pesopre'=>$request->pesoactual,
-                       'mesespre'=>$request->mesesprenez,
-                       'dias_prenez'=>$request->diaprenez,
-                       'metodo'=>$metodo,    
-                       'fepre'=>$request->festipre]); 
-                      $prenez = 1;  	
-                  }catch (\Illuminate\Database\QueryException $e){
-                   $prenez = 0; 
-                   return back()->with('mensaje', 'error');
-               }
+            $prenezHistorial->id_serie = $id_serie;
+            $prenezHistorial->serie = $request->serie;
+            $prenezHistorial->fecap = $request->faproparto;
+            $prenezHistorial->fecas = $request->faprosecado;
+            $prenezHistorial->fecser = $request->fecus;
 
-		            /*
-					* ->| Se registran las nuevas Preñez en el historial. 
-					*/
-					$historias = 0;
+            $prenezHistorial->toropaj = $toropaj;
+            $prenezHistorial->nomi = $nomi;
+            $prenezHistorial->torotemp = $torotemp;
 
-                  $prenezHistorial = new \App\Models\sgprenhez_historico;
+            $prenezHistorial->fregp = $request->fecharegistro;
+            $prenezHistorial->intdiaabi = $request->ida;
+            $prenezHistorial->intestpar = $request->ier;
+            $prenezHistorial->pesopre = $request->pesoactual;
+            $prenezHistorial->dias_prenez = $request->diaprenez;
+            $prenezHistorial->mesespre = $request->mesesprenez;
+            $prenezHistorial->metodo = $metodo;
+            $prenezHistorial->fepre = $request->festipre;
 
-                  $prenezHistorial->id_serie = $id_serie;
-                  $prenezHistorial->serie = $request->serie;
-                  $prenezHistorial->fecap = $request->faproparto;
-                  $prenezHistorial->fecas = $request->faprosecado;
-                  $prenezHistorial->fecser = $request->fecus;
+            $prenezHistorial->id_ciclo = $id_ciclo;
+            $prenezHistorial->id_finca = $id_finca;
 
-                  $prenezHistorial->toropaj = $toropaj;
-                  $prenezHistorial->nomi = $nomi;
-                  $prenezHistorial->torotemp = $torotemp;
+            $prenezHistorial-> save(); 
 
-                  $prenezHistorial->fregp = $request->fecharegistro;
-                  $prenezHistorial->intdiaabi = $request->ida;
-                  $prenezHistorial->intestpar = $request->ier;
-                  $prenezHistorial->pesopre = $request->pesoactual;
-                  $prenezHistorial->dias_prenez = $request->diaprenez;
-                  $prenezHistorial->mesespre = $request->mesesprenez;
-                  $prenezHistorial->metodo = $metodo;
-                  $prenezHistorial->fepre = $request->festipre;
+	        # Se cuentan la cantidad de prenez que se registran a la fecha por la fecha de registro.
+	        
+            $countprenez =  DB::table('sgprenhez_historicos')
+                ->where('fregp','=',$request->fecharegistro)
+                ->where('id_finca','=', $id_finca)
+                ->where('id_ciclo','=', $id_ciclo)
+                ->count(); 
 
-                  $prenezHistorial->id_ciclo = $id_ciclo;
-                  $prenezHistorial->id_finca = $id_finca;
+            $nroprenez = DB::table('sghistoricotemprepros')
+                ->where('fecharegistro','=',$request->fecharegistro)
+                ->where('id_finca','=', $id_finca)
+                ->where('id_ciclo','=', $id_ciclo)
+                ->update(['nropre'=>$countprenez]);   			                                
+           	/*
+          	* Aqui actualizamos la Tipologia en caso de una preñez
+          	* ya que es un proceso que conlleva a eso.
+          	*/
+	        #Buscamos la tipologia actual 
+		    $tipoActual = \App\Models\sgtipologia::where('id_tipologia','=',$series->id_tipologia)->get();
 
-                  $prenezHistorial-> save(); 
+		    #Obtenemos todos parametros de la tipologia
 
-		            /*
-			        * Se cuentan la cantidad de prenez que se registran a la fecha por la fecha de registro.
-			        */
-                   $countprenez =  DB::table('sgprenhez_historicos')
-                   ->where('fregp','=',$request->fecharegistro)
-                   ->where('id_finca','=', $id_finca)
-                   ->where('id_ciclo','=', $id_ciclo)
-                   ->count(); 
+          	foreach ($tipoActual as $key ) {
+          		$tipologiaName = $key->nombre_tipologia;
+          		$edad = $key->edad;
+          		$peso = $key->peso;
+          		$destetado = $key->destetado;
+          		$sexo = $key->sexo;
+          		$nro_monta = $key->nro_monta;
+          		$prenada = $key->prenada;
+          		$parida = $key->parida;
+          		$tienecria = $key->tienecria;
+          		$criaviva = $key->criaviva;
+          		$ordenho = $key->ordenho;
+          		$detectacelo = $key->detectacelo;
+          		$idtipo = $key->id_tipologia;
+          	}
 
-                   $nroprenez = DB::table('sghistoricotemprepros')
-                   ->where('fecharegistro','=',$request->fecharegistro)
-                   ->where('id_finca','=', $id_finca)
-                   ->where('id_ciclo','=', $id_ciclo)
-                   ->update(['nropre'=>$countprenez]);   			                                
-		           	/*
-		          	* Aqui actualizamos la Tipologia en caso de una preñez
-		          	* ya que es un proceso que conlleva a eso.
-		          	*/
-	            	#Buscamos la tipologia actual 
-		          	$tipoActual = \App\Models\sgtipologia::where('id_tipologia','=',$series->id_tipologia)->get();
-
-		          	#Obtenemos todos parametros de la tipologia
-
-		          	foreach ($tipoActual as $key ) {
-		          		$tipologiaName = $key->nombre_tipologia;
-		          		$edad = $key->edad;
-		          		$peso = $key->peso;
-		          		$destetado = $key->destetado;
-		          		$sexo = $key->sexo;
-		          		$nro_monta = $key->nro_monta;
-		          		$prenada = $key->prenada;
-		          		$parida = $key->parida;
-		          		$tienecria = $key->tienecria;
-		          		$criaviva = $key->criaviva;
-		          		$ordenho = $key->ordenho;
-		          		$detectacelo = $key->detectacelo;
-		          		$idtipo = $key->id_tipologia;
-		          	}
-
-			        #Actualizamos la tipologia
-	                #Obteneos la tipologia anterior
-		          	$tipoAnterior = $tipologiaName;
-		          	
-		          	$nroMonta = $series->nro_monta;
+	        #Actualizamos la tipologia
+            #Obteneos la tipologia anterior
+          	$tipoAnterior = $tipologiaName;
+          	
+          	$nroMonta = $series->nro_monta;
 
 
-	            	# Actualizamos si se efectua la preñez.
-                  $tipologia= DB::table('sgtipologias')
-                  ->where('edad','=',$edad)
-                  ->where('peso','=',$peso)
-                  ->where('destetado','=',$destetado)
-                  ->where('sexo','=',$sexo)
-                  ->where('nro_monta','<=',$nroMonta)
-                  ->where('prenada','=',$prenez)
-                  ->where('parida','=',$parida)
-                  ->where('tienecria','=',$tienecria)
-                  ->where('criaviva','=',$criaviva)
-                  ->where('ordenho','=',$ordenho)
-                  ->where('detectacelo','=',$detectacelo)
-                  ->where('id_finca','=',$id_finca)
-                  ->get();
+	        # Actualizamos si se efectua la preñez.
+            $tipologia= DB::table('sgtipologias')
+                ->where('edad','=',$edad)
+                ->where('peso','=',$peso)
+                ->where('destetado','=',$destetado)
+                ->where('sexo','=',$sexo)
+                ->where('nro_monta','<=',$nroMonta)
+                ->where('prenada','=',$prenez)
+                ->where('parida','=',$parida)
+                ->where('tienecria','=',$tienecria)
+                ->where('criaviva','=',$criaviva)
+                ->where('ordenho','=',$ordenho)
+                ->where('detectacelo','=',$detectacelo)
+                ->where('id_finca','=',$id_finca)
+                ->get();
 
-                  foreach ($tipologia as $key ) {
-                      $tipologiaName = $key->nombre_tipologia;
-                      $idtipo = $key->id_tipologia;
-                      $prenada = $key->prenada;
-                      $parida = $key->parida;
-                      $tienecria = $key->tienecria;
-                      $criaviva = $key->criaviva;
-                      $ordenho = $key->ordenho;
-                      $detectacelo = $key->detectacelo;
-                  }	
+            foreach ($tipologia as $key ) {
+                $tipologiaName = $key->nombre_tipologia;
+                $idtipo = $key->id_tipologia;
+                $prenada = $key->prenada;
+                $parida = $key->parida;
+                $tienecria = $key->tienecria;
+                $criaviva = $key->criaviva;
+                $ordenho = $key->ordenho;
+                $detectacelo = $key->detectacelo;
+            }	
 
-                  $idTipologiaNueva = $idtipo;
-                  $nuevaTipologiaName = $tipologiaName; 
+            $idTipologiaNueva = $idtipo;
+            $nuevaTipologiaName = $tipologiaName; 
 
-                  $loteMonta = DB::table('sglotemontas')
-                  ->where('id_ciclo','=',$id_ciclo)
-                  ->get();
+            $loteMonta = DB::table('sglotemontas')
+                ->where('id_ciclo','=',$id_ciclo)
+                ->get();
 
-                  foreach ($loteMonta as $key ) {
+            foreach ($loteMonta as $key ) {
 
-                     $id_lotemonta = $key->id_lotemonta;
+                $id_lotemonta = $key->id_lotemonta;
 
-                     $monta = DB::table('sgmontas')
-                     ->where('id_serie','=',$id_serie)
-                     ->where('id_lotemonta','=', $id_lotemonta)
-                     ->get();
+                $monta = DB::table('sgmontas')
+                    ->where('id_serie','=',$id_serie)
+                    ->where('id_lotemonta','=', $id_lotemonta)
+                    ->get();
 
-                     if ($monta->count()>0) {
-				        /*
-			            * Actualizamos la tabla de monta con el nombre de tipologia nueva o saliente
-			            */	
-                     $tipoSaliente = DB::table('sgmontas')
-                     ->where('id_serie','=',$id_serie)
-                     ->where('id_lotemonta','=', $id_lotemonta)
-                     ->update(['tipologia_salida'=>$nuevaTipologiaName]);		
+                if ($monta->count()>0) {
+			        # Actualizamos la tabla de monta con el nombre de tipologia nueva o saliente
+                    $tipoSaliente = DB::table('sgmontas')
+                         ->where('id_serie','=',$id_serie)
+                         ->where('id_lotemonta','=', $id_lotemonta)
+                         ->update(['tipologia_salida'=>$nuevaTipologiaName]);		
                  }
-             }	
-		            /*
-		            * Actualizamos a tabla mvmadres   
-		            */
-		        	#Buscamos el Numero de parto que tiene la serie
-                   $nroParto = DB:: table('sgpartos')
+            }	
+            
+            # Actualizamos a tabla mvmadres   
+            
+        	#Buscamos el Numero de parto que tiene la serie
+            $nroParto = DB:: table('sgpartos')
                    ->where('id_finca','=',$id_finca)
                    ->where('id_serie','=',$id_serie)
                    ->get();
 
-		        	#Buscamos el Numero de abortos que tiene la serie
-                   $nroAborto = DB:: table('sgabors')
+		    #Buscamos el Numero de abortos que tiene la serie
+            $nroAborto = DB:: table('sgabors')
                    ->where('id_finca','=',$id_finca)
                    ->where('id_serie','=',$id_serie)
                    ->get();
 
-		        	#Buscamos el Numero de abortos que tiene la serie
-                   $nroServicios = DB:: table('sgservs')
+		    #Buscamos el Numero de abortos que tiene la serie
+            $nroServicios = DB:: table('sgservs')
                    ->where('id_finca','=',$id_finca)
                    ->where('id_serie','=',$id_serie)
                    ->get();		
 
-                   $npartos = $nroParto->count(); 
-                   $nabortos = $nroAborto->count();
-                   $nservicios = $nroServicios->count(); 
-		        	/*
-		        	* Actualizamos la tabla mvmadres
-		        	*/
-		        	$fecsistema = Carbon::now();
-		        	/* 
-		        	* Para Crear el registro primero se verifica que la serie no tenga
-		        	* Un Registro en la tabla. 
-		        	*/
-		        	$buscaMvMadre = \App\Models\sgmvmadre::where('codmadre','=',$series->serie)
+            $npartos = $nroParto->count(); 
+            $nabortos = $nroAborto->count();
+            $nservicios = $nroServicios->count(); 
+		        	
+		    # Actualizamos la tabla mvmadres
+		        	
+		    $fecsistema = Carbon::now();
+        	/* 
+        	* Para Crear el registro primero se verifica que la serie no tenga
+        	* Un Registro en la tabla. 
+        	*/
+		    $buscaMvMadre = \App\Models\sgmvmadre::where('id_serie','=',$series->id)
                     ->where('id_finca','=',$id_finca)
                     ->get();
 
-                    foreach ($buscaMvMadre as $key ) {
-                      $codmadre= $key->codmadre; 
-                  }	
+            foreach ($buscaMvMadre as $key ) {
+                $idmadre= $key->id_serie; 
+            }	
 
-                  if ($buscaMvMadre->count()>0) {
-			        		# Si existe, actualizamos los registros 
-                     try{
-					         		//$prenezNueva-> save();
-                       $updateMvMadre = DB::table('sgmvmadres')
-                       ->where('codmadre','=',$codmadre)
-                       ->update(['fnac'=>$series->fnac,
-                          'tipologia'=>$nuevaTipologiaName,
-                          'id_tipologia'=>$idTipologiaNueva,
-                          'npartos'=>$npartos,
-                          'nabortos'=>$nabortos,
-                          'nservicios'=>$nservicios,
-                          'lote'=>$series->lote,
-                          'observacion'=>$series->observa,
-                          'faproxparto'=>$request->faproparto,
-                          'IDA'=>$request->ida,
-                          'fepre'=>$request->festipre,
-                          'fecs'=>$fecsistema,
-                          'fecup'=>$request->fecharegistro,
-                          'vaquera'=>null,    
-                          'id_finca'=>$id_finca]); 
+            if ($buscaMvMadre->count()>0) {
+			    # Si existe, actualizamos los registros 
+                try{
+					//$prenezNueva-> save();
+                    $updateMvMadre = DB::table('sgmvmadres')
+                           ->where('id_serie','=',$idmadre)
+                           ->update(['fnac'=>$series->fnac,
+                                     'tipologia'=>$nuevaTipologiaName,
+                                     'id_tipologia'=>$idTipologiaNueva,
+                                     'npartos'=>$npartos,
+                                     'nabortos'=>$nabortos,
+                                     'nservicios'=>$nservicios,
+                                     'lote'=>$series->lote,
+                                     'observacion'=>$series->observa,
+                                     'faproxparto'=>$request->faproparto,
+                                     'IDA'=>$request->ida,
+                                     'fepre'=>$request->festipre,
+                                     'fecs'=>$fecsistema,
+                                     'fecup'=>$request->fecharegistro,
+                                     'vaquera'=>null,    
+                                     'id_finca'=>$id_finca]); 
+
                    }catch (\Illuminate\Database\QueryException $e){
-                     return back()->with('mensaje', 'error');
-                 }		
-             } else {
+                    return back()->with('mensaje', 'error');
+                }		
+            } else {
 
-                 $mvMadreNueva = new \App\Models\sgmvmadre;
+                $mvMadreNueva = new \App\Models\sgmvmadre;
 
-                 $mvMadreNueva->codmadre = $series->serie;
-                 $mvMadreNueva->fnac = $series->fnac;
-                 $mvMadreNueva->tipologia = $nuevaTipologiaName;
-                 $mvMadreNueva->id_tipologia = $idTipologiaNueva;
-                 $mvMadreNueva->npartos = $request->nroparto;
-                 $mvMadreNueva->nabortos = $request->nroaborto;
-                 $mvMadreNueva->nservicios = $nservicios;
-                 $mvMadreNueva->lote = $series->lote;
-                 $mvMadreNueva->observacion = $series->observa;
-                 $mvMadreNueva->faproxparto = $request->faproparto;
-                 $mvMadreNueva->IDA = $request->ida;
-                 $mvMadreNueva->fepre = $request->festipre;
-                 $mvMadreNueva->fecs = $fecsistema;
-                 $mvMadreNueva->fecup = $request->fecharegistro;
-                 $mvMadreNueva->vaquera = null;
-                 $mvMadreNueva->id_finca = $id_finca;
+                $mvMadreNueva->id_serie = $id_serie;    
+                $mvMadreNueva->codmadre = $series->serie;
+                $mvMadreNueva->fnac = $series->fnac;
+                $mvMadreNueva->tipologia = $nuevaTipologiaName;
+                $mvMadreNueva->id_tipologia = $idTipologiaNueva;
+                $mvMadreNueva->npartos = $request->nroparto;
+                $mvMadreNueva->nabortos = $request->nroaborto;
+                $mvMadreNueva->nservicios = $nservicios;
+                $mvMadreNueva->lote = $series->lote;
+                $mvMadreNueva->observacion = $series->observa;
+                $mvMadreNueva->faproxparto = $request->faproparto;
+                $mvMadreNueva->IDA = $request->ida;
+                $mvMadreNueva->fepre = $request->festipre;
+                $mvMadreNueva->fecs = $fecsistema;
+                $mvMadreNueva->fecup = $request->fecharegistro;
+                $mvMadreNueva->vaquera = null;
+                $mvMadreNueva->id_finca = $id_finca;
 
-                 $mvMadreNueva->save();	
-             }
-		        	# FIN mvmadres
+                $mvMadreNueva->save();	
+            }
+        	# FIN mvmadres
 
-		        	# Actualizamos la tabla sgmv1
+        	# Actualizamos la tabla sgmv1
 
-		        	$caso = "Preñez"; //hardcode
-		        	$mv1Nueva = new \App\Models\sgmv1;
+        	$caso = "PREÑ"; //hardcode
+        	$mv1Nueva = new \App\Models\sgmv1;
 
-                  $mv1Nueva->codmadre = $series->serie;
-                  $mv1Nueva->serie_hijo = null;
-                  $mv1Nueva->caso = $caso;
+            $mv1Nueva->id_serie = $id_serie;
+            $mv1Nueva->codmadre = $series->serie;
+            $mv1Nueva->serie_hijo = null;
+            $mv1Nueva->caso = $caso;
 
-                  $mv1Nueva->id_finca = $id_finca;						
+            $mv1Nueva->id_finca = $id_finca;						
 
-                  $mv1Nueva->save();	
+            $mv1Nueva->save();	
 
-		        	# Fin de Tabla sgmv1
+		    # Fin de Tabla sgmv1
 
-                  $ultimaPrenez = DB::table('sganims')
-                  ->where('id','=',$request->idserie)
-                  ->where('id_finca','=', $id_finca)
-                  ->update(['fecupre'=>$request->fecharegistro,
-                      'tipo'=>$nuevaTipologiaName,
-                      'id_tipologia'=>$idTipologiaNueva,
-                      'tipoanterior'=>$tipoAnterior,
-                      'prenada'=>$prenada,
-                      'parida'=>$parida,
-                      'tienecria'=>$tienecria,
-                      'criaviva'=>$criaviva,
-                      'ordenho'=>$ordenho,
-                      'detectacelo'=>$detectacelo]);                         
+            $ultimaPrenez = DB::table('sganims')
+                    ->where('id','=',$request->idserie)
+                    ->where('id_finca','=', $id_finca)
+                    ->update(['fecupre'=>$request->fecharegistro,
+                              'tipo'=>$nuevaTipologiaName,
+                              'id_tipologia'=>$idTipologiaNueva,
+                              'tipoanterior'=>$tipoAnterior,
+                              'prenada'=>$prenada,
+                              'parida'=>$parida,
+                              'tienecria'=>$tienecria,
+                              'criaviva'=>$criaviva,
+                              'ordenho'=>$ordenho,
+                              'detectacelo'=>$detectacelo]);                         
 
-                  return back()->with('msj', 'Registro agregado satisfactoriamente');	
-              }
-          }else{
+            return back()->with('msj', 'Registro agregado satisfactoriamente');	
+            }
 
+        }else{
 
-        		//return "La preñez no existe, se puede crear los registros";
-        		/*
-	            * Identifica si el registro proviene de una temporada
-	            * 0 = Registro no es de temporada / 1 = Registro es de una temporada
-	            */
+            # Identifica si el registro proviene de una temporada
+            # 0 = Registro no es de temporada / 1 = Registro es de una temporada
+	            
+            $estemporada= 1; 
+				
+		    # ->| Se registran los nuevos Celos
+				
+            $prenezNueva = new \App\Models\sgprenhez;
 
-                $estemporada= 1; 
-				/*
-				* ->| Se registran los nuevos Celos
-				*/
+            $prenezNueva->id_serie = $id_serie;
+            $prenezNueva->serie = $request->serie;
+            $prenezNueva->fecap = $request->faproparto;
+            $prenezNueva->fecas = $request->faprosecado;
+            $prenezNueva->fecser = $request->fecus;
 
-             $prenezNueva = new \App\Models\sgprenhez;
+            $prenezNueva->toropaj = $toropaj;
+            $prenezNueva->nomi = $nomi;
+            $prenezNueva->torotemp = $torotemp;
 
-             $prenezNueva->id_serie = $id_serie;
-             $prenezNueva->serie = $request->serie;
-             $prenezNueva->fecap = $request->faproparto;
-             $prenezNueva->fecas = $request->faprosecado;
-             $prenezNueva->fecser = $request->fecus;
+            $prenezNueva->fregp = $request->fecharegistro;
+            $prenezNueva->intdiaabi = $request->ida;
+            $prenezNueva->intestpar = $request->ier;
+            $prenezNueva->pesopre = $request->pesoactual;
+            $prenezNueva->dias_prenez = $request->diaprenez;
+            $prenezNueva->mesespre = $request->mesesprenez;
+            $prenezNueva->metodo = $metodo;
+            $prenezNueva->fepre = $request->festipre;
 
-             $prenezNueva->toropaj = $toropaj;
-             $prenezNueva->nomi = $nomi;
-             $prenezNueva->torotemp = $torotemp;
+            $prenezNueva->id_ciclo = $id_ciclo;
+            $prenezNueva->id_finca = $id_finca;
 
-             $prenezNueva->fregp = $request->fecharegistro;
-             $prenezNueva->intdiaabi = $request->ida;
-             $prenezNueva->intestpar = $request->ier;
-             $prenezNueva->pesopre = $request->pesoactual;
-             $prenezNueva->dias_prenez = $request->diaprenez;
-             $prenezNueva->mesespre = $request->mesesprenez;
-             $prenezNueva->metodo = $metodo;
-             $prenezNueva->fepre = $request->festipre;
-
-             $prenezNueva->id_ciclo = $id_ciclo;
-             $prenezNueva->id_finca = $id_finca;
-
-             try{
+            try{
                 $prenezNueva-> save();
                 $prenez = 1;  	
             }catch (\Illuminate\Database\QueryException $e){
                $prenez = 0; 
                return back()->with('mensaje', 'error');
-           }
-	            /*
-				* ->| Se registran los nuevos Celos en el historial. 
-				*/
+            }
+	            
+			# ->| Se registran los nuevos Celos en el historial. 
+				
+		    $historias = 0;
 
-				$historias = 0;
+            $prenezHistorial = new \App\Models\sgprenhez_historico;
 
-             $prenezHistorial = new \App\Models\sgprenhez_historico;
+            $prenezHistorial->id_serie = $id_serie;
+            $prenezHistorial->serie = $request->serie;
+            $prenezHistorial->fecap = $request->faproparto;
+            $prenezHistorial->fecas = $request->faprosecado;
+            $prenezHistorial->fecser = $request->fecus;
 
-             $prenezHistorial->id_serie = $id_serie;
-             $prenezHistorial->serie = $request->serie;
-             $prenezHistorial->fecap = $request->faproparto;
-             $prenezHistorial->fecas = $request->faprosecado;
-             $prenezHistorial->fecser = $request->fecus;
+            $prenezHistorial->toropaj = $toropaj;
+            $prenezHistorial->nomi = $nomi;
+            $prenezHistorial->torotemp = $torotemp;
 
-             $prenezHistorial->toropaj = $toropaj;
-             $prenezHistorial->nomi = $nomi;
-             $prenezHistorial->torotemp = $torotemp;
+            $prenezHistorial->fregp = $request->fecharegistro;
+            $prenezHistorial->intdiaabi = $request->ida;
+            $prenezHistorial->intestpar = $request->ier;
+            $prenezHistorial->pesopre = $request->pesoactual;
+            $prenezHistorial->dias_prenez = $request->diaprenez;
+            $prenezHistorial->mesespre = $request->mesesprenez;
+            $prenezHistorial->metodo = $metodo;
+            $prenezHistorial->fepre = $request->festipre;
 
-             $prenezHistorial->fregp = $request->fecharegistro;
-             $prenezHistorial->intdiaabi = $request->ida;
-             $prenezHistorial->intestpar = $request->ier;
-             $prenezHistorial->pesopre = $request->pesoactual;
-             $prenezHistorial->dias_prenez = $request->diaprenez;
-             $prenezHistorial->mesespre = $request->mesesprenez;
-             $prenezHistorial->metodo = $metodo;
-             $prenezHistorial->fepre = $request->festipre;
+            $prenezHistorial->id_ciclo = $id_ciclo;
+            $prenezHistorial->id_finca = $id_finca;
 
-             $prenezHistorial->id_ciclo = $id_ciclo;
-             $prenezHistorial->id_finca = $id_finca;
+            $prenezHistorial-> save(); 
 
+	        #Buscamos la tipologia actual 
+            $tipoActual = \App\Models\sgtipologia::where('id_tipologia','=',$series->id_tipologia)->get();
 
-             $prenezHistorial-> save(); 
+		    #Obtenemos todos parametros de la tipologia
 
-	            #Buscamos la tipologia actual 
-             $tipoActual = \App\Models\sgtipologia::where('id_tipologia','=',$series->id_tipologia)->get();
+            foreach ($tipoActual as $key ) {
+                $tipologiaName = $key->nombre_tipologia;
+                $edad = $key->edad;
+                $peso = $key->peso;
+                $destetado = $key->destetado;
+                $sexo = $key->sexo;
+                $nro_monta = $key->nro_monta;
+                $prenada = $key->prenada;
+                $parida = $key->parida;
+                $tienecria = $key->tienecria;
+                $criaviva = $key->criaviva;
+                $ordenho = $key->ordenho;
+                $detectacelo = $key->detectacelo;
+                $idtipo = $key->id_tipologia;
+            }
 
-		          	#Obtenemos todos parametros de la tipologia
+		    #Obteneos la tipologia anterior
+            $tipoAnterior = $tipologiaName;
 
-             foreach ($tipoActual as $key ) {
-              $tipologiaName = $key->nombre_tipologia;
-              $edad = $key->edad;
-              $peso = $key->peso;
-              $destetado = $key->destetado;
-              $sexo = $key->sexo;
-              $nro_monta = $key->nro_monta;
-              $prenada = $key->prenada;
-              $parida = $key->parida;
-              $tienecria = $key->tienecria;
-              $criaviva = $key->criaviva;
-              $ordenho = $key->ordenho;
-              $detectacelo = $key->detectacelo;
-              $idtipo = $key->id_tipologia;
-          }
+            $nroMonta = $series->nro_monta;
 
-		          	#Obteneos la tipologia anterior
-          $tipoAnterior = $tipologiaName;
+	        # Actualizamos si se efectua la preñez.
+            $tipologia= DB::table('sgtipologias')
+                ->where('edad','=',$edad)
+                ->where('peso','=',$peso)
+                ->where('destetado','=',$destetado)
+                ->where('sexo','=',$sexo)
+                ->where('nro_monta','<=',$nroMonta)
+                ->where('prenada','=',$prenez)
+                ->where('parida','=',$parida)
+                ->where('tienecria','=',$tienecria)
+                ->where('criaviva','=',$criaviva)
+                ->where('ordenho','=',$ordenho)
+                ->where('detectacelo','=',$detectacelo)
+                ->where('id_finca','=',$id_finca)
+                ->get();
 
-          $nroMonta = $series->nro_monta;
+            foreach ($tipologia as $key ) {
+                $tipologiaName = $key->nombre_tipologia;
+                $idtipo = $key->id_tipologia;
+            }	
 
-	            	# Actualizamos si se efectua la preñez.
-          $tipologia= DB::table('sgtipologias')
-          ->where('edad','=',$edad)
-          ->where('peso','=',$peso)
-          ->where('destetado','=',$destetado)
-          ->where('sexo','=',$sexo)
-          ->where('nro_monta','<=',$nroMonta)
-          ->where('prenada','=',$prenez)
-          ->where('parida','=',$parida)
-          ->where('tienecria','=',$tienecria)
-          ->where('criaviva','=',$criaviva)
-          ->where('ordenho','=',$ordenho)
-          ->where('detectacelo','=',$detectacelo)
-          ->where('id_finca','=',$id_finca)
-          ->get();
+            $idTipologiaNueva = $idtipo;
+            $nuevaTipologiaName = $tipologiaName; 	
+	            # Actualizamos si se efectua la preñez.
 
-          foreach ($tipologia as $key ) {
-              $tipologiaName = $key->nombre_tipologia;
-              $idtipo = $key->id_tipologia;
-          }	
+            $loteMonta = DB::table('sglotemontas')
+                ->where('id_ciclo','=',$id_ciclo)
+                ->get();
 
-          $idTipologiaNueva = $idtipo;
-          $nuevaTipologiaName = $tipologiaName; 	
-	            	# Actualizamos si se efectua la preñez.
-
-          $loteMonta = DB::table('sglotemontas')
-          ->where('id_ciclo','=',$id_ciclo)
-          ->get();
-
-          foreach ($loteMonta as $key ) {
+            foreach ($loteMonta as $key ) {
 
               $id_lotemonta = $key->id_lotemonta;
 
               $monta = DB::table('sgmontas')
-              ->where('id_serie','=',$id_serie)
-              ->where('id_lotemonta','=', $id_lotemonta)
-              ->get();
+                    ->where('id_serie','=',$id_serie)
+                    ->where('id_lotemonta','=', $id_lotemonta)
+                    ->get();
 
-              if ($monta->count()>0) {
-				        /*
-			            * Actualizamos la tabla de monta con el nombre de tipologia nueva o saliente
-			            */	
-                     $tipoSaliente = DB::table('sgmontas')
-                     ->where('id_serie','=',$id_serie)
-                     ->where('id_lotemonta','=', $id_lotemonta)
-                     ->update(['tipologia_salida'=>$nuevaTipologiaName]);		
+            if ($monta->count()>0) {
+				        
+			# Actualizamos la tabla de monta con el nombre de tipologia nueva o saliente
+            $tipoSaliente = DB::table('sgmontas')
+                    ->where('id_serie','=',$id_serie)
+                    ->where('id_lotemonta','=', $id_lotemonta)
+                    ->update(['tipologia_salida'=>$nuevaTipologiaName]);		
                  }
-             }	
-	          	/*
-		        * Se cuentan la cantidad de prenez que se registran a la fecha por la fecha de registro.
-		        */
-              $countprenez =  DB::table('sgprenhez_historicos')
-              ->where('fregp','=',$request->fecharegistro)
-              ->where('id_finca','=', $id_finca)
-              ->where('id_ciclo','=', $id_ciclo)
-              ->count(); 
+            }	
+	          	
+		    # Se cuentan la cantidad de prenez que se registran a la fecha por la fecha de registro.
+		        
+            $countprenez =  DB::table('sgprenhez_historicos')
+                ->where('fregp','=',$request->fecharegistro)
+                ->where('id_finca','=', $id_finca)
+                ->where('id_ciclo','=', $id_ciclo)
+                ->count(); 
 
-              $nroprenez = DB::table('sghistoricotemprepros')
-              ->where('fecharegistro','=',$request->fecharegistro)
-              ->where('id_finca','=', $id_finca)
-              ->where('id_ciclo','=', $id_ciclo)
-              ->update(['nropre'=>$countprenez]);   
-	                /*
-		            * Actualizamos a tabla mvmadres   
-		            */
+            $nroprenez = DB::table('sghistoricotemprepros')
+                ->where('fecharegistro','=',$request->fecharegistro)
+                ->where('id_finca','=', $id_finca)
+                ->where('id_ciclo','=', $id_ciclo)
+                ->update(['nropre'=>$countprenez]);   
+	                
+		    # Actualizamos a tabla mvmadres   
+		            
+		    #Buscamos el Numero de parto que tiene la serie
+            $nroParto = DB:: table('sgpartos')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_serie','=',$id_serie)
+                ->get();
 
-		        	#Buscamos el Numero de parto que tiene la serie
-                   $nroParto = DB:: table('sgpartos')
-                   ->where('id_finca','=',$id_finca)
-                   ->where('id_serie','=',$id_serie)
-                   ->get();
+		    #Buscamos el Numero de abortos que tiene la serie
+            $nroAborto = DB:: table('sgabors')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_serie','=',$id_serie)
+                ->get();
 
-		        	#Buscamos el Numero de abortos que tiene la serie
-                   $nroAborto = DB:: table('sgabors')
-                   ->where('id_finca','=',$id_finca)
-                   ->where('id_serie','=',$id_serie)
-                   ->get();
+		    #Buscamos el Numero de abortos que tiene la serie
+            $nroServicios = DB:: table('sgservs')
+                ->where('id_finca','=',$id_finca)
+                ->where('id_serie','=',$id_serie)
+                ->get();		
 
-		        	#Buscamos el Numero de abortos que tiene la serie
-                   $nroServicios = DB:: table('sgservs')
-                   ->where('id_finca','=',$id_finca)
-                   ->where('id_serie','=',$id_serie)
-                   ->get();		
+            $npartos = $nroParto->count(); 
+            $nabortos = $nroAborto->count();
+            $nservicios = $nroServicios->count(); 
 
-                   $npartos = $nroParto->count(); 
-                   $nabortos = $nroAborto->count();
-                   $nservicios = $nroServicios->count(); 
-
-		        	/*
-		        	* Actualizamos la tabla mvmadres
-		        	*/
-		        	$fecsistema = Carbon::now();
-		        	/* 
-		        	* Para Crear el registro primero se verifica que la serie no tenga
-		        	* Un Registro en la tabla. 
-		        	*/
-		        	$buscaMvMadre = \App\Models\sgmvmadre::where('codmadre','=',$series->serie)
+		    # Actualizamos la tabla mvmadres
+		        	
+		    $fecsistema = Carbon::now();
+        	/* 
+        	* Para Crear el registro primero se verifica que la serie no tenga
+        	* Un Registro en la tabla. 
+        	*/
+		    $buscaMvMadre = \App\Models\sgmvmadre::where('id_serie','=',$series->id)
                     ->where('id_finca','=',$id_finca)
                     ->get();
 
-                    foreach ($buscaMvMadre as $key ) {
-                      $codmadre= $key->codmadre; 
-                  }	
+            foreach ($buscaMvMadre as $key ) {
+                      $idmadre= $key->id_serie; 
+                    }	
 
-                  if ($buscaMvMadre->count()>0) {
-			        		# Si existe, actualizamos los registros 
-                     try{
-					         		//$prenezNueva-> save();
-                       $updateMvMadre = DB::table('sgmvmadres')
-                       ->where('codmadre','=',$codmadre)
-                       ->update(['fnac'=>$series->fnac,
-                          'tipologia'=>$nuevaTipologiaName,
+            if ($buscaMvMadre->count()>0) 
+            {
+			    # Si existe, actualizamos los registros 
+                try{
+				#$prenezNueva-> save();
+                $updateMvMadre = DB::table('sgmvmadres')
+                    ->where('codmadre','=',$idmadre)
+                    ->update(['fnac'=>$series->fnac,
+                              'tipologia'=>$nuevaTipologiaName,
+                              'id_tipologia'=>$idTipologiaNueva,
+                              'npartos'=>$npartos,
+                              'nabortos'=>$nabortos,
+                              'nservicios'=>$nservicios,
+                              'lote'=>$series->lote,
+                              'observacion'=>$series->observa,
+                              'faproxparto'=>$request->faproparto,
+                              'IDA'=>$request->ida,
+                              'fepre'=>$request->festipre,
+                              'fecs'=>$fecsistema,
+                              'fecup'=>$request->fecharegistro,
+                              'vaquera'=>null,    
+                              'id_finca'=>$id_finca]); 
+                
+                }catch (\Illuminate\Database\QueryException $e){
+                    return back()->with('mensaje', 'error');
+                }		
+                
+            } else {
+
+                $mvMadreNueva = new \App\Models\sgmvmadre;
+
+                $mvMadreNueva->id_serie = $id_serie;
+                $mvMadreNueva->codmadre = $series->serie;
+                $mvMadreNueva->fnac = $series->fnac;
+                $mvMadreNueva->tipologia = $nuevaTipologiaName;
+                $mvMadreNueva->id_tipologia = $idTipologiaNueva;
+                $mvMadreNueva->npartos = $npartos;
+                $mvMadreNueva->nabortos = $nabortos;
+                $mvMadreNueva->nservicios = $nservicios;
+                $mvMadreNueva->lote = $series->lote;
+                $mvMadreNueva->observacion = $series->observa;
+                $mvMadreNueva->faproxparto = $request->faproparto;
+                $mvMadreNueva->IDA = $request->ida;
+                $mvMadreNueva->fepre = $request->festipre;
+                $mvMadreNueva->fecs = $fecsistema;
+                $mvMadreNueva->fecup = $request->fecharegistro;
+                $mvMadreNueva->vaquera = null;
+                $mvMadreNueva->id_finca = $id_finca;
+
+                $mvMadreNueva->save();	
+            
+            }
+        	# FIN mvmadres
+
+        	# Actualizamos la tabla sgmv1
+
+        	$caso = "PREÑ"; //hardcode
+            	$mv1Nueva = new \App\Models\sgmv1;
+
+                $mv1Nueva->id_serie = $id_serie;
+                $mv1Nueva->codmadre = $series->serie;
+                $mv1Nueva->serie_hijo = null;
+                $mv1Nueva->caso = $caso;
+
+                $mv1Nueva->id_finca = $id_finca;
+
+                $mv1Nueva->save();	
+
+		    # Fin de Tabla sgmv1
+	                
+	        # Actualiza el campo fecha del último Preñez y la tipologia . 
+	            
+
+	        $ultimaPrenez = DB::table('sganims')
+                ->where('id','=',$request->idserie)
+                ->where('id_finca','=', $id_finca)
+                ->update(['fecupre'=>$request->fecharegistro,
+                          'tipo'=>$nuevaTipologiaName,
                           'id_tipologia'=>$idTipologiaNueva,
-                          'npartos'=>$npartos,
-                          'nabortos'=>$nabortos,
-                          'nservicios'=>$nservicios,
-                          'lote'=>$series->lote,
-                          'observacion'=>$series->observa,
-                          'faproxparto'=>$request->faproparto,
-                          'IDA'=>$request->ida,
-                          'fepre'=>$request->festipre,
-                          'fecs'=>$fecsistema,
-                          'fecup'=>$request->fecharegistro,
-                          'vaquera'=>null,    
-                          'id_finca'=>$id_finca]); 
-                   }catch (\Illuminate\Database\QueryException $e){
-                     return back()->with('mensaje', 'error');
-                 }		
-             } else {
-
-                 $mvMadreNueva = new \App\Models\sgmvmadre;
-
-                 $mvMadreNueva->codmadre = $series->serie;
-                 $mvMadreNueva->fnac = $series->fnac;
-                 $mvMadreNueva->tipologia = $nuevaTipologiaName;
-                 $mvMadreNueva->id_tipologia = $idTipologiaNueva;
-                 $mvMadreNueva->npartos = $npartos;
-                 $mvMadreNueva->nabortos = $nabortos;
-                 $mvMadreNueva->nservicios = $nservicios;
-                 $mvMadreNueva->lote = $series->lote;
-                 $mvMadreNueva->observacion = $series->observa;
-                 $mvMadreNueva->faproxparto = $request->faproparto;
-                 $mvMadreNueva->IDA = $request->ida;
-                 $mvMadreNueva->fepre = $request->festipre;
-                 $mvMadreNueva->fecs = $fecsistema;
-                 $mvMadreNueva->fecup = $request->fecharegistro;
-                 $mvMadreNueva->vaquera = null;
-                 $mvMadreNueva->id_finca = $id_finca;
-
-                 $mvMadreNueva->save();	
-             }
-		        	# FIN mvmadres
-
-		        	# Actualizamos la tabla sgmv1
-
-		        	$caso = "Preñez"; //hardcode
-		        	$mv1Nueva = new \App\Models\sgmv1;
-
-                  $mv1Nueva->codmadre = $series->serie;
-                  $mv1Nueva->serie_hijo = null;
-                  $mv1Nueva->caso = $caso;
-
-                  $mv1Nueva->id_finca = $id_finca;
-
-                  $mv1Nueva->save();	
-
-		        	# Fin de Tabla sgmv1
-	            /*
-	            * Actualiza el campo fecha del último Preñez y la tipologia . 
-	            */
-
-	            $ultimaPrenez = DB::table('sganims')
-             ->where('id','=',$request->idserie)
-             ->where('id_finca','=', $id_finca)
-             ->update(['fecupre'=>$request->fecharegistro,
-              'tipo'=>$nuevaTipologiaName,
-              'id_tipologia'=>$idTipologiaNueva,
-              'tipoanterior'=>$tipoAnterior]); 
+                          'tipoanterior'=>$tipoAnterior]); 
              return back()->with('msj', 'Registro agregado satisfactoriamente');
-         }	
+        }	
 
-     }
+    }
 
      public function editar_prenez($id_finca, $id, $id_ciclo, $id_serie, $id_prenez)
      {
@@ -4155,6 +4336,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         $mv1Nuevo->serie_hijo = $request->seriecria1;
         $mv1Nuevo->codpadre = 	$codpadre;
@@ -4181,13 +4363,13 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         $mv1Nuevo->id_finca = $id_finca;
 
         $mv1Nuevo->save();
-
     	/*
     	* Aqui Actualizamos la tabla datos de Vida Solo faltaria sacar las 
     	* filas sumatorias y promedios para cada serie.
     	*/
     	$datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+        $datosDeVidaNuevo->id_serie = $id_serie;
     	$datosDeVidaNuevo->seriem = $series->serie;
     	$datosDeVidaNuevo->fecha = $request->fnac;
     	$datosDeVidaNuevo->caso = $caso;
@@ -4342,7 +4524,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
     	/*
     	* 2-> Guardamos en la tabla de partos los registros del form. 
     	*/	 
-    	$caso = "Nac. Muerto"; //hardcod
+    	$caso = "NAC.M"; //hardcod
 
     	$partoNuevo = new \App\Models\sgparto;
 
@@ -4939,6 +5121,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         $mv1Nuevo->caso = $caso;
         $mv1Nuevo->fecha = $request->fnacmuerte;
@@ -4953,6 +5136,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+        $datosDeVidaNuevo->id_serie = $id_serie;
         $datosDeVidaNuevo->seriem = $series->serie;
         $datosDeVidaNuevo->fecha = $request->fnacmuerte;
         $datosDeVidaNuevo->caso = $caso;
@@ -5059,7 +5243,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
     	/*
     	* 2-> Guardamos en la tabla de partos los registros del form. 
     	*/	 
-    	$caso = "Parto Morochos"; //hardcod
+    	$caso = "PART M"; //hardcod
 
     	$partoNuevo = new \App\Models\sgparto;
 
@@ -5681,6 +5865,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 */
                 $mv1Nuevo = new \App\Models\sgmv1;
 
+                $mv1Nuevo->id_serie = $id_serie;
                 $mv1Nuevo->codmadre = $request->serie;
                 $mv1Nuevo->serie_hijo = $request->seriecria1;
                 $mv1Nuevo->codpadre =   $codpadre;
@@ -5716,6 +5901,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 */
                 $mv1Nuevo = new \App\Models\sgmv1;
 
+                $mv1Nuevo->id_serie = $id_serie;
                 $mv1Nuevo->codmadre = $request->serie;
                 $mv1Nuevo->serie_hijo = $request->seriecria2;
                 $mv1Nuevo->codpadre =   $codpadre;
@@ -5748,6 +5934,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 */
                 $datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+                $datosDeVidaNuevo->id_serie = $id_serie;
                 $datosDeVidaNuevo->seriem = $series->serie;
                 $datosDeVidaNuevo->fecha = $request->fnac;
                 $datosDeVidaNuevo->caso = $caso;
@@ -5781,6 +5968,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 */
                 $datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+                $datosDeVidaNuevo->id_serie = $id_serie;
                 $datosDeVidaNuevo->seriem = $series->serie;
                 $datosDeVidaNuevo->fecha = $request->fnac;
                 $datosDeVidaNuevo->caso = $caso;
@@ -6036,8 +6224,8 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       	/*
       	* 2-> Guardamos en la tabla de partos los registros del form. 
       	*/	 
-      	$caso = "Parto Morocho"; //hardcod
-        $casoM = "Parto Morocho. Nac. Muerto"; //hardcoe
+      	$caso = "PART M"; //hardcod
+        $casoM = "PART M. NAC. M"; //hardcoe
 
         $partoNuevo = new \App\Models\sgparto;
 
@@ -6649,6 +6837,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         $mv1Nuevo->serie_hijo = $request->seriecria1;
         $mv1Nuevo->codpadre =   $codpadre;
@@ -6690,6 +6879,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       # Se actualiza la tabla mv1 manejo de vientre para cría muerta                 
       $mv1Nuevo = new \App\Models\sgmv1;
       
+      $mv1Nuevo->id_serie = $id_serie;
       $mv1Nuevo->codmadre = $request->serie;
 
       $mv1Nuevo->caso = $casoM;
@@ -6705,6 +6895,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       */
       $datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+      $datosDeVidaNuevo->id_serie = $id_serie;
       $datosDeVidaNuevo->seriem = $series->serie;
       $datosDeVidaNuevo->fecha = $request->fnac;
       $datosDeVidaNuevo->caso = $caso;
@@ -6738,6 +6929,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       */
       $datosDeVidaNuevo2 = new \App\Models\sgdatosvida;
 
+      $datosDeVidaNuevo2->id_serie = $id_serie;
       $datosDeVidaNuevo2->seriem = $series->serie;
       $datosDeVidaNuevo2->fecha = $request->fnacmuerte2;
       $datosDeVidaNuevo2->caso = $casoM;
@@ -6907,8 +7099,8 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
   	/*
   	* 2-> Guardamos en la tabla de partos los registros del form. 
   	*/	 
-  	$caso = "Parto Morocho Vivo"; //hardcod
-    $casoM = "Parto Morocho Nac. Muerto"; //hardcod
+  	$caso = "PART M V"; //hardcod
+    $casoM = "PART M NAC. M"; //hardcod
 
     $partoNuevo = new \App\Models\sgparto;
 
@@ -7521,6 +7713,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         $mv1Nuevo->serie_hijo = $request->seriecria2;
         $mv1Nuevo->codpadre =   $codpadre;
@@ -7562,6 +7755,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       # Se actualiza la tabla mv1 manejo de vientre para cría muerta                 
       $mv1Nuevo = new \App\Models\sgmv1;
 
+      $mv1Nuevo->id_serie = $id_serie;
       $mv1Nuevo->codmadre = $request->serie;
 
       $mv1Nuevo->caso = $casoM;
@@ -7576,6 +7770,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       */
       $datosDeVidaNuevo = new \App\Models\sgdatosvida;
 
+      $datosDeVidaNuevo->id_serie = $id_serie;
       $datosDeVidaNuevo->seriem = $series->serie;
       $datosDeVidaNuevo->fecha = $request->fnac2;
       $datosDeVidaNuevo->caso = $caso;
@@ -7610,6 +7805,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
       */
       $datosDeVidaNuevo2 = new \App\Models\sgdatosvida;
 
+      $datosDeVidaNuevo2->id_serie = $id_serie;
       $datosDeVidaNuevo2->seriem = $series->serie;
       $datosDeVidaNuevo2->fecha = $request->fnacmuerte;
       $datosDeVidaNuevo2->caso = $casoM;
@@ -7774,8 +7970,8 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
     	/*
     	* 2-> Guardamos en la tabla de partos los registros del form. 
     	*/	 
-    	$caso = "Parto Morochos"; //hardcod
-      $casoM = "Parto Morochos Nac. Muerto"; //hardcode
+    	$caso = "PART M"; //hardcod
+      $casoM = "PART M NAC. M"; //hardcode
 
       $partoNuevo = new \App\Models\sgparto;
 
@@ -8385,6 +8581,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         # Se actualiza la tabla mv1 manejo de vientre para cría muerta                 
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         $mv1Nuevo->caso = $casoM;
         $mv1Nuevo->fecha = $request->fnacmuerte;
@@ -8398,6 +8595,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         # Se actualiza la tabla mv1 manejo de vientre para cría muerta                 
         $mv1Nuevo = new \App\Models\sgmv1;
 
+        $mv1Nuevo->id_serie = $id_serie;
         $mv1Nuevo->codmadre = $request->serie;
         
         $mv1Nuevo->caso = $casoM;
@@ -8413,6 +8611,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $datosDeVidaNuevo = new \App\Models\sgdatosvida;
         
+        $datosDeVidaNuevo->id_serie = $id_serie;
         $datosDeVidaNuevo->seriem = $series->serie;
         $datosDeVidaNuevo->fecha = $request->fnacmuerte;
         $datosDeVidaNuevo->caso = $casoM;
@@ -8445,6 +8644,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
         */
         $datosDeVidaNuevo2 = new \App\Models\sgdatosvida;
 
+        $datosDeVidaNuevo2->id_serie = $id_serie;
         $datosDeVidaNuevo2->seriem = $series->serie;
         $datosDeVidaNuevo2->fecha = $request->fnacmuerte2;
         $datosDeVidaNuevo2->caso = $casoM;
@@ -8776,7 +8976,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
             	/*
             	* -> Guardamos en la tabla de Abortos los registros del form. 
             	*/	 
-            	$caso = "Aborto"; //hardcod
+            	$caso = "ABOR"; //hardcod
 
             	$abortoNuevo = new \App\Models\sgabor;
 
@@ -8809,16 +9009,16 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
     	        * Se cuentan la cantidad de prenez que se registran a la fecha por la fecha de registro.
     	        */
     	        $countaborto =  DB::table('sgabors')
-             ->where('fecr','=',$request->freg)
-             ->where('id_finca','=', $id_finca)
-             ->where('id_ciclo','=', $id_ciclo)
-             ->count(); 
+                     ->where('fecr','=',$request->freg)
+                     ->where('id_finca','=', $id_finca)
+                     ->where('id_ciclo','=', $id_ciclo)
+                     ->count(); 
 
-             $nroaborto = DB::table('sghistoricotemprepros')
-             ->where('fecharegistro','=',$request->freg)
-             ->where('id_finca','=', $id_finca)
-             ->where('id_ciclo','=', $id_ciclo)
-             ->update(['nroabort'=>$countaborto]);  
+                $nroaborto = DB::table('sghistoricotemprepros')
+                     ->where('fecharegistro','=',$request->freg)
+                     ->where('id_finca','=', $id_finca)
+                     ->where('id_ciclo','=', $id_ciclo)
+                     ->update(['nroabort'=>$countaborto]);  
                 /*
                 * Aqui actualizamos la Tipologia en caso de una aborto
                 * ya que es un proceso que conlleva a eso.
@@ -9356,6 +9556,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 # Se actualiza la tabla mv1 manejo de vientre para cría muerta                 
                 $mv1Nuevo = new \App\Models\sgmv1;
 
+                $mv1Nuevo->id_serie = $id_serie;
                 $mv1Nuevo->codmadre = $request->serie;
                 $mv1Nuevo->caso = $caso;
                 $mv1Nuevo->fecha = $request->freg;
@@ -9369,6 +9570,7 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 */
                 $datosDeVidaNuevo = new \App\Models\sgdatosvida;
                 
+                $datosDeVidaNuevo->id_serie = $id_serie;
                 $datosDeVidaNuevo->seriem = $series->serie;
                 $datosDeVidaNuevo->fecha = $request->freg;
                 $datosDeVidaNuevo->caso = $caso;
@@ -9410,18 +9612,19 @@ public function crear_parto(Request $request, $id_finca, $id, $id_ciclo, $id_ser
                 }   
 
                 $ultimoaborto = DB::table('sganims')
-                ->where('id','=',$id_serie)
-                ->where('id_finca','=', $id_finca)
-                ->update(['fecua'=>$ultabor,
-                  'tipo'=>$nuevaTipologiaName,
-                  'id_tipologia'=>$idTipologiaNueva,
-                  'tipoanterior'=>$tipoAnterior,
+                    ->where('id','=',$id_serie)
+                    ->where('id_finca','=', $id_finca)
+                    ->update(['fecua'=>$ultabor,
+                              'tipo'=>$nuevaTipologiaName,
+                              'nabortoreport'=>$countaborto,
+                              'id_tipologia'=>$idTipologiaNueva,
+                              'tipoanterior'=>$tipoAnterior,
                                               #Actualizamos los parametros tipologicos.
-                  'prenada'=>$prenhada,
-                  'tienecria'=>$tienecria,
-                  'criaviva'=>$criaViva,
-                  'ordenho'=>$ordeNho,
-                  'detectacelo'=>$detectaCelo]);
+                              'prenada'=>$prenhada,
+                              'tienecria'=>$tienecria,
+                              'criaviva'=>$criaViva,
+                              'ordenho'=>$ordeNho,
+                              'detectacelo'=>$detectaCelo]);
 
                 return back()->with('msj', 'Registro agregado satisfactoriamente');       
 
@@ -9760,7 +9963,7 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 /*
                 * -> Guardamos en la tabla de Abortos los registros del form. 
                 */   
-                $caso = "Parto No Concluido"; //hardcod
+                $caso = "PART NC"; //hardcod
 
                 $partoncNuevo = new \App\Models\sgpartosnc;
 
@@ -9794,16 +9997,16 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Se cuentan la cantidad de partos no concluidos que se registran a la fecha 
                 */
                 $countpnc =  DB::table('sgpartosncs')
-                ->where('fecregistro','=',$request->freg)
-                ->where('id_finca','=', $id_finca)
-                ->where('id_ciclo','=', $id_ciclo)
-                ->count(); 
+                    ->where('fecregistro','=',$request->freg)
+                    ->where('id_finca','=', $id_finca)
+                    ->where('id_ciclo','=', $id_ciclo)
+                    ->count(); 
 
                 $nropartnc = DB::table('sghistoricotemprepros')
-                ->where('fecharegistro','=',$request->freg)
-                ->where('id_finca','=', $id_finca)
-                ->where('id_ciclo','=', $id_ciclo)
-                ->update(['nropartnc'=>$countpnc]);  
+                    ->where('fecharegistro','=',$request->freg)
+                    ->where('id_finca','=', $id_finca)
+                    ->where('id_ciclo','=', $id_ciclo)
+                    ->update(['nropartnc'=>$countpnc]);  
                 /*
                 * Aqui actualizamos la Tipologia en caso de una parto no concluido
                 * ya que es un proceso que conlleva a eso.
@@ -10061,10 +10264,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Ubicamos la fecha del Primer parto
                 */  
                 $fechaPrimerParto = DB::table('sgpartos')
-                ->select(DB::raw('MIN(fecpar) as fprimerParto'))
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->get(); 
+                    ->select(DB::raw('MIN(fecpar) as fprimerParto'))
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->get(); 
                 
                 if ($fechaPrimerParto->count()>0) {
                     foreach ($fechaPrimerParto as $key) {
@@ -10077,10 +10280,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * La edad del primer Parto
                 */
                 $edadPrimerParto = DB::table('sgpartos')
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->where('fecpar','=',$fpParto)
-                ->get();
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->where('fecpar','=',$fpParto)
+                    ->get();
 
                 if ($edadPrimerParto->count()>0) {
                     foreach ($edadPrimerParto as $key ) {
@@ -10093,21 +10296,21 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Ubicamos El numero de celos por la temporada de monta
                 */
                 $celos = DB::table('sgcelos')
-                ->where('id_finca','=',$id_finca)
-                ->where('id_ciclo','=',$id_ciclo)
-                ->where('id_serie','=',$id_serie)
-                ->get();
+                    ->where('id_finca','=',$id_finca)
+                    ->where('id_ciclo','=',$id_ciclo)
+                    ->where('id_serie','=',$id_serie)
+                    ->get();
 
                 $nroCelos = $celos->count();    
                 /*
                 * Ubicamos fecha del primer celo y la edad que se tenia en el primer celo
                 */
                 $fechaPrimerCelo = DB::table('sgcelos')
-                ->select(DB::raw('MIN(fechr) as fecPrimerCelo'))
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_ciclo','=',$id_ciclo)
-                ->where('id_serie','=',$id_serie)
-                ->get(); 
+                    ->select(DB::raw('MIN(fechr) as fecPrimerCelo'))
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_ciclo','=',$id_ciclo)
+                    ->where('id_serie','=',$id_serie)
+                    ->get(); 
                 //if ( ($fechaPrimerCelo==null) or empty($fechaPrimerCelo) ) {
                 if ( $fechaPrimerCelo->count()>0) {
 
@@ -10133,11 +10336,11 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 }
 
                 $fechaUltimoCelo = DB::table('sgcelos')
-                ->select(DB::raw('MAX(fechr) as fecUltimoCelo'))
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_ciclo','=',$id_ciclo)
-                ->where('id_serie','=',$id_serie)
-                ->get(); 
+                    ->select(DB::raw('MAX(fechr) as fecUltimoCelo'))
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_ciclo','=',$id_ciclo)
+                    ->where('id_serie','=',$id_serie)
+                    ->get(); 
                 /*
                 * Comprobamos si el ultimo celo existe que lo entrege sino que sea null
                 */
@@ -10154,11 +10357,11 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Con ultimo celo buscamos el ultimo Intervalo de Celo registrado.
                 */
                 $ultimoCelo = DB::table('sgcelos')
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_ciclo','=',$id_ciclo)
-                ->where('id_serie','=',$id_serie)
-                ->where('fechr','=',$fuc)
-                ->get(); 
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_ciclo','=',$id_ciclo)
+                    ->where('id_serie','=',$id_serie)
+                    ->where('fechr','=',$fuc)
+                    ->get(); 
 
                 if ( ($ultimoCelo->count()>0) ) {
                     foreach ($ultimoCelo as $key ) {
@@ -10173,10 +10376,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Ubicamos el ultimo servicio
                 */
                 $ultServicio = DB::table('sgservs')
-                ->select(DB::raw('MAX(fecha) as fultservicio'))
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->get();
+                    ->select(DB::raw('MAX(fecha) as fultservicio'))
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->get();
                 if ($ultServicio->count()>0) {
                     foreach ($ultServicio as $key) {
                         $fUltserv = $key->fultservicio;
@@ -10187,10 +10390,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 }
                 # Ubicamosla iserv del ultimo servicio
                 $intServicio = DB::table('sgservs')
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->where('fecha','=', $fUltserv)
-                ->get();        
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->where('fecha','=', $fUltserv)
+                    ->get();        
                 if ($intServicio->count()>0 ) {
                     foreach ($intServicio as $key ) {
                         $intEntreServ = $key->iers; 
@@ -10202,9 +10405,9 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Buscamo la preñez actual para saber el tiempo de secado
                 */  
                 $prenezActual = DB::table('sgprenhezs')
-                ->where('id_finca','=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->get(); 
+                    ->where('id_finca','=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->get(); 
                 if ($prenezActual->count()>0) {
 
                     foreach ($prenezActual as $key ) {
@@ -10218,10 +10421,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * Fecha del ultimo parto
                 */
                 $fechaUltimoParto = DB::table('sgpartos')
-                ->select(DB::raw('MAX(fecpar) as fultParto'))
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->get();  
+                    ->select(DB::raw('MAX(fecpar) as fultParto'))
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->get();  
                 if ($fechaUltimoParto->count()>0 ) {
 
                     foreach ($fechaUltimoParto as $key) {
@@ -10231,10 +10434,10 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                     $fultParto=null; //No existe
                 }
                 $intervaloEntreParto =  DB::table('sgpartos')
-                ->where('id_finca', '=',$id_finca)
-                ->where('id_serie','=',$id_serie)
-                ->where('fecpar','=',$fultParto)
-                ->get();                        
+                    ->where('id_finca', '=',$id_finca)
+                    ->where('id_serie','=',$id_serie)
+                    ->where('fecpar','=',$fultParto)
+                    ->get();                        
                 if ($intervaloEntreParto->count()>0) {
                     foreach ($intervaloEntreParto as $key) {
                         $intentpart = $key->ientpar; 
@@ -10341,6 +10544,7 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 */
                 $mv1Nuevo = new \App\Models\sgmv1;
 
+                $mv1Nuevo->id_serie = $id_serie;
                 $mv1Nuevo->codmadre = $request->serie;
                 $mv1Nuevo->caso = $caso;
                 $mv1Nuevo->fecha = $request->freg;
@@ -10354,6 +10558,7 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 */
                 $datosDeVidaNuevo = new \App\Models\sgdatosvida;
                 
+                $datosDeVidaNuevo->id_serie = $id_serie;
                 $datosDeVidaNuevo->seriem = $series->serie;
                 $datosDeVidaNuevo->fecha = $request->freg;
                 $datosDeVidaNuevo->caso = $caso;
@@ -10398,26 +10603,26 @@ public function eliminar_seriemonta($id_finca, $id, $id_ciclo, $id_serie)
                 * tabla sganims
                 */
                 $NroPartoNc = DB::table('sgpartosncs')
-                ->where('serie', '=', $series->serie)
-                ->where('id_finca','=',$id_finca)
-                ->get();
+                    ->where('serie', '=', $series->serie)
+                    ->where('id_finca','=',$id_finca)
+                    ->get();
                 #obtenemos el nro de parto no concluido para la serie y actualizamos sganims
                 $npartonc = $NroPartoNc->count();
 
                 $ultimopartonc = DB::table('sganims')
-                ->where('id','=',$id_serie)
-                ->where('id_finca','=', $id_finca)
-                ->update(['fecupartonc'=>$ultpartonc,
-                  'npartonc'=>$npartonc,  
-                  'tipo'=>$nuevaTipologiaName,
-                  'id_tipologia'=>$idTipologiaNueva,
-                  'tipoanterior'=>$tipoAnterior,    
+                    ->where('id','=',$id_serie)
+                    ->where('id_finca','=', $id_finca)
+                    ->update(['fecupartonc'=>$ultpartonc,
+                              'npartonc'=>$npartonc,  
+                              'tipo'=>$nuevaTipologiaName,
+                              'id_tipologia'=>$idTipologiaNueva,
+                              'tipoanterior'=>$tipoAnterior,    
                                               #Actualizamos los parametros tipologicos.
-                  'prenada'=>$prenhada,
-                  'tienecria'=>$tienecria,
-                  'criaviva'=>$criaViva,
-                  'ordenho'=>$ordeNho,
-                  'detectacelo'=>$detectaCelo]);
+                              'prenada'=>$prenhada,
+                              'tienecria'=>$tienecria,
+                              'criaviva'=>$criaViva,
+                              'ordenho'=>$ordeNho,
+                              'detectacelo'=>$detectaCelo]);
 
                 return back()->with('msj', 'Registro agregado satisfactoriamente');       
 

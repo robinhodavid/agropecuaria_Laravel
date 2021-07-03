@@ -26,7 +26,7 @@ class AddFecupreColumnsToSganimsTable extends Migration
     public function down()
     {
         Schema::table('sganims', function (Blueprint $table) {
-            $table->dorpColumn('fecupre');
+            $table->dropColumn('fecupre');
         });
     }
 }

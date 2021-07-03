@@ -170,41 +170,44 @@
 	                      <td>{{ $item->tipoactual }}</td>
 	                      <td><span class="tag tag-success">{{$item->pesoactual}}</span></td>
 	                      <td>	
-	                      	<form action="{{route('seriemonta.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie]) }}" class="d-inline form-delete" method="POST">
-				              @method('DELETE')
-				              @csrf
-				              	<button type="submit" class="btn btn-danger btn-sm">
-				                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-				                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-				                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-				                  </svg> 
-				               	</button>
-				            </form> 
+	                      	@if($temp_reprod->fecdefcierre==null)
+	                      		<form action="{{route('seriemonta.eliminar',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie]) }}" class="d-inline form-delete" method="POST">
+							              @method('DELETE')
+							              @csrf
+						              	<button type="submit" class="btn btn-danger btn-sm">
+						                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+						                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+						                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+						                  </svg> 
+						               	</button>
+						            </form> 
 	                      	@if ($item->sexo == 0)
-
 		                      	<div class="btn-group dropend">
-						            <button type="button" class="btn dropdown-toggle mr-2" data-toggle="dropdown" aria-expanded="false">
-						            	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
-										  <path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-										</svg>
-						            </button>
-				                    <div class="dropdown-menu" style="">
-				                    	<a class="dropdown-item" href="{{route('celos',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Celo</a>
-				                    	
-					                    <a class="dropdown-item" href="{{route('servicio',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Servicio</a>
-					                    <div class="dropdown-divider"></div>
-					                    <a class="dropdown-item" href="{{route('palpacion',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Palpaciones</a>
-					                      <div class="dropdown-divider"></div>
-					                    <a class="dropdown-item" href="{{route('prenez',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Preñez</a>
-					                    <a class="dropdown-item" href="{{route('parto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto</a>
-					                      <div class="dropdown-divider"></div>
-					                    <a class="dropdown-item" href="{{route('aborto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Aborto</a>
-					                    <a class="dropdown-item" href="{{route('partonc',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto No Culminado</a>
-				                    </div>
-		                		</div>	<!-- /btn-group -->
-	                		@endif()  
-	                	</td>
-	                    </tr>
+						            			<button type="button" class="btn dropdown-toggle mr-2" data-toggle="dropdown" aria-expanded="false">
+									            	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+													  		<path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+																</svg>
+						            			</button>
+					                    <div class="dropdown-menu" style="">
+					                    	<a class="dropdown-item" href="{{route('celos',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Celo
+					                    	</a>
+					                    	
+						                    <a class="dropdown-item" href="{{route('servicio',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Servicio</a>
+
+						                    <div class="dropdown-divider"></div>
+						                    <a class="dropdown-item" href="{{route('palpacion',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Palpaciones</a>
+						                      <div class="dropdown-divider"></div>
+						                    <a class="dropdown-item" href="{{route('prenez',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Preñez</a>
+						                    <a class="dropdown-item" href="{{route('parto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto</a>
+						                      <div class="dropdown-divider"></div>
+						                    <a class="dropdown-item" href="{{route('aborto',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Aborto</a>
+						                    <a class="dropdown-item" href="{{route('partonc',[$finca->id_finca, $temp_reprod->id, $ciclo->id_ciclo, $item->id_serie ])}}">R. Parto No Culminado</a>
+					                    </div>
+		                				</div>	<!-- /btn-group -->
+	                				@endif()
+	                		@endif  
+	                		</td>
+	                  </tr>
 	                    @endif
 	                   @endforeach() 
 	                </tbody>
@@ -240,11 +243,14 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js" integrity="sha384-KsvD1yqQ1/1+IA7gi3P0tyJcT3vR+NdBTt13hSJ2lnve8agRGXTTyNaBYmCR/Nwi" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.min.js" integrity="sha384-nsg8ua9HAw1y0W1btsyWgBklPnCUAFLuTMS2G72MMONqmOymq585AcH49TLBQObG" crossorigin="anonymous"></script>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	
-	{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}
+		{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}
     {!! Html::script('js/jquery-3.5.1.min.js')!!}
   	{!! Html::script('js/dropdown.js')!!}
-  	 {!! Html::script('js/sweetalert2.js')!!}  
+  	{!! Html::script('js/sweetalert2.js')!!}  
+  	{!! Html::script('js/routes.js')!!}  
 
    @if(session('mensaje')=='ok')
       <script>
@@ -273,7 +279,7 @@
       })
       </script>
    @endif
-   @if (session('mensaje')=='nop')
+  @if (session('mensaje')=='nop')
       <script>
         Swal.fire({
         text:'No se puede Registrar Preñez a una Serie Preñada',
@@ -281,8 +287,8 @@
         title:'¡Registro de Preñez!'
       })
       </script>
-   @endif
-   @if (session('info')=='ok')
+  @endif
+  @if (session('info')=='ok')
       <script>
         Swal.fire({
         text:'Esta serie no posee registro de preñez. ¡Por favor! Realice un nuevo registro antes de continuar',
@@ -290,8 +296,8 @@
         title:'¡No posee Preñez Registrada!'
       })
       </script>
-   @endif
-   @if (session('info')=='oka')
+  @endif
+  @if (session('info')=='oka')
       <script>
         Swal.fire({
         text:'Esta serie no posee un registro de preñez reciente. ¡Por favor! Realice un nuevo registro antes de continuar',
@@ -299,8 +305,8 @@
         title:'¡No posee Preñez Registrada!'
       })
       </script>
-   @endif
-   @if (session('info')=='int')
+  @endif
+  @if (session('info')=='int')
    	<script>
         Swal.fire({
         text:'No se puede registrar un parto donde el Tiempo de Preñez Estimada, es menor al Tiempo de Gestación',
@@ -308,9 +314,9 @@
         title:'¡Registro de Parto!'
       })
     </script>
-   @endif
+  @endif
 
-   @if (session('infoser')=='ok')
+  @if (session('infoser')=='ok')
       <script>
         Swal.fire({
         text:'Este Registro de Preñez no tiene un Servicio Registrado',
@@ -318,48 +324,52 @@
         title:'¡Registro de Preñez Sin Servicio Previo!'
       })
       </script>
-   @endif
-    
+  @endif
+  
+ 	@if(session('celos')=='noregistro')
     <script>
- 
+      Swal.fire({
+        title: '¡Servicio Sin Celos Registrado!',
+        text:  'Esta serie no posee registros de celos. ¡Por favor! Realice un nuevo registro de Celos antes de continuar',
+       	icon:  'info',               
+ 	 		})
+    </script>
+  @endif
+
+  <script>
     $('.form-delete').submit(function(e){
       e.preventDefault();
       Swal.fire({
-      title:'¿Está seguro que desea Retirar la Serie de la Monta?',
-      text:"Este cambio es irreverible",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Retirar',
-      cancelButtonText: 'Cancelar'
-    }).then((result)=>{
-      if (result.value){
-        this.submit();
-      }
-    })
+	      title:'¿Está seguro que desea Retirar la Serie de la Monta?',
+	      text:"Este cambio es irreverible",
+	      icon: 'warning',
+	      showCancelButton: true,
+	      confirmButtonColor: '#3085d6',
+	      cancelButtonColor: '#d33',
+	      confirmButtonText: 'Retirar',
+	      cancelButtonText: 'Cancelar'
+    	}).then((result)=>{
+      	if (result.value){
+        	this.submit();
+      	}
+   	  })
     }); 
     </script>  
 
-
     <script>
-
     $('.form-trans').submit(function(e){
-  
       var fecus = new Date(document.getElementById('fecus').value);    
       var fecharegistro = new Date(document.getElementById('fecharegistro').value);
       
       if (fecus > fecharegistro) {
         e.preventDefault();
         Swal.fire({
-        text:'La Fecha "Último Servicio" no puede ser posterior a la fecha "Registro" del servicio',
-        icon: 'error',
-        title:'¡Rango de Fecha No valido!'
+	        text:'La Fecha "Último Servicio" no puede ser posterior a la fecha "Registro" del servicio',
+	        icon: 'error',
+	        title:'¡Rango de Fecha No valido!'
         })
       }
     }); 
     </script>
-  
-    
 
 @stop
