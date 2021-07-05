@@ -31,6 +31,6 @@ class sgfinca extends Model
         return $this->belongsToMany('App\Models\User','sgfinca_user','id_finca','user_id')->withTimesTamps();
     }
 
-
+  
 }
  

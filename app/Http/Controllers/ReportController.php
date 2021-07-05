@@ -916,56 +916,227 @@ class ReportController extends Controller
 
                 ($request->fpdesde==null) ? "":$query->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
                 ($request->fphasta==null) ? "":$query->whereDate('sgpartos.fecpar','<=',$request->fphasta);
-        $partos = $query->get(); 
-                  
-            foreach ($partos as $key) {
-                $totalCria1 [] = $key->becer;
-                $totalCria2 [] = $key->becer1;
-            }
+        $partos = $query->get();  
 
-        //return $partos;
-        $arregloFinal = Arr::except($totalCria2, null);    
-        return count($arregloFinal); 
-            
+        #Aqui calculamos los datos promedios para el cuadro resumen.
+        #Query para sacar la tabla de resumen
+
+        $cantCria1 = 'count(sgpartos.becer)';
+        $cantCria2 = 'count(sgpartos.becer1)';
+        $totalCria = 'count(sgpartos.becer) + count(sgpartos.becer1)';
+        $partPromAnimal = 'ROUND((count(sgpartos.becer) + count(sgpartos.becer1))/count(*),2)';
+        $promServicio = 'ROUND((sum(sganims.nservi))/count(*),2)';
+        $promientpart = 'ROUND((sum(sgpartos.ientpar))/count(*),2)';
+        $prompesoalnacer = 'ROUND((sum(sgpartos.pesoib) + sum(sgpartos.pesoib1))/count(*),2)';
+
+        $queryResumen = DB::table('sgpartos')
+                ->select('sgpartos.id_serie', 'sgpartos.serie', 'sgpartos.tipo', 
+                         'sgpartos.estado','sgpartos.edad','sgpartos.tipoap','sgpartos.fecup',
+                         'sgpartos.fecpar', 'sgpartos.sexo','sgpartos.sexo1', 'sgpartos.becer',
+                         'sgpartos.color_pelaje', 'sgpartos.becer1', 'sgpartos.color_pelaje1',
+                         'sgpartos.obspar', 'sgpartos.obspar1', 'sgpartos.edobece', 'sgpartos.edobece1',
+                         'sgpartos.razabe', 'sgpartos.pesoib', 'sgpartos.pesoib1', 'sgpartos.ientpar',
+                         'sgpartos.codap', 'sganims.nparto', 'sganims.nservi', 'sgrazas.nombreraza',
+                         'sgprenhezs.toropaj', 'sgprenhezs.torotemp')
+                ->select(DB::raw($cantCria1 ." ".'as cantcria1'), 
+                         DB::raw($cantCria2 ." ". 'as cantcria2'),
+                         DB::raw($totalCria ." ".'as totalcria'),
+                         DB::raw($partPromAnimal." ".'as partospromanimal'),
+                         DB::raw($promServicio ." ".'as promservicio'),
+                         DB::raw($promientpart ." ".'as promientpart'),
+                         DB::raw($prompesoalnacer ." ".'as prompesoalnacer')
+                        )
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                //->leftjoin('sgservs','sgservs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+
+                ($request->serie==null) ? "":$queryResumen->where('sgpartos.serie','=',$request->serie);
+                ($request->fpdesde==null) ? "":$queryResumen->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$queryResumen->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+
+        $partosResumen = $queryResumen->get(); 
+                  
+        $queryHembra = DB::table('sgpartos')
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->where('sgpartos.sexo','=',0); # 0 = hembra, 1 = macho
+                ($request->serie==null) ? "":$queryHembra->where('sgpartos.serie','=',$request->serie);
+                ($request->fpdesde==null) ? "":$queryHembra->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$queryHembra->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+
+        $cantHembra=$queryHembra->count();
+
+        $queryHembra1 = DB::table('sgpartos')
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->where('sgpartos.sexo1','=',0); # 0 = hembra, 1 = macho
+                ($request->serie==null) ? "":$queryHembra1->where('sgpartos.serie','=',$request->serie);
+                ($request->fpdesde==null) ? "":$queryHembra1->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$queryHembra1->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+
+         $cantHembra1=$queryHembra1->count();
+        /*
+        $cantHembra1 = DB::table('sgpartos')
+            ->where('id_finca','=',$id_finca)
+            ->where('sexo1','=',0) # 0 = hembra, 1 = macho
+            ->count();
+        */
+        $totalHembra = $cantHembra+$cantHembra1;
+    
+        $queryMacho = DB::table('sgpartos')
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->where('sgpartos.sexo','=',1); # 0 = hembra, 1 = macho
+                ($request->serie==null) ? "":$queryMacho->where('sgpartos.serie','=',$request->serie);
+                ($request->fpdesde==null) ? "":$queryMacho->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$queryMacho->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+
+        $cantMacho=$queryMacho->count();
+
+        $queryMacho1 = DB::table('sgpartos')
+                ->join('sganims','sganims.id','=','sgpartos.id_serie')
+                ->join('sgrazas','sgrazas.idraza','=','sganims.idraza')
+                ->leftjoin('sgprenhezs','sgprenhezs.id_serie','=','sgpartos.id_serie')
+                ->where('sgpartos.id_finca','=',$id_finca)
+                ->where('sgpartos.sexo1','=',1); # 0 = hembra, 1 = macho
+                ($request->serie==null) ? "":$queryMacho1->where('sgpartos.serie','=',$request->serie);
+                ($request->fpdesde==null) ? "":$queryMacho1->whereDate('sgpartos.fecpar','>=',$request->fpdesde);
+                ($request->fphasta==null) ? "":$queryMacho1->whereDate('sgpartos.fecpar','<=',$request->fphasta);
+
+        $cantMacho1=$queryMacho1->count();
+    
+        /*
+        $cantMacho = DB::table('sgpartos')
+            ->where('id_finca','=',$id_finca)
+            ->where('sexo','=',1) # 0 = hembra, 1 = macho
+            ->count();
+        $cantMacho1 = DB::table('sgpartos')
+            ->where('id_finca','=',$id_finca)
+            ->where('sexo1','=',1) # 0 = hembra, 1 = macho
+            ->count();
+        */
+
+        $totalMacho = $cantMacho+$cantMacho1;    
+
+        //return $partosResumen;
+
         $fechadereporte = Carbon::now(); 
 
         $rangofechadesde = $request->fcdesde;
         $rangofechahasta = $request->fchasta;   
     
-        #Aqui calculamos los datos promedios para el cuadro resumen.
-
+    
 
         $cantregistro = $partos->count(); 
     
 
         if ($request->formato == "html") {
           
-          return view('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+          return view('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta','partosResumen','totalHembra','totalMacho'));
         }
 
         if ($request->formato == "Pdf") {
-          $pdf = PDF::loadView('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+          $pdf = PDF::loadView('reports.partos',compact('finca','partos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta','partosResumen','totalHembra','totalMacho'));
 
-            return $pdf->stream('Servicios_Registrados.pdf');
+            return $pdf->stream('Partos_Registrados.pdf');
+        }
+
+        if ($request->formato == "xls") {
+            return Excel::download(new sganim, 'Partos_Registrados.xlsx');
+        }
+
+   }
+
+   public function report_abortos(Request $request, $id_finca)
+   {
+
+    $finca = sgfinca::findOrFail($id_finca);
+
+        $query = DB::table('sgabors')
+                ->where('id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+                         
+                ($request->serie==null) ? "":$query->where('serie','=',$request->serie);
+
+                ($request->fadesde==null) ? "":$query->whereDate('fecr','>=',$request->fadesde);
+                ($request->fahasta==null) ? "":$query->whereDate('fecr','<=',$request->fahasta);
+                ($request->causa==null) ? "":$query->where('causa','=',$request->causa);
+        $abortos = $query->get(); 
+            
+        //return $celos; 
+            
+        $fechadereporte = Carbon::now(); 
+
+        $rangofechadesde = $request->fadesde;
+        $rangofechahasta = $request->fahasta;   
+    
+        $cantregistro = $abortos->count(); 
+    
+
+        if ($request->formato == "html") {
+          
+          return view('reports.abortos',compact('finca','abortos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        }
+
+        if ($request->formato == "Pdf") {
+          $pdf = PDF::loadView('reports.abortos',compact('finca','abortos','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+
+            return $pdf->stream('Abortos_Registrados.pdf');
         }
 
         if ($request->formato == "xls") {
             return Excel::download(new sganim, 'Servicios_Registrados.xlsx');
         }
-
-
    }
 
-   public function report_abortos()
+   public function report_partosnc(Request $request, $id_finca)
    {
+     $finca = sgfinca::findOrFail($id_finca);
 
-    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
-   }
+        $query = DB::table('sgpartosncs')
+                ->where('id_finca','=',$id_finca)
+                ->orderBy($request->orderby,'ASC');
+                         
+                ($request->serie==null) ? "":$query->where('serie','=',$request->serie);
 
-   public function report_partonc()
-   {
+                ($request->fpncdesde==null) ? "":$query->whereDate('fecregistro','>=',$request->fpncdesde);
+                ($request->fpnchasta==null) ? "":$query->whereDate('fecregistro','<=',$request->fpnchasta);
+                ($request->causa==null) ? "":$query->where('causa','=',$request->causa);
+        $partosnc = $query->get(); 
+            
+        //return $celos; 
+            
+        $fechadereporte = Carbon::now(); 
 
-    return view('reports.manejo_vientre',compact('finca','mvmadres','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        $rangofechadesde = $request->fpncdesde;
+        $rangofechahasta = $request->fpnchasta;   
+    
+        $cantregistro = $partosnc->count(); 
+    
+
+        if ($request->formato == "html") {
+          
+          return view('reports.partosnc',compact('finca','partosnc','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+        }
+
+        if ($request->formato == "Pdf") {
+          $pdf = PDF::loadView('reports.partosnc',compact('finca','partosnc','fechadereporte','cantregistro','rangofechadesde','rangofechahasta'));
+
+            return $pdf->stream('Registro_Partos_No_Culminados.pdf');
+        }
+
+        if ($request->formato == "xls") {
+            return Excel::download(new sganim, 'Registro_Partos_No_Culminados.xlsx');
+        }
    }
 
    public function report_proximaspalpar()

@@ -225,6 +225,24 @@ return [
     */
 
     'menu' => [
+        //Navbar notification
+        [
+            'type'         => 'navbar-notification',
+            'id'           => 'my-notification',      // An ID attribute (required).
+            'icon'         => 'fas fa-bell',          // A font awesome icon (required).
+            'icon_color'   => 'warning',              // The initial icon color (optional).
+            'label'        => 1,                      // The initial label for the badge (optional).
+            'label_color'  => 'danger',               // The initial badge color (optional).
+            'url'          => 'notifications/show',   // The url to access all notifications/elements (required).
+            'topnav_right' => true,                   // Or "topnav => true" to place on the left (required).
+            'dropdown_mode'   => true,                // Enables the dropdown mode (optional).
+            'dropdown_flabel' => 'Todas las notificaciones', // The label for the dropdown footer link (optional).
+            'update_cfg'   => [
+                'url' => 'notifications/get',         // The url to periodically fetch new data (optional).
+                'period' => 30,                       // The update period for get new data (in seconds, optional).
+            ],
+        ],
+
         // Navbar items:
         [
             'type'         => 'navbar-search',
@@ -275,7 +293,8 @@ return [
                 [
                     'text' => 'Especie',
                     'icon_color' => 'info',
-                    'url'  => '#',
+                  //  'route'  => ['especie',['id_finca'=>$id_finca]],
+                    'url'=>'#',
                 ],
                 [
                     'text' => 'Raza',
@@ -344,37 +363,6 @@ return [
                     'url'  => '#',
                     'can' => ['tanque','tanque.crear'],
                 ],
-
-
-
-                [
-                    'text'    => 'level_one',
-                    'url'     => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url'  => '#',
-                        ],
-                        [
-                            'text'    => 'level_two',
-                            'url'     => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url'  => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url'  => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
-                    'url'  => '#',
-                ],
             ],
         ],
 
@@ -422,36 +410,6 @@ return [
                     'text' => 'Crear Ficha de Pajuela',
                     'icon' => 'fas fa-fw fa-arrow-right',
                     'icon_color' => 'warning',
-                    'url'  => '#',
-                ],
-             
-
-                [
-                    'text'    => 'level_one',
-                    'url'     => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url'  => '#',
-                        ],
-                        [
-                            'text'    => 'level_two',
-                            'url'     => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url'  => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url'  => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
                     'url'  => '#',
                 ],
             ],

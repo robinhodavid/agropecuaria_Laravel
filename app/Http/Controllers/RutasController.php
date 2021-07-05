@@ -4158,17 +4158,28 @@ for($i=0; $i < $cont; $i++){
 
     public function vista_reportes_abortos(Request $request,  $id_finca) 
     {
-        return view('info.vista_reportes_manejo_vientre', compact('finca','tipologia','lotes'));
+        $finca = sgfinca::findOrFail($id_finca); 
+        $causa = \App\Models\sgcausamuerte::all();
+
+        return view('info.vista_reportes_abortos', compact('finca','causa'));
     }
+
 
     public function vista_reportes_partosnc(Request $request, $id_finca) 
     {
-        return view('info.vista_reportes_manejo_vientre', compact('finca','tipologia','lotes'));
+        $finca = sgfinca::findOrFail($id_finca); 
+        $causa = \App\Models\sgcausamuerte::all();
+
+        return view('info.vista_reportes_partosnc', compact('finca','causa'));
     }
 
-    public function vista_reportes_seriespalpar(Request $request,  $id_finca) 
+    public function vista_reportes_proximaspalpar(Request $request,  $id_finca) 
     {
-        return view('info.vista_reportes_manejo_vientre', compact('finca','tipologia','lotes'));
+        $finca = sgfinca::findOrFail($id_finca);
+        $diagnostico = \App\Models\sgdiagnosticpalpaciones::all();
+
+
+        return view('info.vista_reportes_proximaspalpar', compact('finca','diagnostico'));
     }
 
 

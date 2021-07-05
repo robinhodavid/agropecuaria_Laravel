@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator; 
+use Illuminate\Support\Facades\View;
 use Carbon\Carbon; 
+use App\Models\sgfinca;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,5 +32,8 @@ class AppServiceProvider extends ServiceProvider
         Carbon::setUTF8(true);
         Carbon::setLocale(config('app.locale'));
         setlocale(LC_TIME, config('app.locale'));
+
+        
+
     }
 }

@@ -87,16 +87,12 @@ class HomeController extends Controller
         $finca = sgfinca::findOrFail($id_finca);
 
         $this->authorize('fincas', $finca);
-        
+    
         //Gate::authorize('haveaccess','fincas');
         /*
         * Variables y constantes necesarias para el filtrado
         */
-        
         //$status = 1 activo; 0 = Inactivo;
-
-        $finca = \App\Models\sgfinca::findOrFail($id_finca);
-        
         $seriesactivas = DB::table('sganims')
                 ->where('status', '=', 1)
                 ->where('id_finca', '=', $finca->id_finca)

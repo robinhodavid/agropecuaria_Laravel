@@ -761,6 +761,27 @@ Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-partos', [App
 Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-partos', [App\Http\Controllers\ReportController::class, 'report_partos'])->name('print_partos');
 
 
+#Reporte de Abortos Registrados
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-abortos', [App\Http\Controllers\RutasController::class, 'vista_reportes_abortos'])->name('vista_reporteabortos'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-abortos', [App\Http\Controllers\ReportController::class, 'report_abortos'])->name('print_abortos');
+
+
+#Reporte de registros de partos no culminados
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-partos-no-culminados', [App\Http\Controllers\RutasController::class, 'vista_reportes_partosnc'])->name('vista_reportepartosnc'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-partos-no-culminados', [App\Http\Controllers\ReportController::class, 'report_partosnc'])->name('print_partosnc');
+
+
+#Reporte de series próximas a palpar.
+Route::get('/home/sisga-admin/finca/{id_finca}/reporte-registro-de-series-proximas-palpar', [App\Http\Controllers\RutasController::class, 'vista_reportes_proximaspalpar'])->name('vista_proximaspalpar'); 
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-series-proximas-palpar-post-servicio', [App\Http\Controllers\ReportController::class, 'report_palparpostservicio'])->name('print_paplparpostservicio');
+
+Route::post('/home/sisga-admin/finca/{id_finca}/impresion-registro-de-series-proximas-palpar-post-parto', [App\Http\Controllers\ReportController::class, 'report_palparpostparto'])->name('print_paplparpostparto');
+
+
+
 
 
 

@@ -2,7 +2,123 @@
 
 @section('title', 'Sistema de Gestión Agropecuaría')
 
+
+
 @section('content_header')
+
+@section('menu')
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+     <div class="container-fluid">
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+         <li class="nav-item">
+          <a class="nav-link" aria-current="page" 
+          href="{{route ('home')}}"><i class="fa fa-home" aria-hidden="true"></i>
+        Inicio</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-cog" aria-hidden="true"></i> Variables de Control</a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href=" {{ route('especie', $finca->id_finca) }}">Especie</a></li>
+          <li><a class="dropdown-item" href="{{ route('raza', $finca->id_finca) }}">Raza</a></li>
+          <li><a class="dropdown-item" href="{{ route('tipologia', $finca->id_finca) }}">Tipología</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('condicion_corporal', $finca->id_finca) }}">Condiciones Corporales</a></li>
+          <li><a class="dropdown-item" href="{{ route('colores', $finca->id_finca) }}">Colores Campo</a></li>
+          <li><a class="dropdown-item" href="{{ route('diagnostico_palpaciones', $finca->id_finca) }}">Diagnósticos de Palpaciones</a></li>
+          <li><a class="dropdown-item" href="{{ route('parametros', $finca->id_finca)  }}">Ganaderia - Reproducción</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('motivo_entrada_salida', $finca->id_finca)  }}">Motivos de Entrada / Salida</a></li>
+          <li><a class="dropdown-item" href="{{ route('patologia', $finca->id_finca)  }}">Patología</a></li>
+          <li><a class="dropdown-item" href="{{ route('tipomonta', $finca->id_finca)  }}">Tipo de Montas</a></li>
+          <hr> 
+          <li><a class="dropdown-item" href="{{ route('causamuerte', $finca->id_finca)  }}">Causa de Muerte</a></li>
+          <li><a class="dropdown-item" href="{{ route('destinosalida', $finca->id_finca)  }}">Destino Salida</a></li>
+          <li><a class="dropdown-item" href="{{ route('procedencia', $finca->id_finca)  }}">Procedencia</a></li>
+          <hr> 
+          <li><a class="dropdown-item" href="{{ route('salaordeno', $finca->id_finca)  }}">Sala de Ordeño</a></li>
+          <li><a class="dropdown-item" href="{{ route('tanque', $finca->id_finca)  }}">Tanque de Enfriamiento</a></li>
+        </ul>
+      </li>
+      <li class="nav-item dropdown">  
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-paw" aria-hidden="true"></i> Ganadería</a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{route('ficha', $finca->id_finca)}}">Ficha de Ganado</a></li>
+          <li><a class="dropdown-item" href="{{route('lote', $finca->id_finca)}}">Lote</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{route('cambio_tipologia', $finca->id_finca)}}">Cambio de Tipología</a></li>
+
+          <li><a class="dropdown-item" href="{{route('transferencia',$finca->id_finca) }} ">Trasferencia</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{route('salida',$finca->id_finca) }}">Salida de Animales</a></li>
+
+          <li><a class="dropdown-item" href="{{route('peso_ajustado',$finca->id_finca) }}">Ajuste de Peso</a></li>
+
+          <li><a class="dropdown-item" href="{{ route('pajuela', $finca->id_finca)  }}">Pajuela</a></li>
+          <!--<li><a class="dropdown-item" href="#">Pedigree</a></li>-->
+        </ul>
+      </li>
+      <li class="nav-item dropdown">  
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa fa-clone" aria-hidden="true"></i> Reproducción</a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{ route('temporada_monta', $finca->id_finca ) }}">Temporada de Reproducción Animal</a></li>
+            <!--
+            <li><a class="dropdown-item" href="#">Lechera</a></li>
+            <li><a class="dropdown-item" href="#">Quesera</a></li>
+          -->
+        </ul>
+      </li>
+      <li class="nav-item dropdown">  
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text-fill" viewBox="0 0 16 16">
+          <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0zM9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1zM4.5 9a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM4 10.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm.5 2.5a.5.5 0 0 1 0-1h4a.5.5 0 0 1 0 1h-4z"/>
+        </svg> Reportes</a>
+        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <li><a class="dropdown-item" href="{{ route('reportes_catalogodeganado', $finca->id_finca) }}">Catálogo de Ganado</a></li>
+          <li><a class="dropdown-item" href="{{ route('reportes_pajuela', $finca->id_finca) }}">Catálogo de Pajuela</a></li>
+          <li><a class="dropdown-item" href="{{ route('reportes_histsalida', $finca->id_finca) }}">Historial de Salida</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{ route ('reportes_transferencia', $finca->id_finca) }}"> Transferencias</a></li>
+          <li><a class="dropdown-item" href="{{ route('reportes_movimientolote', $finca->id_finca) }}"> Movimiento de Lote</a></li>
+          <li><a class="dropdown-item" href="{{ route('reportes_pesoajustado', $finca->id_finca)}}"> Ajuste de Peso</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('personreport', $finca->id_finca)}}" id="navbarDropdown" role="button">Personalizados</a></li> 
+          <li><a class="dropdown-item" href="{{ route('vistamanejovientre', $finca->id_finca)}}" id="navbarDropdown" role="button">Manejo de Vientres</a></li>
+
+          <li><a class="dropdown-item" href="{{ route('vista_reportecelo', $finca->id_finca)}}" id="navbarDropdown" role="button">Registro de Celos</a></li>  
+          <hr>
+          <li><a class="dropdown-item" href="{{ route('vista_reporteservicios', $finca->id_finca)}}" id="navbarDropdown" role="button">Servicios Registrados</a></li>
+          <li><a class="dropdown-item" href="{{ route('vista_reportepartos', $finca->id_finca)}}" id="navbarDropdown" role="button">Partos Registrados</a></li>
+          <li><a class="dropdown-item" href="{{ route('vista_reporteabortos', $finca->id_finca)}}" id="navbarDropdown" role="button">Abortos Registrados</a></li>
+          <hr>
+          <li><a class="dropdown-item" href="{{route('vista_reportepartosnc',$finca->id_finca)}}" id="navbarDropdown" role="button">Partos No Concluidos</a></li>
+          <li><a class="dropdown-item" href="{{route('vista_proximaspalpar',$finca->id_finca)}}" id="navbarDropdown" role="button">Series Próximas a Palpar</a></li>
+          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Series Próximas a Parir</a></li>
+        </ul>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Inventario de Animales
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li>
+              <a class="dropdown-item" href="{{route('inventario',$finca->id_finca)}}">Trabajo de Campo</a>
+            </li>
+
+          </ul>
+        </li>
+      </ul>
+      <!--
+      <form class="d-flex">
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form> 
+    -->
+  </div>
+</div>
+</nav>
+
+@stop
+
 <div class="container">
   <div class="row">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -86,10 +202,10 @@
           <hr>
           <li><a class="dropdown-item" href="{{ route('vista_reporteservicios', $finca->id_finca)}}" id="navbarDropdown" role="button">Servicios Registrados</a></li>
           <li><a class="dropdown-item" href="{{ route('vista_reportepartos', $finca->id_finca)}}" id="navbarDropdown" role="button">Partos Registrados</a></li>
-          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Abortos Registrados</a></li>
+          <li><a class="dropdown-item" href="{{ route('vista_reporteabortos', $finca->id_finca)}}" id="navbarDropdown" role="button">Abortos Registrados</a></li>
           <hr>
-          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Partos No Concluidos</a></li>
-          <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Series Próximas a Palpar</a></li>
+          <li><a class="dropdown-item" href="{{route('vista_reportepartosnc',$finca->id_finca)}}" id="navbarDropdown" role="button">Partos No Concluidos</a></li>
+          <li><a class="dropdown-item" href="{{route('vista_proximaspalpar',$finca->id_finca)}}" id="navbarDropdown" role="button">Series Próximas a Palpar</a></li>
           <li><a class="dropdown-item" href="#" id="navbarDropdown" role="button">Series Próximas a Parir</a></li>
         </ul>
         <li class="nav-item dropdown">
@@ -419,7 +535,7 @@
  });
 </script>
 
-{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}
+<!--{!! Html::script('css/bootstrap5/js/bootstrap.min.js') !!}-->
 {!! Html::script('js/jquery-3.5.1.min.js')!!}
 {!! Html::script('js/dropdown.js')!!}
 

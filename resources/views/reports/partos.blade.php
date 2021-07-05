@@ -170,7 +170,7 @@
                             <td style="text-align:center;"> 
                                 {{$parto->becer}}
                             </td>
-                            <td style="text-align:center;">
+                            <td style="text-align:center;">                                
                                 {{$parto->sexo}}
                             </td>
                             <td style="text-align:center;">
@@ -227,34 +227,36 @@
             <div class="row my-4">
                 <table>
                     <thead>
+                        @foreach($partosResumen as $pR)
                         <tr>
                             <th>
-                               <strong>Total Crías:</strong>{{$cantregistro}} 
+                               <strong>Total Crías:</strong>{{$pR->totalcria}} 
                             </th>
                             <th>
-                               <strong>Partos Promedio x Serie:</strong>{{$cantregistro}} 
+                               <strong>Partos Promedio por Serie:</strong>{{$pR->partospromanimal}} 
                             </th>
                         </tr>
                         <tr>
                             <th>
-                               <strong>Total Hembras:</strong>{{$cantregistro}} | <strong>Total Machos:</strong>{{$cantregistro}}
+                               <strong>Total Hembras:</strong>{{$totalHembra}} | <strong>Total Machos:</strong>{{$totalMacho}}
                             </th>
                             <th>
-                               <strong>Promedio de N°. Servicios:</strong>{{$cantregistro}} 
+                               <strong>Promedio de N°. Servicios:</strong>{{$pR->promservicio}} 
                             </th>
                         </tr>
                         <tr>
                             <th>
-                               <strong>Promedio IEP:</strong>{{$cantregistro}} 
+                               <strong>Promedio IEP:</strong>{{$pR->promientpart}} 
                             </th>
                             <th>
-                               <strong>Peso Promedio al Nacimiento:</strong>{{$cantregistro}} 
+                               <strong>Peso Promedio al Nacimiento:</strong>{{$pR->prompesoalnacer}} 
                             </th>
                         </tr>    
+                        @endforeach()
                     </thead>
-                    
+                   
                 </table>
-                <div class="resumen-data">
+                <div class="resumen-data" style="padding-top: 20px;">
                     <label class="content-resumen-data">Cant. Partos: {{$cantregistro}} </label>
                     <br>
                 </div>
